@@ -4,9 +4,8 @@ compatibility_date = "2025-01-01"
 
 [[kv_namespaces]]
 binding = "EVENTS"
-id      = ""          # same namespace ID as ingest Worker
+id      = ""
 
-# Routes — /events and /stats are served by this Worker
 # [[routes]]
 # pattern = "bathysphere.tech/events"
 # zone_name = "bathysphere.tech"
