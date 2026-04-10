@@ -1,0 +1,37 @@
+[Unit]
+Description=Bathysphere — Cowrie log pusher
+Documentation=https://bathysphere.tech
+After=network-online.target cowrie.service
+Wants=network-online.target
+# Restart if cowrie restarts
+BindsTo=cowrie.service
+
+[Service]
+Type=simple
+User=cowrie
+Group=cowrie
+
+# Secrets live here — not in the unit file
+EnvironmentFile=/etc/cowrie-pusher/env
+
+ExecStart=/usr/bin/python3 /opt/cowrie-pusher/cowrie_pusher.py
+WorkingDirectory=/opt/cowrie-pusher
+
+# Restart robustly
+Restart=always
+RestartSec=10
+StartLimitIntervalSec=120
+StartLimitBurst=5
+
+# Hardening
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/var/lib/cowrie-pusher
+ReadOnlyPaths=/home/cowrie/var/log/cowrie
+PrivateTmp=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+[Install]
+WantedBy=multi-user.target

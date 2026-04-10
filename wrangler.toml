@@ -1,0 +1,16 @@
+name       = "bathysphere-ingest"
+main       = "index.js"
+compatibility_date = "2025-01-01"
+
+[[kv_namespaces]]
+binding = "EVENTS"
+id      = ""          # fill in after: wrangler kv:namespace create "EVENTS"
+
+# Route — only the /ingest path hits this Worker
+# Set this after connecting the Worker to bathysphere.tech in the dashboard
+# [[routes]]
+# pattern = "bathysphere.tech/ingest"
+# zone_name = "bathysphere.tech"
+
+# BATHYSPHERE_SECRET is a secret, not set here.
+# Deploy with: wrangler secret put BATHYSPHERE_SECRET
