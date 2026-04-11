@@ -330,21 +330,19 @@ async function abuseIpLookup(ip, env) {
 
 /**
  * Batch AbuseIPDB + geo lookup for all unique IPs in a batch.
+ * Sequential to avoid stalled HTTP response warnings in Workers.
  * Returns Map of raw_ip -> { geo, abuse }
  */
 async function batchEnrich(rawIps, env) {
   const unique = [...new Set(rawIps.filter(ip => ip && !isBlocked(ip)))];
-  const [geoResults, abuseResults] = await Promise.all([
-    Promise.all(unique.map(ip => geoLookup(ip, env))),
-    Promise.all(unique.map(ip => abuseIpLookup(ip, env))),
-  ]);
   const map = new Map();
-  unique.forEach((ip, i) => {
-    map.set(ip, {
-      geo:   geoResults[i]   ?? null,
-      abuse: abuseResults[i] ?? null,
-    });
-  });
+  for (const ip of unique) {
+    const [geo, abuse] = await Promise.all([
+      geoLookup(ip, env),
+      abuseIpLookup(ip, env),
+    ]);
+    map.set(ip, { geo: geo ?? null, abuse: abuse ?? null });
+  }
   return map;
 }
 
@@ -544,51 +542,60 @@ async function handleIngest(request, env) {
  * Uses INSERT OR IGNORE to handle duplicate IDs gracefully.
  */
 async function writeToD1(events, db) {
-  // D1 batch API — execute multiple statements in one round trip
-  const stmts = events.map(e =>
-    db.prepare(`
-      INSERT OR IGNORE INTO events (
-        id, ts, eventid, session, src_ip, protocol, sensor,
-        geo_country, geo_city,
-        dst_port, duration, version,
-        username, password_hash, password_len,
-        input, filename, shasum, url,
-        attack_id, attack_name, attack_tactic,
-        iocs, abuse_score
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).bind(
-      e.id,
-      e.ts,
-      e.eventid,
-      e.session ?? null,
-      e.src_ip ?? null,
-      e.protocol ?? 'ssh',
-      e.sensor ?? 'honeypot-pi',
-      e.geo?.country ?? null,
-      e.geo?.city ?? null,
-      e.dst_port ?? null,
-      e.duration ?? null,
-      e.version ?? null,
-      e.username ?? null,
-      e.password_hash ?? null,
-      e.password_len ?? null,
-      e.input ?? null,
-      e.filename ?? null,
-      e.shasum ?? null,
-      e.url ?? null,
-      e.attack?.id ?? null,
-      e.attack?.name ?? null,
-      e.attack?.tactic ?? null,
-      e.iocs ? JSON.stringify(e.iocs) : null,
-      e.iocs?.find(i => i.type === 'reputation')?.score ?? null
-    )
-  );
+  // Helper to ensure no undefined values reach D1
+  const n = v => (v === undefined ? null : v ?? null);
+
+  const stmts = events
+    .filter(e => e.id && e.ts && e.eventid) // skip malformed events
+    .map(e =>
+      db.prepare(`
+        INSERT OR IGNORE INTO events (
+          id, ts, eventid, session, src_ip, protocol, sensor,
+          geo_country, geo_city,
+          dst_port, duration, version,
+          username, password_hash, password_len,
+          input, filename, shasum, url,
+          attack_id, attack_name, attack_tactic,
+          iocs, abuse_score
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).bind(
+        n(e.id),
+        n(e.ts),
+        n(e.eventid),
+        n(e.session),
+        n(e.src_ip),
+        n(e.protocol) ?? 'ssh',
+        n(e.sensor)   ?? 'honeypot-pi',
+        n(e.geo?.country),
+        n(e.geo?.city),
+        n(e.dst_port),
+        n(e.duration),
+        n(e.version),
+        n(e.username),
+        n(e.password_hash),
+        n(e.password_len),
+        n(e.input),
+        n(e.filename),
+        n(e.shasum),
+        n(e.url),
+        n(e.attack?.id),
+        n(e.attack?.name),
+        n(e.attack?.tactic),
+        e.iocs?.length ? JSON.stringify(e.iocs) : null,
+        n(e.iocs?.find(i => i.type === 'reputation')?.score)
+      )
+    );
+
+  if (stmts.length === 0) return;
 
   try {
-    await db.batch(stmts);
+    // D1 batch limit is 100 statements — chunk if needed
+    for (let i = 0; i < stmts.length; i += 100) {
+      await db.batch(stmts.slice(i, i + 100));
+    }
   } catch (err) {
-    // Log but don't fail the ingest — KV write already succeeded
     console.error('D1 write failed:', err.message);
+    throw err; // re-throw so handleIngest can return proper error
   }
 }
 
