@@ -91,6 +91,18 @@ nav {
 .nav-links a:hover { color: var(--glow); }
 .nav-links a.active { color: var(--bio); }
 
+.live-badge {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase;
+  color: var(--bio);
+}
+.live-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--bio); box-shadow: 0 0 6px var(--bio);
+  animation: livepulse 1.5s ease-in-out infinite;
+}
+@keyframes livepulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
 /* ── Page layout ── */
 .page { max-width: 1200px; margin: 0 auto; padding: 2rem; }
 
@@ -298,9 +310,13 @@ nav {
     <ul class="nav-links">
       <li><a href="/">about</a></li>
       <li><a href="/feed.html">feed</a></li>
-      <li><a href="/archive.html" class="active">archive</a></li>
+      <li><a href="/archive.html" class="active">event archive</a></li>
       <li><a href="https://github.com/Kasuskei/bathysphere.tech" target="_blank">github</a></li>
     </ul>
+    <div class="live-badge">
+      <div class="live-dot"></div>
+      <span>live</span>
+    </div>
   </div>
 </nav>
 
