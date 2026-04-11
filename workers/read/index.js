@@ -118,7 +118,10 @@ async function handleStats(env) {
         env.DB.prepare(`SELECT COUNT(DISTINCT src_ip) as unique_ips FROM events`),
       ]);
       const t = totals.results?.[0] ?? {};
-      return json({ total_events: t.total_events ?? 0, unique_ips: ips.results?.[0]?.unique_ips ?? 0, sessions: t.sessions ?? 0, logins_ok: t.logins_ok ?? 0, logins_fail: t.logins_fail ?? 0, commands: t.commands ?? 0, uploads: t.uploads ?? 0, oldest: t.oldest ?? null, newest: t.newest ?? null, source: "d1" });
+      // Fall back to KV if D1 has suspiciously few events (still backfilling or just cleared)
+      if ((t.total_events ?? 0) >= 100) {
+        return json({ total_events: t.total_events ?? 0, unique_ips: ips.results?.[0]?.unique_ips ?? 0, sessions: t.sessions ?? 0, logins_ok: t.logins_ok ?? 0, logins_fail: t.logins_fail ?? 0, commands: t.commands ?? 0, uploads: t.uploads ?? 0, oldest: t.oldest ?? null, newest: t.newest ?? null, source: "d1" });
+      }
     } catch (err) {
       console.error("D1 stats failed, falling back to KV:", err.message);
     }
