@@ -212,7 +212,7 @@ nav {
 /* ── Column headers ── */
 .feed-cols {
   display: grid;
-  grid-template-columns: 148px 52px 100px 110px 1fr 140px;
+  grid-template-columns: 148px 52px 100px 110px 1fr 160px;
   gap: 0; padding: 0.5rem 1.5rem;
   border-bottom: 1px solid var(--rim);
   background: rgba(0,0,0,0.2);
@@ -226,7 +226,7 @@ nav {
 
 .feed-row {
   display: grid;
-  grid-template-columns: 148px 52px 100px 110px 1fr 140px;
+  grid-template-columns: 148px 52px 100px 110px 1fr 160px;
   gap: 0; padding: 0.45rem 1.5rem;
   border-bottom: 1px solid rgba(15,24,34,0.7);
   align-items: center; transition: background 0.1s; cursor: default;
@@ -265,7 +265,7 @@ nav {
 
 .cell-detail {
   font-size: 10px; color: var(--text-dim);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 400px;
 }
 .detail-cred { color: var(--text-mid); }
 .detail-cmd  { color: var(--text); font-family: var(--mono); }
