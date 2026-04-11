@@ -254,9 +254,10 @@ nav {
 
 .ioc-tag {
   display: inline-flex; align-items: center; gap: 3px;
-  font-size: 9px; letter-spacing: 0.05em; padding: 1px 5px;
-  border-radius: 2px; white-space: nowrap; max-width: 155px;
-  overflow: hidden; text-overflow: ellipsis; border: 1px solid transparent;
+  font-size: 9px; letter-spacing: 0.06em; padding: 2px 6px;
+  border-radius: 2px; white-space: nowrap;
+  border: 1px solid transparent; cursor: default;
+  font-weight: 500; text-transform: uppercase;
 }
 .ioc-critical { color: #ff4444; border-color: rgba(255,68,68,0.3);  background: rgba(255,68,68,0.08); }
 .ioc-high     { color: #f0a94a; border-color: rgba(240,169,74,0.3); background: rgba(240,169,74,0.08); }
@@ -285,7 +286,43 @@ nav {
 .detail-cmd  { color: var(--text); font-family: var(--mono); }
 .detail-file { color: var(--amber); }
 
-/* ── ATT&CK tag ── */
+/* ── Row detail panel ── */
+.row-detail {
+  grid-column: 1 / -1;
+  background: var(--glass);
+  border-bottom: 1px solid var(--rim);
+  border-top: 1px solid var(--rim-hover);
+  padding: 1rem 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  animation: detailIn 0.15s ease forwards;
+}
+@keyframes detailIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.detail-group { display: flex; flex-direction: column; gap: 0.5rem; }
+.detail-group-title {
+  font-size: 9px; text-transform: uppercase; letter-spacing: 0.15em;
+  color: var(--text-dim); margin-bottom: 0.25rem;
+}
+.detail-field { display: flex; flex-direction: column; gap: 2px; }
+.detail-field-label { font-size: 9px; color: var(--text-dim); letter-spacing: 0.1em; text-transform: uppercase; }
+.detail-field-value {
+  font-size: 11px; color: var(--text);
+  font-family: var(--mono); word-break: break-all;
+}
+.detail-ioc-list { display: flex; flex-direction: column; gap: 4px; }
+.detail-ioc-item {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; color: var(--text);
+}
+.detail-ioc-item .ioc-tag { font-size: 9px; flex-shrink: 0; }
+.detail-no-data { font-size: 11px; color: var(--text-dim); font-style: italic; }
+
+.feed-row { cursor: pointer; }
+.feed-row.expanded { background: var(--glass); border-bottom: none; }
 .attack-tag {
   display: inline-flex; align-items: center; gap: 4px;
   font-size: 10px; letter-spacing: 0.06em; padding: 2px 8px;
@@ -612,20 +649,32 @@ function eventDetail(e) {
   return '';
 }
 
+// Short labels for IoC tags — keeps the column compact
+const IOC_SHORT = {
+  'credential':   'CRED',
+  'malware':      'MAL',
+  'persistence':  'PERSIST',
+  'exfiltration': 'EXFIL',
+  'recon':        'RECON',
+  'c2':           'C2',
+  'scanner':      'SCAN',
+  'reputation':   'REP',
+};
+
 function iocTags(iocs) {
   if (!iocs || iocs.length === 0) return '';
-  return iocs.slice(0, 2).map(ioc =>
-    `<span class="ioc-tag ioc-${escHtml(ioc.severity ?? 'low')}" title="${escHtml(ioc.label)}">${escHtml(ioc.label)}</span>`
-  ).join('');
+  return iocs.slice(0, 2).map(ioc => {
+    const short = IOC_SHORT[ioc.type] ?? ioc.type?.toUpperCase() ?? 'IOC';
+    return `<span class="ioc-tag ioc-${escHtml(ioc.severity ?? 'low')}" data-tip="${escHtml(ioc.label)}">${short}</span>`;
+  }).join('');
 }
 
 function attackTag(attack) {
   if (!attack) return '';
   const tactic = attack.tactic ?? '';
   const cls = 'tac-' + tactic;
-  return `<span class="attack-tag ${cls}" title="${escHtml(attack.name)} (${escHtml(attack.id)})">
-    ${escHtml(attack.id)}
-  </span>`;
+  const tip = `${escHtml(attack.id)} · ${escHtml(attack.name)} · ${escHtml(attack.tactic)}`;
+  return `<span class="attack-tag ${cls}" data-tip="${tip}">${escHtml(attack.id)}</span>`;
 }
 
 function escHtml(s) {
@@ -641,6 +690,120 @@ function passesFilter(e) {
   if (activeFilter === 'file')    return e.eventid === 'cowrie.session.file_upload' || e.eventid === 'cowrie.session.file_download';
   if (activeFilter === 'attack')  return !!e.attack;
   return true;
+}
+
+// ── Row detail panel ─────────────────────────────────────────────────────────
+function buildDetailPanel(e) {
+  const panel = document.createElement('div');
+  panel.className = 'row-detail';
+
+  const geoStr = e.geo
+    ? [e.geo.city, e.geo.country].filter(Boolean).join(', ')
+    : '—';
+
+  // Group 1: Connection
+  const g1 = `
+    <div class="detail-group">
+      <div class="detail-group-title">Connection</div>
+      <div class="detail-field">
+        <div class="detail-field-label">Timestamp</div>
+        <div class="detail-field-value">${escHtml(e.ts ?? '—')}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-field-label">Source IP</div>
+        <div class="detail-field-value">${escHtml(e.src_ip ?? '—')}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-field-label">Location</div>
+        <div class="detail-field-value">${escHtml(geoStr)}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-field-label">Sensor</div>
+        <div class="detail-field-value">${escHtml(e.sensor ?? '—')}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-field-label">Session</div>
+        <div class="detail-field-value">${escHtml(e.session ?? '—')}</div>
+      </div>
+    </div>`;
+
+  // Group 2: Event detail
+  let eventFields = '';
+  if (e.username) eventFields += `
+    <div class="detail-field">
+      <div class="detail-field-label">Username</div>
+      <div class="detail-field-value">${escHtml(e.username)}</div>
+    </div>`;
+  if (e.password_hash) eventFields += `
+    <div class="detail-field">
+      <div class="detail-field-label">Password</div>
+      <div class="detail-field-value">${escHtml(e.password_hash)} (${e.password_len ?? '?'} chars)</div>
+    </div>`;
+  if (e.input) eventFields += `
+    <div class="detail-field">
+      <div class="detail-field-label">Command</div>
+      <div class="detail-field-value">${escHtml(e.input)}</div>
+    </div>`;
+  if (e.filename) eventFields += `
+    <div class="detail-field">
+      <div class="detail-field-label">Filename</div>
+      <div class="detail-field-value">${escHtml(e.filename)}</div>
+    </div>`;
+  if (e.shasum) eventFields += `
+    <div class="detail-field">
+      <div class="detail-field-label">SHA256</div>
+      <div class="detail-field-value">${escHtml(e.shasum)}</div>
+    </div>`;
+  if (e.version) eventFields += `
+    <div class="detail-field">
+      <div class="detail-field-label">Client version</div>
+      <div class="detail-field-value">${escHtml(e.version)}</div>
+    </div>`;
+  if (e.duration != null) eventFields += `
+    <div class="detail-field">
+      <div class="detail-field-label">Duration</div>
+      <div class="detail-field-value">${e.duration}s</div>
+    </div>`;
+  if (!eventFields) eventFields = `<div class="detail-no-data">No additional event data</div>`;
+
+  const g2 = `
+    <div class="detail-group">
+      <div class="detail-group-title">Event detail</div>
+      ${eventFields}
+    </div>`;
+
+  // Group 3: Threat intel
+  let iocHtml = '';
+  if (e.iocs && e.iocs.length > 0) {
+    iocHtml = `<div class="detail-ioc-list">` +
+      e.iocs.map(ioc => `
+        <div class="detail-ioc-item">
+          <span class="ioc-tag ioc-${escHtml(ioc.severity ?? 'low')}">${IOC_SHORT[ioc.type] ?? 'IOC'}</span>
+          <span>${escHtml(ioc.label)}${ioc.reports ? ` (${ioc.reports} reports)` : ''}</span>
+        </div>`).join('') +
+      `</div>`;
+  } else {
+    iocHtml = `<div class="detail-no-data">No IoCs matched</div>`;
+  }
+
+  const attackHtml = e.attack
+    ? `<div class="detail-field" style="margin-top:0.75rem">
+        <div class="detail-field-label">ATT&amp;CK technique</div>
+        <div class="detail-field-value">${escHtml(e.attack.id)} · ${escHtml(e.attack.name)}</div>
+        <div class="detail-field-label" style="margin-top:4px">Tactic</div>
+        <div class="detail-field-value">${escHtml(e.attack.tactic)}</div>
+      </div>`
+    : `<div class="detail-no-data" style="margin-top:0.75rem">No ATT&amp;CK technique mapped</div>`;
+
+  const g3 = `
+    <div class="detail-group">
+      <div class="detail-group-title">Threat intel</div>
+      ${iocHtml}
+      ${attackHtml}
+    </div>`;
+
+  panel.innerHTML = g1 + g2 + g3;
+  return panel;
 }
 
 // ── Render a single row ───────────────────────────────────────────────────────
@@ -668,6 +831,22 @@ function makeRow(e, isNew = false) {
     <div class="cell-ioc">${iocTags(e.iocs)}</div>
     <div>${attackTag(e.attack)}</div>
   `;
+
+  // Click to expand detail panel
+  row.addEventListener('click', () => {
+    // Close any existing open panel
+    const existing = document.querySelector('.row-detail');
+    const wasThisRow = existing && existing.previousSibling === row;
+    if (existing) existing.remove();
+    row.classList.remove('expanded');
+
+    if (!wasThisRow) {
+      const panel = buildDetailPanel(e);
+      row.after(panel);
+      row.classList.add('expanded');
+    }
+  });
+
   return row;
 }
 
