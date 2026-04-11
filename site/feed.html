@@ -148,7 +148,31 @@ nav {
   color: var(--glow); letter-spacing: -0.03em; line-height: 1; margin-bottom: 0.35rem;
 }
 .stat-value.highlight { color: var(--bio); }
-.stat-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-dim); }
+.stat-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-dim); display: flex; align-items: center; gap: 4px; }
+
+.stat-tip {
+  position: relative; display: inline-flex; align-items: center;
+  width: 12px; height: 12px; flex-shrink: 0;
+}
+.stat-tip-icon {
+  width: 12px; height: 12px; border-radius: 50%;
+  border: 1px solid var(--text-dim); color: var(--text-dim);
+  font-size: 8px; line-height: 12px; text-align: center;
+  cursor: default; font-style: normal; opacity: 0.6;
+  font-family: var(--mono); font-weight: 500;
+}
+.stat-tip:hover .stat-tip-icon { opacity: 1; border-color: var(--glow); color: var(--glow); }
+.stat-tip-text {
+  position: absolute; bottom: calc(100% + 6px); left: 50%;
+  transform: translateX(-50%);
+  background: var(--glass); border: 1px solid var(--rim-hover);
+  color: var(--text); font-size: 10px; letter-spacing: 0.02em;
+  text-transform: none; white-space: nowrap;
+  padding: 5px 8px; border-radius: 3px; pointer-events: none;
+  opacity: 0; transition: opacity 0.15s; z-index: 50;
+  font-family: var(--mono);
+}
+.stat-tip:hover .stat-tip-text { opacity: 1; }
 
 /* ── Main grid ── */
 .main-grid {
@@ -379,27 +403,39 @@ nav {
   <div class="stats-bar">
     <div class="stat">
       <div class="stat-value" id="s-total">—</div>
-      <div class="stat-label">total events</div>
+      <div class="stat-label">events captured
+        <span class="stat-tip"><i class="stat-tip-icon">?</i><span class="stat-tip-text">All telemetry including connections, handshakes, login attempts, and commands</span></span>
+      </div>
     </div>
     <div class="stat">
       <div class="stat-value highlight" id="s-sessions">—</div>
-      <div class="stat-label">sessions</div>
+      <div class="stat-label">sessions
+        <span class="stat-tip"><i class="stat-tip-icon">?</i><span class="stat-tip-text">Unique TCP connections opened to the honeypot</span></span>
+      </div>
     </div>
     <div class="stat">
       <div class="stat-value" id="s-ips">—</div>
-      <div class="stat-label">unique IPs</div>
+      <div class="stat-label">unique IPs
+        <span class="stat-tip"><i class="stat-tip-icon">?</i><span class="stat-tip-text">Distinct anonymized source addresses seen across all sessions</span></span>
+      </div>
     </div>
     <div class="stat">
       <div class="stat-value" id="s-logins">—</div>
-      <div class="stat-label">login attempts</div>
+      <div class="stat-label">login attempts
+        <span class="stat-tip"><i class="stat-tip-icon">?</i><span class="stat-tip-text">Total credential pairs tried — both failed and successful auths</span></span>
+      </div>
     </div>
     <div class="stat">
       <div class="stat-value" id="s-cmds">—</div>
-      <div class="stat-label">commands</div>
+      <div class="stat-label">commands
+        <span class="stat-tip"><i class="stat-tip-icon">?</i><span class="stat-tip-text">Shell commands run by attackers inside the captured honeypot session</span></span>
+      </div>
     </div>
     <div class="stat">
       <div class="stat-value" id="s-uploads">—</div>
-      <div class="stat-label">file uploads</div>
+      <div class="stat-label">file uploads
+        <span class="stat-tip"><i class="stat-tip-icon">?</i><span class="stat-tip-text">Files transferred to the honeypot via SFTP — malware, scripts, binaries</span></span>
+      </div>
     </div>
   </div>
 
