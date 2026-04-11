@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>bathysphere.tech</title>
+<meta name="description" content="A honeypot threat intelligence feed. Watching what comes out of the dark.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --ink:       #080c10;
+  --deep:      #060a0e;
+  --surface:   #0b1118;
+  --glass:     #0f1822;
+  --rim:       rgba(120,180,220,0.08);
+  --rim-hover: rgba(120,180,220,0.14);
+  --glow:      #7ab4dc;
+  --glow-dim:  rgba(122,180,220,0.18);
+  --glow-faint:rgba(122,180,220,0.06);
+  --bio:       #4de8b0;
+  --bio-dim:   rgba(77,232,176,0.12);
+  --bio-faint: rgba(77,232,176,0.04);
+  --text:      #a8c4d8;
+  --text-dim:  #4a6878;
+  --text-mid:  #6a8fa8;
+  --text-bright: #d4e8f4;
+  --serif: 'Instrument Serif', Georgia, serif;
+  --mono:  'DM Mono', 'Courier New', monospace;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--ink);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.7;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Depth background ── */
+.depth-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Vignette — darker at edges, slightly lighter in center, like a pressure vessel window */
+.depth-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 40%, rgba(15,28,45,0.0) 0%, rgba(6,10,14,0.7) 100%),
+    radial-gradient(ellipse 100% 80% at 50% 0%, rgba(10,20,35,0.4) 0%, transparent 60%);
+}
+
+/* Particle layer — faint suspended particles */
+.depth-bg canvas {
+  position: absolute;
+  inset: 0;
+  opacity: 0.5;
+}
+
+/* ── Layout ── */
+.wrap {
+  position: relative;
+  z-index: 1;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+/* ── Nav ── */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  border-bottom: 1px solid var(--rim);
+  background: rgba(6,10,14,0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.nav-inner {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-logo {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--glow);
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Sonar ping indicator */
+.ping {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--bio);
+  position: relative;
+  flex-shrink: 0;
+}
+
+.ping::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 1px solid var(--bio);
+  animation: sonar 3s ease-out infinite;
+  opacity: 0;
+}
+
+@keyframes sonar {
+  0%   { transform: scale(1); opacity: 0.7; }
+  100% { transform: scale(3); opacity: 0; }
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  list-style: none;
+}
+
+.nav-links a {
+  color: var(--text-dim);
+  text-decoration: none;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: color 0.2s;
+}
+
+.nav-links a:hover { color: var(--glow); }
+
+.nav-links a.active { color: var(--text-mid); }
+
+.nav-cta {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--bio) !important;
+  border: 1px solid rgba(77,232,176,0.25);
+  padding: 5px 14px;
+  border-radius: 2px;
+  transition: background 0.2s, border-color 0.2s !important;
+}
+
+.nav-cta:hover {
+  background: var(--bio-dim) !important;
+  border-color: rgba(77,232,176,0.5) !important;
+  color: var(--bio) !important;
+}
+
+/* ── Hero ── */
+.hero {
+  padding: 14rem 0 8rem;
+  position: relative;
+}
+
+.hero-depth {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 2.5rem;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  opacity: 0;
+  animation: rise 0.8s ease forwards 0.2s;
+}
+
+.hero-depth::before {
+  content: '';
+  display: block;
+  width: 28px;
+  height: 1px;
+  background: var(--text-dim);
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+h1 {
+  font-family: var(--serif);
+  font-size: clamp(2.4rem, 6vw, 4.2rem);
+  font-weight: 400;
+  color: var(--text-bright);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  margin-bottom: 2rem;
+  opacity: 0;
+  animation: rise 0.8s ease forwards 0.35s;
+}
+
+h1 em {
+  font-style: italic;
+  color: var(--glow);
+}
+
+.hero-body {
+  max-width: 500px;
+  color: var(--text-mid);
+  font-size: 13px;
+  line-height: 1.9;
+  margin-bottom: 3.5rem;
+  opacity: 0;
+  animation: rise 0.8s ease forwards 0.5s;
+}
+
+.hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  opacity: 0;
+  animation: rise 0.8s ease forwards 0.65s;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: var(--bio);
+  padding: 11px 22px;
+  text-decoration: none;
+  border-radius: 2px;
+  transition: opacity 0.2s, box-shadow 0.2s;
+}
+
+.btn-primary:hover {
+  opacity: 0.85;
+  box-shadow: 0 0 20px rgba(77,232,176,0.25);
+}
+
+.btn-primary svg { flex-shrink: 0; }
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.btn-ghost:hover { color: var(--text); }
+
+/* ── Live counter strip ── */
+.counter-strip {
+  border-top: 1px solid var(--rim);
+  border-bottom: 1px solid var(--rim);
+  background: var(--glow-faint);
+  margin: 0 0 6rem;
+  opacity: 0;
+  animation: rise 0.8s ease forwards 0.8s;
+}
+
+.counter-inner {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+}
+
+.counter-item {
+  padding: 1.75rem 1.5rem;
+  border-right: 1px solid var(--rim);
+  position: relative;
+}
+
+.counter-item:last-child { border-right: none; }
+
+.counter-value {
+  font-family: var(--mono);
+  font-size: 1.9rem;
+  font-weight: 300;
+  color: var(--glow);
+  letter-spacing: -0.03em;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+
+.counter-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--text-dim);
+}
+
+.counter-note {
+  font-size: 10px;
+  color: var(--text-dim);
+  opacity: 0.6;
+  margin-top: 0.2rem;
+}
+
+/* ── Sections ── */
+.section {
+  padding: 0 0 6rem;
+}
+
+.section-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--text-dim);
+  margin-bottom: 3rem;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--rim);
+  max-width: 200px;
+}
+
+h2 {
+  font-family: var(--serif);
+  font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+  font-weight: 400;
+  color: var(--text-bright);
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  margin-bottom: 1.25rem;
+}
+
+h2 em { font-style: italic; color: var(--glow); }
+
+.section-body {
+  color: var(--text-mid);
+  max-width: 520px;
+  line-height: 1.9;
+  margin-bottom: 2.5rem;
+}
+
+/* ── Feature cards ── */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--rim);
+  border: 1px solid var(--rim);
+  margin-top: 3rem;
+}
+
+.card {
+  background: var(--surface);
+  padding: 1.75rem 1.5rem;
+  transition: background 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--glow-dim), transparent);
+  transform: scaleX(0);
+  transition: transform 0.4s;
+}
+
+.card:hover { background: var(--glass); }
+.card:hover::before { transform: scaleX(1); }
+
+.card-icon {
+  width: 32px; height: 32px;
+  margin-bottom: 1.25rem;
+  opacity: 0.6;
+}
+
+.card-title {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-bright);
+  letter-spacing: 0.04em;
+  margin-bottom: 0.75rem;
+}
+
+.card-body {
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.8;
+}
+
+/* ── Feed preview ── */
+.feed-preview {
+  border: 1px solid var(--rim);
+  background: var(--surface);
+  overflow: hidden;
+  margin-top: 3rem;
+}
+
+.feed-bar {
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid var(--rim);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0,0,0,0.2);
+}
+
+.feed-bar-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--bio);
+  animation: sonar 2.5s ease-out infinite;
+  box-shadow: 0 0 4px var(--bio);
+}
+
+.feed-bar-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-dim);
+}
+
+.feed-bar-label span { color: var(--bio); }
+
+.feed-row {
+  display: grid;
+  grid-template-columns: 55px 110px 1fr auto;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.55rem 1.25rem;
+  border-bottom: 1px solid rgba(15,24,34,0.8);
+  font-family: var(--mono);
+  font-size: 11px;
+  transition: background 0.15s;
+  animation: feedIn 0.3s ease forwards;
+  opacity: 0;
+}
+
+@keyframes feedIn {
+  from { opacity: 0; transform: translateX(-4px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.feed-row:hover { background: var(--glass); }
+.feed-row:last-child { border-bottom: none; }
+
+.feed-time { color: var(--text-dim); font-size: 10px; }
+.feed-ip   { color: var(--glow); }
+
+.feed-event { color: var(--text-mid); }
+.feed-event.fail    { color: #e06060; }
+.feed-event.success { color: var(--bio); }
+.feed-event.cmd     { color: var(--glow); }
+
+.feed-detail { color: var(--text-dim); font-size: 10px; text-align: right; }
+
+.feed-blur {
+  position: relative;
+  padding: 1.5rem 1.25rem;
+  text-align: center;
+  border-top: 1px solid var(--rim);
+}
+
+.feed-blur::before {
+  content: '';
+  position: absolute;
+  top: -60px; left: 0; right: 0;
+  height: 60px;
+  background: linear-gradient(transparent, var(--surface));
+  pointer-events: none;
+}
+
+.feed-blur-text {
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 0.05em;
+}
+
+.feed-blur-text a {
+  color: var(--bio);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(77,232,176,0.3);
+  padding-bottom: 1px;
+}
+
+/* ── How it works ── */
+.pipeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: 2.5rem;
+  border: 1px solid var(--rim);
+}
+
+.pipeline-step {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--rim);
+  align-items: start;
+  transition: background 0.2s;
+}
+
+.pipeline-step:last-child { border-bottom: none; }
+.pipeline-step:hover { background: var(--glass); }
+
+.step-num {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 0.1em;
+  padding-top: 2px;
+}
+
+.step-title {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-bright);
+  margin-bottom: 0.4rem;
+  letter-spacing: 0.03em;
+}
+
+.step-body {
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.8;
+}
+
+.step-body code {
+  background: rgba(122,180,220,0.08);
+  border: 1px solid rgba(122,180,220,0.12);
+  border-radius: 2px;
+  padding: 1px 5px;
+  font-size: 11px;
+  color: var(--glow);
+  font-family: var(--mono);
+}
+
+/* ── CTA ── */
+.cta-section {
+  padding: 5rem 0 8rem;
+  text-align: center;
+}
+
+.cta-section h2 {
+  margin: 0 auto 1rem;
+  max-width: 480px;
+}
+
+.cta-section .section-body {
+  margin: 0 auto 2.5rem;
+  text-align: center;
+}
+
+.cta-section .hero-actions {
+  justify-content: center;
+  opacity: 1;
+  animation: none;
+}
+
+/* ── Footer ── */
+footer {
+  border-top: 1px solid var(--rim);
+  padding: 2.5rem 0;
+}
+
+.footer-inner {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.footer-logo {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-dim);
+  letter-spacing: 0.04em;
+}
+
+.footer-links {
+  display: flex;
+  gap: 1.5rem;
+  list-style: none;
+}
+
+.footer-links a {
+  font-size: 11px;
+  color: var(--text-dim);
+  text-decoration: none;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: color 0.2s;
+}
+
+.footer-links a:hover { color: var(--glow); }
+
+/* ── Particles (canvas) ── */
+/* handled in JS */
+
+/* ── Scroll reveal ── */
+.reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* ── Responsive ── */
+@media (max-width: 680px) {
+  .counter-inner { grid-template-columns: 1fr 1fr; }
+  .counter-item:nth-child(2) { border-right: none; }
+  .cards { grid-template-columns: 1fr; }
+  .feed-row { grid-template-columns: 50px 1fr; }
+  .feed-event, .feed-detail { display: none; }
+  .nav-links { display: none; }
+  h1 { font-size: 2.2rem; }
+  .footer-inner { flex-direction: column; gap: 1rem; text-align: center; }
+}
+</style>
+</head>
+<body>
+
+<!-- Depth background -->
+<div class="depth-bg">
+  <canvas id="particles"></canvas>
+</div>
+
+<!-- Nav -->
+<nav>
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">
+      <div class="ping"></div>
+      bathysphere.tech
+    </a>
+    <ul class="nav-links">
+      <li><a href="#how" class="active">about</a></li>
+      <li><a href="#feed">feed</a></li>
+      <li><a href="https://github.com" target="_blank">github</a></li>
+      <li><a href="/feed" class="nav-cta">live feed →</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- Hero -->
+<div class="wrap">
+  <section class="hero">
+    <div class="hero-depth">depth 3,800m // sensor active</div>
+    <h1>Something is<br><em>always</em> out there.</h1>
+    <p class="hero-body">
+      A honeypot sitting quietly in the dark. No announcements. No inbound links.
+      The scanners find it anyway — drawn to any open port like creatures to a light
+      at the bottom of the sea. This is what they do when they think no one is watching.
+    </p>
+    <div class="hero-actions">
+      <a href="/feed" class="btn-primary">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <circle cx="6" cy="6" r="2.5" fill="currentColor"/>
+          <circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1" fill="none" opacity="0.4"/>
+        </svg>
+        view live feed
+      </a>
+      <a href="#how" class="btn-ghost">how it works ↓</a>
+    </div>
+  </section>
+</div>
+
+<!-- Counter strip -->
+<div class="counter-strip">
+  <div class="counter-inner">
+    <div class="counter-item">
+      <div class="counter-value" id="c-sessions">865</div>
+      <div class="counter-label">sessions</div>
+      <div class="counter-note">day one</div>
+    </div>
+    <div class="counter-item">
+      <div class="counter-value" id="c-ips">55</div>
+      <div class="counter-label">unique IPs</div>
+      <div class="counter-note">external</div>
+    </div>
+    <div class="counter-item">
+      <div class="counter-value" id="c-logins">805</div>
+      <div class="counter-label">login attempts</div>
+      <div class="counter-note">credential spray</div>
+    </div>
+    <div class="counter-item">
+      <div class="counter-value" id="c-cmds">176</div>
+      <div class="counter-label">commands run</div>
+      <div class="counter-note">in captured shell</div>
+    </div>
+  </div>
+</div>
+
+<!-- Feed preview -->
+<div class="wrap">
+  <section class="section reveal" id="feed">
+    <div class="section-label">threat feed</div>
+    <h2>What they do<br>when they get <em>in.</em></h2>
+    <p class="section-body">
+      Cowrie grants every attacker a convincing shell. What follows is a reliable
+      playbook: enumerate the host, check for miners, drop a payload, disappear.
+      Sometimes they're hunting Solana nodes. Sometimes Telegram sessions.
+      Always automated.
+    </p>
+
+    <div class="feed-preview">
+      <div class="feed-bar">
+        <div class="feed-bar-dot"></div>
+        <div class="feed-bar-label">honeypot-pi // cowrie &nbsp;<span>● live</span></div>
+      </div>
+      <div class="feed-row" style="animation-delay:0.1s">
+        <div class="feed-time">15:04:31</div>
+        <div class="feed-ip">165.154.x.x</div>
+        <div class="feed-event success">AUTH OK</div>
+        <div class="feed-detail">root / 123456</div>
+      </div>
+      <div class="feed-row" style="animation-delay:0.2s">
+        <div class="feed-time">15:04:33</div>
+        <div class="feed-ip">165.154.x.x</div>
+        <div class="feed-event cmd">COMMAND</div>
+        <div class="feed-detail">uname -s -v -n -r -m</div>
+      </div>
+      <div class="feed-row" style="animation-delay:0.3s">
+        <div class="feed-time">15:04:34</div>
+        <div class="feed-ip">165.154.x.x</div>
+        <div class="feed-event cmd">COMMAND</div>
+        <div class="feed-detail">cat /proc/cpuinfo</div>
+      </div>
+      <div class="feed-row" style="animation-delay:0.4s">
+        <div class="feed-time">15:04:35</div>
+        <div class="feed-ip">165.154.x.x</div>
+        <div class="feed-event cmd">COMMAND</div>
+        <div class="feed-detail">ps | grep '[Mm]iner'</div>
+      </div>
+      <div class="feed-row" style="animation-delay:0.5s">
+        <div class="feed-time">15:04:37</div>
+        <div class="feed-ip">165.154.x.x</div>
+        <div class="feed-event cmd">COMMAND</div>
+        <div class="feed-detail">chmod +x ./.3264.../xinetd; nohup ... &</div>
+      </div>
+      <div class="feed-row" style="animation-delay:0.6s">
+        <div class="feed-time">15:12:09</div>
+        <div class="feed-ip">27.79.x.x</div>
+        <div class="feed-event fail">AUTH FAIL</div>
+        <div class="feed-detail">operator / operator</div>
+      </div>
+      <div class="feed-row" style="animation-delay:0.7s">
+        <div class="feed-time">15:22:44</div>
+        <div class="feed-ip">116.99.x.x</div>
+        <div class="feed-event cmd">COMMAND</div>
+        <div class="feed-detail">ls -la ~/.local/share/TelegramDesktop/tdata ...</div>
+      </div>
+      <div class="feed-blur">
+        <div class="feed-blur-text">
+          Full event stream available in the <a href="/feed">live feed →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section class="section reveal" id="how">
+    <div class="section-label">architecture</div>
+    <h2>A trap in the <em>dark.</em></h2>
+    <p class="section-body">
+      A Raspberry Pi 4 running Cowrie, exposed on a non-standard port with no
+      credentials worth stealing. Events stream from the Pi to bathysphere.tech,
+      updating the feed in near real-time.
+    </p>
+
+    <div class="pipeline">
+      <div class="pipeline-step">
+        <div class="step-num">01</div>
+        <div>
+          <div class="step-title">Raspberry Pi 4 // Cowrie SSH honeypot</div>
+          <div class="step-body">
+            A low-interaction SSH/Telnet honeypot that presents a convincing shell.
+            Logs every keystroke, credential attempt, and uploaded file in structured JSON.
+            Running on port 2222, visible to the open internet.
+          </div>
+        </div>
+      </div>
+      <div class="pipeline-step">
+        <div class="step-num">02</div>
+        <div>
+          <div class="step-title">Log pusher // tail → Worker</div>
+          <div class="step-body">
+            A lightweight script on the Pi tails <code>cowrie.json</code> and POSTs
+            new events to a Cloudflare Worker endpoint every 30 seconds.
+            Events are validated, enriched, and written to KV storage.
+          </div>
+        </div>
+      </div>
+      <div class="pipeline-step">
+        <div class="step-num">03</div>
+        <div>
+          <div class="step-title">Cloudflare Workers + KV</div>
+          <div class="step-body">
+            An ingest Worker authenticates and stores events. A read Worker serves
+            the latest N events as JSON. No origin server — everything runs at the edge.
+            KV retention keeps a rolling window of the last 10,000 events.
+          </div>
+        </div>
+      </div>
+      <div class="pipeline-step">
+        <div class="step-num">04</div>
+        <div>
+          <div class="step-title">Cloudflare Pages // this site</div>
+          <div class="step-body">
+            The feed dashboard polls the read Worker every 30 seconds and appends
+            new rows. No WebSockets needed — simple polling is plenty for this data rate.
+            Deployed via <code>wrangler pages deploy</code> on git push.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- What's running -->
+  <section class="section reveal">
+    <div class="section-label">sensors</div>
+    <h2>What's <em>listening.</em></h2>
+    <p class="section-body">
+      The honeynet is expanding. Each node exposes a different attack surface.
+      All events flow into the same feed.
+    </p>
+
+    <div class="cards">
+      <div class="card">
+        <svg class="card-icon" viewBox="0 0 32 32" fill="none">
+          <rect x="4" y="8" width="24" height="16" rx="2" stroke="var(--glow)" stroke-width="1"/>
+          <circle cx="16" cy="16" r="3" stroke="var(--glow)" stroke-width="1"/>
+          <line x1="4" y1="16" x2="13" y2="16" stroke="var(--glow)" stroke-width="1" opacity="0.4"/>
+          <line x1="19" y1="16" x2="28" y2="16" stroke="var(--glow)" stroke-width="1" opacity="0.4"/>
+        </svg>
+        <div class="card-title">SSH / Telnet</div>
+        <div class="card-body">Cowrie on a Raspberry Pi 4. Port 2222. The original sensor — collecting since day one.</div>
+      </div>
+      <div class="card">
+        <svg class="card-icon" viewBox="0 0 32 32" fill="none">
+          <rect x="4" y="6" width="24" height="20" rx="2" stroke="var(--glow)" stroke-width="1"/>
+          <line x1="4" y1="12" x2="28" y2="12" stroke="var(--glow)" stroke-width="1" opacity="0.4"/>
+          <line x1="10" y1="18" x2="22" y2="18" stroke="var(--glow)" stroke-width="1" opacity="0.3"/>
+          <line x1="10" y1="21" x2="19" y2="21" stroke="var(--glow)" stroke-width="1" opacity="0.2"/>
+        </svg>
+        <div class="card-title">HTTP // port 80</div>
+        <div class="card-body">Apache-based web honeypot. Coming online soon. Watching for scanner fingerprints and payload delivery attempts.</div>
+      </div>
+      <div class="card">
+        <svg class="card-icon" viewBox="0 0 32 32" fill="none">
+          <circle cx="16" cy="16" r="10" stroke="var(--glow)" stroke-width="1"/>
+          <circle cx="16" cy="16" r="5" stroke="var(--glow)" stroke-width="1" opacity="0.5"/>
+          <circle cx="16" cy="16" r="1.5" fill="var(--glow)" opacity="0.6"/>
+        </svg>
+        <div class="card-title">Expanding</div>
+        <div class="card-body">SMB, FTP, DNS, and database surfaces planned across a stack of Pi nodes. All feeding this feed.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section reveal">
+    <div class="section-label" style="justify-content: center; gap: 12px;">
+      <span style="width: 28px; height: 1px; background: var(--text-dim); display: block;"></span>
+      ready
+      <span style="width: 28px; height: 1px; background: var(--text-dim); display: block;"></span>
+    </div>
+    <h2>See what's <em>out there.</em></h2>
+    <p class="section-body">
+      The feed is live. Events are real. All IPs are anonymized.
+      No accounts, no tracking — just the data.
+    </p>
+    <div class="hero-actions">
+      <a href="/feed" class="btn-primary">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <circle cx="6" cy="6" r="2.5" fill="currentColor"/>
+          <circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1" fill="none" opacity="0.4"/>
+        </svg>
+        open live feed
+      </a>
+      <a href="https://github.com" target="_blank" class="btn-ghost">source on github →</a>
+    </div>
+  </section>
+</div>
+
+<!-- Footer -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-logo">bathysphere.tech</div>
+    <ul class="footer-links">
+      <li><a href="#how">about</a></li>
+      <li><a href="/feed">feed</a></li>
+      <li><a href="https://github.com" target="_blank">github</a></li>
+    </ul>
+  </div>
+</footer>
+
+<script>
+// ── Particle field ──────────────────────────────────────────
+const canvas = document.getElementById('particles');
+const ctx = canvas.getContext('2d');
+let W, H, particles = [];
+
+function resize() {
+  W = canvas.width  = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+
+function initParticles() {
+  particles = Array.from({ length: 60 }, () => ({
+    x: Math.random() * W,
+    y: Math.random() * H,
+    r: Math.random() * 1.2 + 0.2,
+    vx: (Math.random() - 0.5) * 0.08,
+    vy: (Math.random() - 0.5) * 0.04 - 0.02,
+    alpha: Math.random() * 0.25 + 0.03,
+    // occasional bioluminescent particle
+    bio: Math.random() < 0.08,
+  }));
+}
+
+function drawParticles() {
+  ctx.clearRect(0, 0, W, H);
+  particles.forEach(p => {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fillStyle = p.bio
+      ? `rgba(77,232,176,${p.alpha})`
+      : `rgba(122,180,220,${p.alpha})`;
+    ctx.fill();
+    p.x += p.vx;
+    p.y += p.vy;
+    if (p.y < -4) p.y = H + 4;
+    if (p.x < -4) p.x = W + 4;
+    if (p.x > W + 4) p.x = -4;
+  });
+  requestAnimationFrame(drawParticles);
+}
+
+resize();
+initParticles();
+drawParticles();
+window.addEventListener('resize', () => { resize(); initParticles(); });
+
+// ── Scroll reveal ──────────────────────────────────────────
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      observer.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// ── Counter animation ──────────────────────────────────────
+function animateCount(el, target, duration = 1200) {
+  const start = performance.now();
+  const startVal = 0;
+  const update = (now) => {
+    const progress = Math.min((now - start) / duration, 1);
+    const ease = 1 - Math.pow(1 - progress, 3);
+    el.textContent = Math.round(startVal + (target - startVal) * ease);
+    if (progress < 1) requestAnimationFrame(update);
+  };
+  requestAnimationFrame(update);
+}
+
+const counterObserver = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      animateCount(document.getElementById('c-sessions'), 865, 1400);
+      animateCount(document.getElementById('c-ips'),      55,  900);
+      animateCount(document.getElementById('c-logins'),   805, 1300);
+      animateCount(document.getElementById('c-cmds'),     176, 1000);
+      counterObserver.disconnect();
+    }
+  });
+}, { threshold: 0.3 });
+
+counterObserver.observe(document.querySelector('.counter-strip'));
+</script>
+</body>
+</html>
