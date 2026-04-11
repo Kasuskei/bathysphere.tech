@@ -752,53 +752,12 @@ footer {
     <div class="feed-preview">
       <div class="feed-bar">
         <div class="feed-bar-dot"></div>
-        <div class="feed-bar-label">honeypot-pi // cowrie &nbsp;<span>● live</span></div>
+        <div class="feed-bar-label">honeypot-pi // cowrie &nbsp;<span id="preview-status">● loading</span></div>
       </div>
-      <div class="feed-row" style="animation-delay:0.1s">
-        <div class="feed-time">15:22:44</div>
-        <div class="feed-ip">116.99.x.x</div>
-        <div class="feed-event cmd">COMMAND</div>
-        <div class="feed-detail">ls -la ~/.local/share/TelegramDesktop/tdata ...</div>
-      </div>
-      <div class="feed-row" style="animation-delay:0.2s">
-        <div class="feed-time">15:12:09</div>
-        <div class="feed-ip">27.79.x.x</div>
-        <div class="feed-event fail">AUTH FAIL</div>
-        <div class="feed-detail">operator / operator</div>
-      </div>
-      <div class="feed-row" style="animation-delay:0.3s">
-        <div class="feed-time">15:04:37</div>
-        <div class="feed-ip">165.154.x.x</div>
-        <div class="feed-event cmd">COMMAND</div>
-        <div class="feed-detail">chmod +x ./.3264.../xinetd; nohup ... &</div>
-      </div>
-      <div class="feed-row" style="animation-delay:0.4s">
-        <div class="feed-time">15:04:35</div>
-        <div class="feed-ip">165.154.x.x</div>
-        <div class="feed-event cmd">COMMAND</div>
-        <div class="feed-detail">ps | grep '[Mm]iner'</div>
-      </div>
-      <div class="feed-row" style="animation-delay:0.5s">
-        <div class="feed-time">15:04:34</div>
-        <div class="feed-ip">165.154.x.x</div>
-        <div class="feed-event cmd">COMMAND</div>
-        <div class="feed-detail">cat /proc/cpuinfo</div>
-      </div>
-      <div class="feed-row" style="animation-delay:0.6s">
-        <div class="feed-time">15:04:33</div>
-        <div class="feed-ip">165.154.x.x</div>
-        <div class="feed-event cmd">COMMAND</div>
-        <div class="feed-detail">uname -s -v -n -r -m</div>
-      </div>
-      <div class="feed-row" style="animation-delay:0.7s">
-        <div class="feed-time">15:04:31</div>
-        <div class="feed-ip">165.154.x.x</div>
-        <div class="feed-event success">AUTH OK</div>
-        <div class="feed-detail">root / 123456</div>
-      </div>
+      <div id="preview-rows"></div>
       <div class="feed-blur">
         <div class="feed-blur-text">
-          Full event stream available in the <a href="/feed">live feed →</a>
+          Full event stream available in the <a href="/feed.html">live feed →</a>
         </div>
       </div>
     </div>
@@ -1026,6 +985,82 @@ const counterObserver = new IntersectionObserver(entries => {
 }, { threshold: 0.3 });
 
 counterObserver.observe(document.querySelector('.counter-strip'));
+
+// ── Live feed preview ──────────────────────────────────────────────────────
+(async () => {
+  const READ_URL = 'https://bathysphere-read.kasuskei.workers.dev';
+
+  function fmtTime(ts) {
+    if (!ts) return '—';
+    const d = new Date(ts);
+    return d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  }
+
+  function escHtml(s) {
+    return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function eventClass(eventid) {
+    if (eventid === 'cowrie.login.success') return 'success';
+    if (eventid === 'cowrie.login.failed')  return 'fail';
+    if (eventid === 'cowrie.command.input' || eventid === 'cowrie.command.failed') return 'cmd';
+    return '';
+  }
+
+  function eventLabel(eventid) {
+    const map = {
+      'cowrie.session.connect': 'CONNECT', 'cowrie.session.closed': 'CLOSED',
+      'cowrie.client.version': 'CLIENT',   'cowrie.login.success': 'AUTH OK',
+      'cowrie.login.failed': 'AUTH FAIL',  'cowrie.command.input': 'COMMAND',
+      'cowrie.session.file_upload': 'UPLOAD', 'cowrie.session.file_download': 'DOWNLOAD',
+      'cowrie.direct-tcpip.request': 'TUNNEL',
+    };
+    return map[eventid] ?? eventid.split('.').pop().toUpperCase();
+  }
+
+  function eventDetail(e) {
+    if (e.eventid === 'cowrie.login.success' || e.eventid === 'cowrie.login.failed')
+      return `${escHtml(e.username ?? '?')} / ${escHtml(e.password_hash ?? '?')}`;
+    if (e.eventid === 'cowrie.command.input')
+      return escHtml((e.input ?? '').slice(0, 50));
+    if (e.eventid === 'cowrie.session.file_upload')
+      return escHtml(e.filename ?? '');
+    if (e.eventid === 'cowrie.client.version')
+      return escHtml(e.version ?? '');
+    return '';
+  }
+
+  try {
+    const resp = await fetch(`${READ_URL}/events?limit=8`);
+    if (!resp.ok) throw new Error();
+    const data = await resp.json();
+    const events = (data.events ?? []).reverse();
+
+    const container = document.getElementById('preview-rows');
+    const status    = document.getElementById('preview-status');
+
+    events.forEach((e, i) => {
+      const ec = eventClass(e.eventid);
+      const detail = eventDetail(e);
+      const row = document.createElement('div');
+      row.className = 'feed-row';
+      row.style.animationDelay = `${i * 0.08}s`;
+      row.innerHTML = `
+        <div class="feed-time">${fmtTime(e.ts)}</div>
+        <div class="feed-ip">${escHtml(e.src_ip ?? '—')}</div>
+        <div class="feed-event ${ec}">${eventLabel(e.eventid)}</div>
+        <div class="feed-detail">${detail}</div>
+      `;
+      container.appendChild(row);
+    });
+
+    status.textContent = '● live';
+    status.style.color = 'var(--bio)';
+
+  } catch {
+    document.getElementById('preview-status').textContent = '● offline';
+  }
+})();
 </script>
 </body>
 </html>
