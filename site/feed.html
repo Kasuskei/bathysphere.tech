@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>bathysphere.tech // live feed</title>
+<meta name="description" content="Live SSH honeypot threat feed. Real attack data, updated every 30 seconds.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --ink:        #080c10;
+  --deep:       #060a0e;
+  --surface:    #0b1118;
+  --glass:      #0f1822;
+  --rim:        rgba(120,180,220,0.08);
+  --rim-hover:  rgba(120,180,220,0.14);
+  --glow:       #7ab4dc;
+  --glow-dim:   rgba(122,180,220,0.18);
+  --glow-faint: rgba(122,180,220,0.06);
+  --bio:        #4de8b0;
+  --bio-dim:    rgba(77,232,176,0.12);
+  --amber:      #f0a94a;
+  --amber-dim:  rgba(240,169,74,0.12);
+  --red:        #e05c5c;
+  --red-dim:    rgba(224,92,92,0.10);
+  --coral:      #e07060;
+  --coral-dim:  rgba(224,112,96,0.10);
+  --text:       #a8c4d8;
+  --text-dim:   #4a6878;
+  --text-mid:   #6a8fa8;
+  --text-bright:#d4e8f4;
+  --serif: 'Instrument Serif', Georgia, serif;
+  --mono:  'DM Mono', 'Courier New', monospace;
+
+  /* Tactic color map */
+  --tactic-recon:     #7ab4dc;
+  --tactic-initial:   #4de8b0;
+  --tactic-exec:      #a78bfa;
+  --tactic-persist:   #f0a94a;
+  --tactic-defense:   #e07060;
+  --tactic-cred:      #e05c5c;
+  --tactic-discovery: #60b8e0;
+  --tactic-collect:   #f0c94a;
+  --tactic-c2:        #e05c9c;
+  --tactic-lateral:   #8be07a;
+  --tactic-impact:    #e05c5c;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  background: var(--ink);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Scanlines ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.025) 2px, rgba(0,0,0,0.025) 4px);
+  pointer-events: none;
+  z-index: 999;
+}
+
+/* ── Nav ── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 100;
+  border-bottom: 1px solid var(--rim);
+  background: rgba(6,10,14,0.92);
+  backdrop-filter: blur(12px);
+}
+.nav-inner {
+  max-width: 1200px; margin: 0 auto; padding: 0 2rem;
+  height: 52px; display: flex; align-items: center; justify-content: space-between;
+}
+.nav-logo {
+  font-family: var(--mono); font-size: 13px; color: var(--glow);
+  text-decoration: none; display: flex; align-items: center; gap: 10px;
+}
+.ping {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--bio); position: relative; flex-shrink: 0;
+}
+.ping::after {
+  content: ''; position: absolute; inset: -3px;
+  border-radius: 50%; border: 1px solid var(--bio);
+  animation: sonar 3s ease-out infinite; opacity: 0;
+}
+@keyframes sonar {
+  0%   { transform: scale(1); opacity: 0.7; }
+  100% { transform: scale(3); opacity: 0; }
+}
+.nav-links { display: flex; align-items: center; gap: 2rem; list-style: none; }
+.nav-links a {
+  color: var(--text-dim); text-decoration: none;
+  font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--glow); }
+.nav-links a.active { color: var(--bio); }
+
+/* ── Live indicator ── */
+.live-badge {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase;
+  color: var(--bio);
+}
+.live-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--bio); box-shadow: 0 0 6px var(--bio);
+  animation: livepulse 1.5s ease-in-out infinite;
+}
+@keyframes livepulse {
+  0%,100% { opacity: 1; }
+  50%      { opacity: 0.3; }
+}
+
+/* ── Layout ── */
+.page { padding-top: 52px; max-width: 1200px; margin: 0 auto; }
+
+/* ── Stats bar ── */
+.stats-bar {
+  display: grid; grid-template-columns: repeat(6, 1fr);
+  gap: 1px; background: var(--rim);
+  border-bottom: 1px solid var(--rim);
+}
+.stat {
+  background: var(--surface); padding: 1.25rem 1.5rem;
+  transition: background 0.2s; position: relative; overflow: hidden;
+}
+.stat::after {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: var(--glow); transform: scaleX(0); transform-origin: left;
+  transition: transform 0.3s;
+}
+.stat:hover { background: var(--glass); }
+.stat:hover::after { transform: scaleX(1); }
+.stat-value {
+  font-family: var(--mono); font-size: 1.5rem; font-weight: 300;
+  color: var(--glow); letter-spacing: -0.03em; line-height: 1; margin-bottom: 0.35rem;
+}
+.stat-value.highlight { color: var(--bio); }
+.stat-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-dim); }
+
+/* ── Main grid ── */
+.main-grid {
+  display: grid; grid-template-columns: 1fr 280px;
+  gap: 1px; background: var(--rim); min-height: calc(100vh - 52px - 80px);
+}
+
+/* ── Feed column ── */
+.feed-col { background: var(--ink); display: flex; flex-direction: column; }
+
+.feed-header {
+  padding: 1rem 1.5rem; border-bottom: 1px solid var(--rim);
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--surface); position: sticky; top: 52px; z-index: 10;
+}
+.feed-header-left { display: flex; align-items: center; gap: 12px; }
+.feed-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-dim); }
+
+.feed-controls { display: flex; align-items: center; gap: 8px; }
+.filter-btn {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em;
+  text-transform: uppercase; padding: 4px 10px; border-radius: 2px;
+  border: 1px solid var(--rim); background: transparent; color: var(--text-dim);
+  cursor: pointer; transition: all 0.15s;
+}
+.filter-btn:hover { border-color: var(--rim-hover); color: var(--text); }
+.filter-btn.active { border-color: rgba(77,232,176,0.3); background: var(--bio-dim); color: var(--bio); }
+
+/* ── Column headers ── */
+.feed-cols {
+  display: grid;
+  grid-template-columns: 72px 52px 100px 110px 1fr 140px;
+  gap: 0; padding: 0.5rem 1.5rem;
+  border-bottom: 1px solid var(--rim);
+  background: rgba(0,0,0,0.2);
+}
+.col-head {
+  font-size: 9px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-dim);
+}
+
+/* ── Feed rows ── */
+.feed-body { flex: 1; overflow-y: auto; }
+
+.feed-row {
+  display: grid;
+  grid-template-columns: 72px 52px 100px 110px 1fr 140px;
+  gap: 0; padding: 0.45rem 1.5rem;
+  border-bottom: 1px solid rgba(15,24,34,0.7);
+  align-items: center; transition: background 0.1s; cursor: default;
+  animation: rowIn 0.25s ease forwards; opacity: 0;
+}
+@keyframes rowIn {
+  from { opacity: 0; background: rgba(77,232,176,0.04); }
+  to   { opacity: 1; background: transparent; }
+}
+.feed-row:hover { background: var(--glass); }
+.feed-row.new { animation: rowNew 0.4s ease forwards; }
+@keyframes rowNew {
+  0%   { opacity: 0; background: rgba(77,232,176,0.08); }
+  60%  { opacity: 1; background: rgba(77,232,176,0.05); }
+  100% { opacity: 1; background: transparent; }
+}
+
+.cell-time  { font-size: 10px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.cell-proto { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+.cell-ip    { font-size: 11px; color: var(--glow); font-variant-numeric: tabular-nums; }
+.cell-sensor{ font-size: 10px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.cell-event { display: flex; align-items: center; gap: 6px; }
+.event-tag {
+  font-size: 10px; font-weight: 500; letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.event-tag.connect  { color: var(--text-dim); }
+.event-tag.login-ok { color: var(--bio); }
+.event-tag.login-fail { color: var(--red); }
+.event-tag.command  { color: var(--glow); }
+.event-tag.upload   { color: var(--amber); }
+.event-tag.download { color: var(--amber); }
+.event-tag.tunnel   { color: var(--coral); }
+.event-tag.other    { color: var(--text-mid); }
+
+.cell-detail {
+  font-size: 10px; color: var(--text-dim);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.detail-cred { color: var(--text-mid); }
+.detail-cmd  { color: var(--text); font-family: var(--mono); }
+.detail-file { color: var(--amber); }
+
+/* ── ATT&CK tag ── */
+.attack-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 9px; letter-spacing: 0.06em; padding: 2px 6px;
+  border-radius: 2px; white-space: nowrap; max-width: 136px;
+  overflow: hidden; text-overflow: ellipsis;
+  border: 1px solid transparent;
+}
+
+/* tactic colors */
+.tac-Reconnaissance     { color: var(--tactic-recon);     border-color: rgba(122,180,220,0.2);  background: rgba(122,180,220,0.06); }
+.tac-Initial\ Access    { color: var(--tactic-initial);   border-color: rgba(77,232,176,0.2);   background: rgba(77,232,176,0.06); }
+.tac-Execution          { color: var(--tactic-exec);      border-color: rgba(167,139,250,0.2);  background: rgba(167,139,250,0.06); }
+.tac-Persistence        { color: var(--tactic-persist);   border-color: rgba(240,169,74,0.2);   background: rgba(240,169,74,0.06); }
+.tac-Defense\ Evasion   { color: var(--tactic-defense);   border-color: rgba(224,112,96,0.2);   background: rgba(224,112,96,0.06); }
+.tac-Credential\ Access { color: var(--tactic-cred);      border-color: rgba(224,92,92,0.2);    background: rgba(224,92,92,0.06); }
+.tac-Discovery          { color: var(--tactic-discovery); border-color: rgba(96,184,224,0.2);   background: rgba(96,184,224,0.06); }
+.tac-Collection         { color: var(--tactic-collect);   border-color: rgba(240,201,74,0.2);   background: rgba(240,201,74,0.06); }
+.tac-Command\ and\ Control { color: var(--tactic-c2);     border-color: rgba(224,92,156,0.2);   background: rgba(224,92,156,0.06); }
+.tac-Lateral\ Movement  { color: var(--tactic-lateral);   border-color: rgba(139,224,122,0.2);  background: rgba(139,224,122,0.06); }
+.tac-Impact             { color: var(--tactic-impact);    border-color: rgba(224,92,92,0.25);   background: rgba(224,92,92,0.08); }
+
+/* ── Sidebar ── */
+.sidebar { background: var(--surface); border-left: 1px solid var(--rim); }
+
+.sidebar-section {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--rim);
+}
+.sidebar-title {
+  font-size: 9px; text-transform: uppercase; letter-spacing: 0.18em;
+  color: var(--text-dim); margin-bottom: 1rem;
+}
+
+/* Tactic breakdown */
+.tactic-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 0.3rem 0; border-bottom: 1px solid rgba(15,24,34,0.6);
+}
+.tactic-row:last-child { border-bottom: none; }
+.tactic-name { font-size: 10px; color: var(--text-mid); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tactic-bar-bg { width: 48px; height: 2px; background: var(--rim); position: relative; flex-shrink: 0; }
+.tactic-bar-fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--glow); opacity: 0.5; transition: width 0.5s ease; }
+.tactic-count { font-size: 10px; color: var(--text-dim); min-width: 24px; text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Top credentials */
+.cred-row {
+  display: flex; align-items: center; gap: 6px;
+  padding: 0.3rem 0; border-bottom: 1px solid rgba(15,24,34,0.6);
+  font-size: 10px;
+}
+.cred-row:last-child { border-bottom: none; }
+.cred-user { color: var(--text-mid); min-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cred-sep { color: var(--text-dim); opacity: 0.4; }
+.cred-pass { color: var(--text-dim); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cred-n { color: var(--text-dim); font-variant-numeric: tabular-nums; min-width: 20px; text-align: right; }
+
+/* Top commands */
+.cmd-item {
+  padding: 0.35rem 0; border-bottom: 1px solid rgba(15,24,34,0.6);
+  font-size: 10px; color: var(--text-dim);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.cmd-item:last-child { border-bottom: none; }
+.cmd-item span { color: var(--glow); }
+
+/* Sensor list */
+.sensor-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 0.4rem 0; border-bottom: 1px solid rgba(15,24,34,0.6);
+}
+.sensor-row:last-child { border-bottom: none; }
+.sensor-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--bio); box-shadow: 0 0 4px var(--bio); flex-shrink: 0; }
+.sensor-dot.offline { background: var(--text-dim); box-shadow: none; }
+.sensor-name { font-size: 10px; color: var(--text-mid); flex: 1; }
+.sensor-count { font-size: 10px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+
+/* ── Update ticker ── */
+.update-bar {
+  padding: 0.5rem 1.5rem; border-top: 1px solid var(--rim);
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--surface); font-size: 10px; color: var(--text-dim);
+}
+.update-bar span { letter-spacing: 0.05em; }
+.next-update { color: var(--text-dim); font-variant-numeric: tabular-nums; }
+
+/* ── Empty state ── */
+.empty-state {
+  padding: 4rem 2rem; text-align: center; color: var(--text-dim);
+}
+.empty-state p { font-size: 12px; line-height: 1.8; }
+
+/* ── Scrollbar ── */
+.feed-body::-webkit-scrollbar { width: 4px; }
+.feed-body::-webkit-scrollbar-track { background: transparent; }
+.feed-body::-webkit-scrollbar-thumb { background: var(--rim); border-radius: 2px; }
+.feed-body::-webkit-scrollbar-thumb:hover { background: var(--rim-hover); }
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .main-grid { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+  .stats-bar { grid-template-columns: repeat(3, 1fr); }
+  .feed-cols, .feed-row { grid-template-columns: 65px 90px 1fr 120px; }
+  .col-head:nth-child(2), .cell-proto,
+  .col-head:nth-child(4), .cell-sensor { display: none; }
+}
+@media (max-width: 560px) {
+  .stats-bar { grid-template-columns: repeat(2, 1fr); }
+  .feed-cols, .feed-row { grid-template-columns: 65px 1fr 100px; }
+  .col-head:nth-child(4), .cell-sensor { display: none; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">
+      <div class="ping"></div>
+      bathysphere.tech
+    </a>
+    <ul class="nav-links">
+      <li><a href="/">about</a></li>
+      <li><a href="/feed.html" class="active">feed</a></li>
+      <li><a href="https://github.com/Kasuskei/bathysphere.tech" target="_blank">github</a></li>
+    </ul>
+    <div class="live-badge">
+      <div class="live-dot"></div>
+      <span id="live-label">connecting</span>
+    </div>
+  </div>
+</nav>
+
+<div class="page">
+
+  <!-- Stats bar -->
+  <div class="stats-bar">
+    <div class="stat">
+      <div class="stat-value" id="s-total">—</div>
+      <div class="stat-label">total events</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value highlight" id="s-sessions">—</div>
+      <div class="stat-label">sessions</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="s-ips">—</div>
+      <div class="stat-label">unique IPs</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="s-logins">—</div>
+      <div class="stat-label">login attempts</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="s-cmds">—</div>
+      <div class="stat-label">commands</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="s-uploads">—</div>
+      <div class="stat-label">file uploads</div>
+    </div>
+  </div>
+
+  <!-- Main grid -->
+  <div class="main-grid">
+
+    <!-- Feed column -->
+    <div class="feed-col">
+      <div class="feed-header">
+        <div class="feed-header-left">
+          <div class="feed-title">event stream</div>
+        </div>
+        <div class="feed-controls">
+          <button class="filter-btn active" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="auth">Auth</button>
+          <button class="filter-btn" data-filter="command">Commands</button>
+          <button class="filter-btn" data-filter="file">Files</button>
+          <button class="filter-btn" data-filter="attack">ATT&amp;CK</button>
+        </div>
+      </div>
+
+      <div class="feed-cols">
+        <div class="col-head">time</div>
+        <div class="col-head">proto</div>
+        <div class="col-head">source IP</div>
+        <div class="col-head">sensor</div>
+        <div class="col-head">event</div>
+        <div class="col-head">technique</div>
+      </div>
+
+      <div class="feed-body" id="feed-body">
+        <div class="empty-state">
+          <p>Connecting to feed…</p>
+        </div>
+      </div>
+
+      <div class="update-bar">
+        <span id="last-update">—</span>
+        <span class="next-update">next update in <span id="countdown">30</span>s</span>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+
+      <div class="sidebar-section">
+        <div class="sidebar-title">Sensors</div>
+        <div id="sensor-list">
+          <div class="sensor-row">
+            <div class="sensor-dot"></div>
+            <div class="sensor-name">honeypot-pi</div>
+            <div class="sensor-count" id="sensor-count">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-title">Tactics observed</div>
+        <div id="tactic-list"></div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-title">Top credentials</div>
+        <div id="cred-list"></div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-title">Top commands</div>
+        <div id="cmd-list"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Config ────────────────────────────────────────────────────────────────────
+const READ_URL    = 'https://bathysphere-read.kasuskei.workers.dev';
+const POLL_MS     = 30_000;
+const MAX_ROWS    = 500;   // max rows kept in the DOM
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let newestTs      = null;
+let allEvents     = [];
+let activeFilter  = 'all';
+let countdownVal  = 30;
+let countdownTimer;
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function fmt(ts) {
+  if (!ts) return '—';
+  const d = new Date(ts);
+  return d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+function eventClass(eventid) {
+  if (eventid === 'cowrie.login.success')       return 'login-ok';
+  if (eventid === 'cowrie.login.failed')        return 'login-fail';
+  if (eventid === 'cowrie.command.input' ||
+      eventid === 'cowrie.command.failed')      return 'command';
+  if (eventid === 'cowrie.session.file_upload') return 'upload';
+  if (eventid === 'cowrie.session.file_download') return 'download';
+  if (eventid === 'cowrie.direct-tcpip.request') return 'tunnel';
+  if (eventid === 'cowrie.session.connect')     return 'connect';
+  return 'other';
+}
+
+function eventLabel(eventid) {
+  const map = {
+    'cowrie.session.connect':          'CONNECT',
+    'cowrie.session.closed':           'CLOSED',
+    'cowrie.client.version':           'CLIENT',
+    'cowrie.login.success':            'AUTH OK',
+    'cowrie.login.failed':             'AUTH FAIL',
+    'cowrie.command.input':            'COMMAND',
+    'cowrie.command.failed':           'CMD FAIL',
+    'cowrie.session.file_upload':      'UPLOAD',
+    'cowrie.session.file_download':    'DOWNLOAD',
+    'cowrie.direct-tcpip.request':     'TUNNEL',
+  };
+  return map[eventid] ?? eventid.split('.').pop().toUpperCase();
+}
+
+function eventDetail(e) {
+  if (e.eventid === 'cowrie.login.success' || e.eventid === 'cowrie.login.failed') {
+    return `<span class="detail-cred">${e.username ?? '?'} / ${e.password_hash ?? '?'}</span>`;
+  }
+  if (e.eventid === 'cowrie.command.input' || e.eventid === 'cowrie.command.failed') {
+    const cmd = (e.input ?? '').slice(0, 60);
+    return `<span class="detail-cmd">${escHtml(cmd)}</span>`;
+  }
+  if (e.eventid === 'cowrie.session.file_upload') {
+    return `<span class="detail-file">${escHtml(e.filename ?? e.shasum?.slice(0,12) ?? '?')}</span>`;
+  }
+  if (e.eventid === 'cowrie.session.file_download') {
+    const u = (e.url ?? e.shasum ?? '').slice(0, 50);
+    return `<span class="detail-file">${escHtml(u)}</span>`;
+  }
+  if (e.eventid === 'cowrie.client.version') {
+    return `<span>${escHtml(e.version ?? '')}</span>`;
+  }
+  if (e.eventid === 'cowrie.direct-tcpip.request') {
+    return `<span>TCP tunnel attempt</span>`;
+  }
+  return '';
+}
+
+function attackTag(attack) {
+  if (!attack) return '';
+  const tactic = attack.tactic ?? '';
+  const cls = 'tac-' + tactic;
+  return `<span class="attack-tag ${cls}" title="${escHtml(attack.name)} (${escHtml(attack.id)})">
+    ${escHtml(attack.id)}
+  </span>`;
+}
+
+function escHtml(s) {
+  return String(s ?? '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+function passesFilter(e) {
+  if (activeFilter === 'all')     return true;
+  if (activeFilter === 'auth')    return e.eventid === 'cowrie.login.success' || e.eventid === 'cowrie.login.failed';
+  if (activeFilter === 'command') return e.eventid === 'cowrie.command.input' || e.eventid === 'cowrie.command.failed';
+  if (activeFilter === 'file')    return e.eventid === 'cowrie.session.file_upload' || e.eventid === 'cowrie.session.file_download';
+  if (activeFilter === 'attack')  return !!e.attack;
+  return true;
+}
+
+// ── Render a single row ───────────────────────────────────────────────────────
+function makeRow(e, isNew = false) {
+  const row = document.createElement('div');
+  row.className = 'feed-row' + (isNew ? ' new' : '');
+  row.dataset.eventid = e.eventid;
+  row.dataset.hasAttack = e.attack ? '1' : '0';
+
+  const ec = eventClass(e.eventid);
+  row.innerHTML = `
+    <div class="cell-time">${fmt(e.ts)}</div>
+    <div class="cell-proto">${escHtml(e.protocol ?? 'ssh')}</div>
+    <div class="cell-ip">${escHtml(e.src_ip ?? '—')}</div>
+    <div class="cell-sensor">${escHtml(e.sensor ?? '—')}</div>
+    <div class="cell-event">
+      <span class="event-tag ${ec}">${eventLabel(e.eventid)}</span>
+      <span class="cell-detail">${eventDetail(e)}</span>
+    </div>
+    <div>${attackTag(e.attack)}</div>
+  `;
+  return row;
+}
+
+// ── Render full feed ──────────────────────────────────────────────────────────
+function renderFeed(events, newIds = new Set()) {
+  const body = document.getElementById('feed-body');
+  const visible = events.filter(passesFilter).slice(-MAX_ROWS).reverse();
+
+  if (visible.length === 0) {
+    body.innerHTML = '<div class="empty-state"><p>No events match the current filter.</p></div>';
+    return;
+  }
+
+  // On first load, batch render
+  if (newIds.size === 0 || body.querySelector('.empty-state')) {
+    const frag = document.createDocumentFragment();
+    visible.forEach(e => frag.appendChild(makeRow(e, false)));
+    body.innerHTML = '';
+    body.appendChild(frag);
+    return;
+  }
+
+  // On poll: prepend new rows, trim old ones
+  const frag = document.createDocumentFragment();
+  visible.filter(e => newIds.has(e.id)).forEach(e => frag.appendChild(makeRow(e, true)));
+  body.insertBefore(frag, body.firstChild);
+
+  // Trim excess rows
+  const rows = body.querySelectorAll('.feed-row');
+  if (rows.length > MAX_ROWS) {
+    for (let i = MAX_ROWS; i < rows.length; i++) rows[i].remove();
+  }
+}
+
+// ── Update stats bar ──────────────────────────────────────────────────────────
+function updateStats(data) {
+  document.getElementById('s-total').textContent    = data.total_events?.toLocaleString() ?? '—';
+  document.getElementById('s-sessions').textContent = data.sessions?.toLocaleString() ?? '—';
+  document.getElementById('s-ips').textContent      = data.unique_ips?.toLocaleString() ?? '—';
+  document.getElementById('s-logins').textContent   = ((data.logins_ok ?? 0) + (data.logins_fail ?? 0)).toLocaleString();
+  document.getElementById('s-cmds').textContent     = data.commands?.toLocaleString() ?? '—';
+  document.getElementById('s-uploads').textContent  = data.uploads?.toLocaleString() ?? '—';
+}
+
+// ── Update sidebar ────────────────────────────────────────────────────────────
+function updateSidebar(events) {
+  // Tactic breakdown
+  const tactics = {};
+  events.forEach(e => {
+    if (e.attack?.tactic) tactics[e.attack.tactic] = (tactics[e.attack.tactic] ?? 0) + 1;
+  });
+  const tacMax = Math.max(...Object.values(tactics), 1);
+  const tacSorted = Object.entries(tactics).sort((a,b) => b[1]-a[1]).slice(0, 8);
+  const tacList = document.getElementById('tactic-list');
+  tacList.innerHTML = tacSorted.map(([t, n]) => `
+    <div class="tactic-row">
+      <div class="tactic-name">${escHtml(t)}</div>
+      <div class="tactic-bar-bg"><div class="tactic-bar-fill" style="width:${Math.round(n/tacMax*100)}%"></div></div>
+      <div class="tactic-count">${n}</div>
+    </div>`).join('');
+
+  // Top credentials
+  const creds = {};
+  events.filter(e => e.eventid === 'cowrie.login.failed' || e.eventid === 'cowrie.login.success')
+    .forEach(e => {
+      const key = `${e.username}|||${e.password_hash}`;
+      creds[key] = (creds[key] ?? 0) + 1;
+    });
+  const credSorted = Object.entries(creds).sort((a,b) => b[1]-a[1]).slice(0,7);
+  document.getElementById('cred-list').innerHTML = credSorted.map(([k, n]) => {
+    const [u, p] = k.split('|||');
+    return `<div class="cred-row">
+      <span class="cred-user">${escHtml(u)}</span>
+      <span class="cred-sep">/</span>
+      <span class="cred-pass">${escHtml(p ?? '?')}</span>
+      <span class="cred-n">${n}</span>
+    </div>`;
+  }).join('');
+
+  // Top commands
+  const cmds = {};
+  events.filter(e => e.eventid === 'cowrie.command.input')
+    .forEach(e => { if (e.input) cmds[e.input] = (cmds[e.input] ?? 0) + 1; });
+  const cmdSorted = Object.entries(cmds).sort((a,b) => b[1]-a[1]).slice(0,6);
+  document.getElementById('cmd-list').innerHTML = cmdSorted.map(([cmd, n]) => `
+    <div class="cmd-item"><span>${n}×</span> ${escHtml(cmd.slice(0, 44))}</div>
+  `).join('');
+
+  // Sensor count
+  const sensorCounts = {};
+  events.forEach(e => { if (e.sensor) sensorCounts[e.sensor] = (sensorCounts[e.sensor] ?? 0) + 1; });
+  document.getElementById('sensor-count').textContent =
+    (sensorCounts['honeypot-pi'] ?? 0).toLocaleString();
+}
+
+// ── Fetch and update ──────────────────────────────────────────────────────────
+async function fetchEvents() {
+  const url = newestTs
+    ? `${READ_URL}/events?limit=500&since=${encodeURIComponent(newestTs)}`
+    : `${READ_URL}/events?limit=500`;
+
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+  return resp.json();
+}
+
+async function fetchStats() {
+  const resp = await fetch(`${READ_URL}/stats`);
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+  return resp.json();
+}
+
+async function poll(isFirst = false) {
+  try {
+    const [evData, stats] = await Promise.all([fetchEvents(), fetchStats()]);
+
+    const incoming = evData.events ?? [];
+    const newIds = new Set(incoming.map(e => e.id));
+
+    if (isFirst) {
+      allEvents = incoming;
+    } else {
+      allEvents = [...allEvents, ...incoming];
+      if (allEvents.length > MAX_ROWS * 2) allEvents = allEvents.slice(-MAX_ROWS * 2);
+    }
+
+    if (incoming.length > 0) {
+      newestTs = incoming[incoming.length - 1].ts;
+    }
+
+    renderFeed(allEvents, isFirst ? new Set() : newIds);
+    updateStats(stats);
+    updateSidebar(allEvents);
+
+    // Update live indicator
+    document.getElementById('live-label').textContent = 'live';
+    document.getElementById('last-update').textContent =
+      'last update ' + new Date().toLocaleTimeString('en-US', { hour12: false });
+
+  } catch (err) {
+    console.error('Poll failed:', err);
+    document.getElementById('live-label').textContent = 'reconnecting';
+  }
+}
+
+// ── Countdown ─────────────────────────────────────────────────────────────────
+function startCountdown() {
+  clearInterval(countdownTimer);
+  countdownVal = 30;
+  document.getElementById('countdown').textContent = countdownVal;
+  countdownTimer = setInterval(() => {
+    countdownVal = Math.max(0, countdownVal - 1);
+    document.getElementById('countdown').textContent = countdownVal;
+  }, 1000);
+}
+
+// ── Filter buttons ────────────────────────────────────────────────────────────
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeFilter = btn.dataset.filter;
+    renderFeed(allEvents, new Set());
+  });
+});
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+poll(true);
+startCountdown();
+
+setInterval(() => {
+  poll(false);
+  startCountdown();
+}, POLL_MS);
+</script>
+</body>
+</html>
