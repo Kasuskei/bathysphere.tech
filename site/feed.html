@@ -618,6 +618,8 @@ function iocTags(iocs) {
     `<span class="ioc-tag ioc-${escHtml(ioc.severity ?? 'low')}" title="${escHtml(ioc.label)}">${escHtml(ioc.label)}</span>`
   ).join('');
 }
+
+function attackTag(attack) {
   if (!attack) return '';
   const tactic = attack.tactic ?? '';
   const cls = 'tac-' + tactic;
