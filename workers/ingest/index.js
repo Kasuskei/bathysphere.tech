@@ -607,6 +607,47 @@ export default {
       return handleIngest(request, env);
     }
 
+    // ── D1-only ingest — bypasses KV entirely, used by backfill script ────────
+    // Normalizes and enriches events then writes only to D1, never touches KV.
+    // This prevents backfill runs from burning through the KV daily read limit.
+    if (url.pathname === "/ingest-d1" && request.method === "POST") {
+      const secret = request.headers.get("X-Bathysphere-Secret");
+      if (!secret || secret !== env.BATHYSPHERE_SECRET) {
+        return new Response("Unauthorized", { status: 401 });
+      }
+      let body;
+      try { body = await request.json(); } catch {
+        return new Response("Bad JSON", { status: 400 });
+      }
+      if (!Array.isArray(body?.events)) {
+        return new Response("Expected { events: [...] }", { status: 400 });
+      }
+
+      const rawIps = body.events.map(e => e.src_ip).filter(Boolean);
+      const enrichMap = await batchEnrich(rawIps, env);
+
+      const incoming = body.events
+        .map(e => normalize(e, enrichMap.get(e.src_ip) ?? null))
+        .filter(Boolean);
+
+      if (incoming.length === 0) {
+        return new Response(JSON.stringify({ stored: 0 }), {
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
+      if (!env.DB) {
+        return new Response("D1 not configured", { status: 503 });
+      }
+
+      await writeToD1(incoming, env.DB);
+
+      return new Response(
+        JSON.stringify({ stored: incoming.length }),
+        { headers: { "Content-Type": "application/json" } }
+      );
+    }
+
     // ── Backfill endpoint — accepts pre-normalized events directly ────────────
     // Used by geo_backfill.js to replace KV contents with geo-enriched events
     if (url.pathname === "/backfill" && request.method === "POST") {
