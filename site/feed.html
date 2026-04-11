@@ -124,7 +124,7 @@ nav {
 }
 
 /* ── Layout ── */
-.page { padding-top: 52px; max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; height: 100vh; }
+.page { padding-top: 52px; width: 100%; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
 /* ── Stats bar ── */
 .stats-bar {
@@ -185,7 +185,7 @@ nav {
 /* ── Main grid ── */
 .main-grid {
   display: grid; grid-template-columns: 1fr 280px;
-  gap: 1px; background: var(--rim); flex: 1; min-height: 0;
+  gap: 1px; background: var(--rim); flex: 1; min-height: 0; overflow: hidden;
 }
 
 /* ── Feed column ── */
@@ -222,7 +222,7 @@ nav {
 }
 
 /* ── Feed rows ── */
-.feed-body { flex: 1; overflow-y: auto; }
+.feed-body { flex: 1; overflow-y: auto; overflow-x: hidden; min-height: 0; }
 
 .feed-row {
   display: grid;
