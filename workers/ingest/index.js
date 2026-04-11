@@ -11,6 +11,179 @@
  *   BATHYSPHERE_SECRET   — must match SHARED_SECRET on the Pi
  */
 
+// ── MITRE ATT&CK mapping ───────────────────────────────────────────────────
+//
+// Each rule is evaluated in order. The first match wins.
+// Rules can match on eventid, and optionally inspect the event payload
+// for more specific classification (e.g. a specific command pattern).
+//
+// technique: { id, name, tactic } maps to ATT&CK Enterprise.
+
+const ATTACK_RULES = [
+  // ── Reconnaissance / Initial Access ───────────────────────────────────────
+  {
+    match: e => e.eventid === "cowrie.session.connect",
+    technique: { id: "T1595.002", name: "Vulnerability Scanning", tactic: "Reconnaissance" },
+  },
+  {
+    match: e => e.eventid === "cowrie.client.version",
+    technique: { id: "T1595.001", name: "Scanning IP Blocks", tactic: "Reconnaissance" },
+  },
+
+  // ── Credential Access ──────────────────────────────────────────────────────
+  {
+    match: e => e.eventid === "cowrie.login.failed",
+    technique: { id: "T1110.001", name: "Password Guessing", tactic: "Credential Access" },
+  },
+  {
+    // Credential stuffing: same username and password (e.g. 345gs5662d34/345gs5662d34)
+    match: e => e.eventid === "cowrie.login.failed" && e.username === e.password_hash?.slice(0,2),
+    technique: { id: "T1110.004", name: "Credential Stuffing", tactic: "Credential Access" },
+  },
+  {
+    match: e => e.eventid === "cowrie.login.success",
+    technique: { id: "T1078", name: "Valid Accounts", tactic: "Initial Access" },
+  },
+
+  // ── Discovery ─────────────────────────────────────────────────────────────
+  {
+    match: e => e.eventid === "cowrie.command.input" &&
+      /uname|\/proc\/version|\/etc\/os-release/.test(e.input),
+    technique: { id: "T1082", name: "System Information Discovery", tactic: "Discovery" },
+  },
+  {
+    match: e => e.eventid === "cowrie.command.input" &&
+      /\/proc\/cpuinfo|lscpu|nproc/.test(e.input),
+    technique: { id: "T1082", name: "System Information Discovery", tactic: "Discovery" },
+  },
+  {
+    match: e => e.eventid === "cowrie.command.input" &&
+      /ifconfig|ip addr|ip link|netstat|ss -/.test(e.input),
+    technique: { id: "T1016", name: "System Network Configuration Discovery", tactic: "Discovery" },
+  },
+  {
+    match: e => e.eventid === "cowrie.command.input" &&
+      /\bps\b|\/proc\/[0-9]/.test(e.input),
+    technique: { id: "T1057", name: "Process Discovery", tactic: "Discovery" },
+  },
+  {
+    match: e => e.eventid === "cowrie.command.input" &&
+      /whoami|id\b|groups\b|w\b|who\b/.test(e.input),
+    technique: { id: "T1033", name: "System Owner/User Discovery", tactic: "Discovery" },
+  },
+  {
+    match: e => e.eventid === "cowrie.command.input" &&
+      /crontab|\/etc\/cron/.test(e.input),
+    technique: { id: "T1053.003", name: "Cron", tactic: "Discovery" },
+  },
+  {
+    match: e => e.eventid === "cowrie.command.input" &&
+      /df\b|lsblk|fdisk|mount\b/.test(e.input),
+    technique: { id: "T1082", name: "System Information Discovery", tactic: "Discovery" },
+  },
+  {
+    match: e => e.eventid === "cowrie.command.input" &&
+      /free\b|\/proc\/meminfo/.test(e.input),
+    technique: { id: "T1082", name: "System Information Discovery", tactic: "Discovery" },
+  },
+
+  // ── Persistence ───────────────────────────────────────────────────────────
+  {
+    match: e => e.eventid === "cowrie.command.input" &&
+      /authorized_keys/.test(e.input),
+    technique: { id: "T1098.004", name: "SSH Authorized Keys", tactic: "Persistence" },
+  },
+  {
+    match: e => e.eventid === "cowrie.command.input" &&
+      /chattr|lockr/.test(e.input),
+    technique: { id: "T1222.002", name: "Linux File/Directory Permissions Modification", tactic: "Defense Evasion" },
+  },
+  {
+    match: e => e.eventid === "cowrie.command.input" &&
+      /nohup|systemctl|service\b/.test(e.input),
+    technique: { id: "T1543", name: "Create or Modify System Process", tactic: "Persistence" },
+  },
+
+  // ── Defense Evasion ───────────────────────────────────────────────────────
+  {
+    match: e => e.eventid === "cowrie.command.input" &&
+      /rm -rf|shred|unlink/.test(e.input),
+    technique: { id: "T1070.004", name: "File Deletion", tactic: "Defense Evasion" },
+  },
+  {
+    match: e => e.eventid === "cowrie.command.input" &&
+      /pkill|kill -9/.test(e.input),
+    technique: { id: "T1562.001", name: "Disable or Modify Tools", tactic: "Defense Evasion" },
+  },
+  {
+    // Hidden directory dropper (e.g. ./.3264486628506439129/xinetd)
+    match: e => e.eventid === "cowrie.command.input" &&
+      /chmod\s+\+x\s+\.\/\.[^\/]+\//.test(e.input),
+    technique: { id: "T1564.001", name: "Hidden Files and Directories", tactic: "Defense Evasion" },
+  },
+
+  // ── Collection / Exfiltration ─────────────────────────────────────────────
+  {
+    match: e => e.eventid === "cowrie.command.input" &&
+      /TelegramDesktop|tdata|ttyGSM|ttyUSB|smsd|qmuxd|modem/.test(e.input),
+    technique: { id: "T1005", name: "Data from Local System", tactic: "Collection" },
+  },
+  {
+    match: e => e.eventid === "cowrie.command.input" &&
+      /locate\s+[A-F0-9]{8,}/.test(e.input),
+    technique: { id: "T1005", name: "Data from Local System", tactic: "Collection" },
+  },
+
+  // ── Command and Control ───────────────────────────────────────────────────
+  {
+    match: e => e.eventid === "cowrie.direct-tcpip.request",
+    technique: { id: "T1572", name: "Protocol Tunneling", tactic: "Command and Control" },
+  },
+
+  // ── Impact ────────────────────────────────────────────────────────────────
+  {
+    match: e => e.eventid === "cowrie.command.input" &&
+      /[Mm]iner|xmrig|xmr|monero|stratum\+/.test(e.input),
+    technique: { id: "T1496", name: "Resource Hijacking", tactic: "Impact" },
+  },
+  {
+    match: e => (e.eventid === "cowrie.session.file_upload" ||
+                 e.eventid === "cowrie.session.file_download") &&
+      /redtail|miner|xmrig/.test(e.filename ?? e.url ?? ""),
+    technique: { id: "T1496", name: "Resource Hijacking", tactic: "Impact" },
+  },
+
+  // ── Execution ─────────────────────────────────────────────────────────────
+  {
+    // Generic shell command execution — catch-all for command events not
+    // matched by a more specific rule above
+    match: e => e.eventid === "cowrie.command.input",
+    technique: { id: "T1059.004", name: "Unix Shell", tactic: "Execution" },
+  },
+
+  // ── Lateral Movement ─────────────────────────────────────────────────────
+  {
+    match: e => (e.eventid === "cowrie.session.file_upload" ||
+                 e.eventid === "cowrie.session.file_download"),
+    technique: { id: "T1570", name: "Lateral Tool Transfer", tactic: "Lateral Movement" },
+  },
+];
+
+/**
+ * Return the first matching ATT&CK technique for a normalized event,
+ * or null if no rule matches.
+ */
+function classifyAttack(event) {
+  for (const rule of ATTACK_RULES) {
+    try {
+      if (rule.match(event)) return rule.technique;
+    } catch {
+      // match function threw (e.g. regex on undefined field) — skip
+    }
+  }
+  return null;
+}
+
 const MAX_EVENTS = 10_000;   // rolling window size kept in KV
 const KV_KEY     = "events"; // single key storing the JSON array
 
@@ -60,50 +233,56 @@ function normalize(raw) {
   };
 
   // Attach event-type-specific fields
+  let event;
   switch (raw.eventid) {
     case "cowrie.session.connect":
-      return { ...base, dst_port: raw.dst_port };
+      event = { ...base, dst_port: raw.dst_port };
+      break;
 
     case "cowrie.session.closed":
-      return { ...base, duration: parseFloat(raw.duration) };
+      event = { ...base, duration: parseFloat(raw.duration) };
+      break;
 
     case "cowrie.client.version":
-      return { ...base, version: raw.version };
+      event = { ...base, version: raw.version };
+      break;
 
     case "cowrie.login.success":
     case "cowrie.login.failed":
-      return {
+      event = {
         ...base,
         username: raw.username,
-        // Don't store passwords verbatim — hash them so patterns
+        // Don't store passwords verbatim — mask them so patterns
         // are visible without leaking real credentials
         password_hash: raw.password
           ? raw.password.slice(0, 2) + "***" + raw.password.slice(-1)
           : null,
-        password_len:  raw.password?.length ?? null,
+        password_len: raw.password?.length ?? null,
       };
+      break;
 
     case "cowrie.command.input":
     case "cowrie.command.failed":
-      return { ...base, input: raw.input };
+      event = { ...base, input: raw.input };
+      break;
 
     case "cowrie.session.file_upload":
-      return {
-        ...base,
-        filename: raw.filename,
-        shasum:   raw.shasum,
-      };
+      event = { ...base, filename: raw.filename, shasum: raw.shasum };
+      break;
 
     case "cowrie.session.file_download":
-      return {
-        ...base,
-        url:    raw.url,
-        shasum: raw.shasum,
-      };
+      event = { ...base, url: raw.url, shasum: raw.shasum };
+      break;
 
     default:
-      return base;
+      event = base;
   }
+
+  // ── ATT&CK classification ─────────────────────────────────────────────────
+  const technique = classifyAttack(event);
+  if (technique) event.attack = technique;
+
+  return event;
 }
 
 async function handleIngest(request, env) {
