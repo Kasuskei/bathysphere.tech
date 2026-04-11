@@ -212,7 +212,7 @@ nav {
 /* ── Column headers ── */
 .feed-cols {
   display: grid;
-  grid-template-columns: 148px 52px 100px 110px 1fr 160px;
+  grid-template-columns: 148px 52px 110px 120px 1fr 160px;
   gap: 0; padding: 0.5rem 1.5rem;
   border-bottom: 1px solid var(--rim);
   background: rgba(0,0,0,0.2);
@@ -226,8 +226,8 @@ nav {
 
 .feed-row {
   display: grid;
-  grid-template-columns: 148px 52px 100px 110px 1fr 160px;
-  gap: 0; padding: 0.45rem 1.5rem;
+  grid-template-columns: 148px 52px 110px 120px 1fr 160px;
+  gap: 0; padding: 0.5rem 1.5rem;
   border-bottom: 1px solid rgba(15,24,34,0.7);
   align-items: center; transition: background 0.1s; cursor: default;
   animation: rowIn 0.25s ease forwards; opacity: 0;
@@ -244,14 +244,14 @@ nav {
   100% { opacity: 1; background: transparent; }
 }
 
-.cell-time  { font-size: 10px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
-.cell-proto { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
-.cell-ip    { font-size: 11px; color: var(--glow); font-variant-numeric: tabular-nums; }
-.cell-sensor{ font-size: 10px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cell-time  { font-size: 12px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.cell-proto { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+.cell-ip    { font-size: 12px; color: var(--glow); font-variant-numeric: tabular-nums; }
+.cell-sensor{ font-size: 11px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.cell-event { display: flex; align-items: center; gap: 6px; }
+.cell-event { display: flex; align-items: center; gap: 8px; }
 .event-tag {
-  font-size: 10px; font-weight: 500; letter-spacing: 0.04em;
+  font-size: 11px; font-weight: 500; letter-spacing: 0.04em;
   white-space: nowrap;
 }
 .event-tag.connect  { color: var(--text-dim); }
@@ -264,7 +264,7 @@ nav {
 .event-tag.other    { color: var(--text-mid); }
 
 .cell-detail {
-  font-size: 10px; color: var(--text-dim);
+  font-size: 11px; color: var(--text-dim);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 400px;
 }
 .detail-cred { color: var(--text-mid); }
@@ -274,8 +274,8 @@ nav {
 /* ── ATT&CK tag ── */
 .attack-tag {
   display: inline-flex; align-items: center; gap: 4px;
-  font-size: 9px; letter-spacing: 0.06em; padding: 2px 6px;
-  border-radius: 2px; white-space: nowrap; max-width: 136px;
+  font-size: 10px; letter-spacing: 0.06em; padding: 2px 8px;
+  border-radius: 2px; white-space: nowrap; max-width: 155px;
   overflow: hidden; text-overflow: ellipsis;
   border: 1px solid transparent;
 }
