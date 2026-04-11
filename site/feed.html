@@ -158,7 +158,7 @@ nav {
   width: 12px; height: 12px; border-radius: 50%;
   border: 1px solid var(--text-dim); color: var(--text-dim);
   font-size: 8px; line-height: 12px; text-align: center;
-  cursor: help; font-style: normal; opacity: 0.6;
+  cursor: default; font-style: normal; opacity: 0.6;
   font-family: var(--mono); font-weight: 500;
   transition: opacity 0.15s, border-color 0.15s, color 0.15s;
 }
@@ -835,12 +835,12 @@ function position(e) {
   const vw = window.innerWidth;
   const vh = window.innerHeight;
 
-  // Default: above and centered on cursor
+  // Default: below cursor
   let x = e.clientX - tw / 2;
-  let y = e.clientY - th - MARGIN;
+  let y = e.clientY + MARGIN;
 
-  // Flip below if too close to top
-  if (y < 8) y = e.clientY + MARGIN;
+  // Flip above if too close to bottom
+  if (y + th > vh - 8) y = e.clientY - th - MARGIN;
 
   // Keep within horizontal bounds
   if (x < 8) x = 8;
