@@ -213,7 +213,7 @@ nav {
 /* ── Column headers ── */
 .feed-cols {
   display: grid;
-  grid-template-columns: 148px 52px 110px 120px 1fr 160px;
+  grid-template-columns: 148px 52px 110px 110px 130px 1fr 160px;
   gap: 0; padding: 0.5rem 1.5rem;
   border-bottom: 1px solid var(--rim);
   background: rgba(0,0,0,0.2); flex-shrink: 0;
@@ -227,7 +227,7 @@ nav {
 
 .feed-row {
   display: grid;
-  grid-template-columns: 148px 52px 110px 120px 1fr 160px;
+  grid-template-columns: 148px 52px 110px 110px 130px 1fr 160px;
   gap: 0; padding: 0.5rem 1.5rem;
   border-bottom: 1px solid rgba(15,24,34,0.7);
   align-items: center; transition: background 0.1s; cursor: default;
@@ -249,6 +249,7 @@ nav {
 .cell-proto { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
 .cell-ip    { font-size: 12px; color: var(--glow); font-variant-numeric: tabular-nums; }
 .cell-sensor{ font-size: 11px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cell-geo   { font-size: 11px; color: var(--text-mid); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .cell-event { display: flex; align-items: center; gap: 8px; }
 .event-tag {
@@ -378,12 +379,14 @@ nav {
   .stats-bar { grid-template-columns: repeat(3, 1fr); }
   .feed-cols, .feed-row { grid-template-columns: 65px 90px 1fr 120px; }
   .col-head:nth-child(2), .cell-proto,
-  .col-head:nth-child(4), .cell-sensor { display: none; }
+  .col-head:nth-child(4), .cell-sensor,
+  .col-head:nth-child(5), .cell-geo { display: none; }
 }
 @media (max-width: 560px) {
   .stats-bar { grid-template-columns: repeat(2, 1fr); }
   .feed-cols, .feed-row { grid-template-columns: 65px 1fr 100px; }
-  .col-head:nth-child(4), .cell-sensor { display: none; }
+  .col-head:nth-child(4), .cell-sensor,
+  .col-head:nth-child(5), .cell-geo { display: none; }
 }
 </style>
 </head>
@@ -472,6 +475,7 @@ nav {
         <div class="col-head">proto</div>
         <div class="col-head">source IP</div>
         <div class="col-head">sensor</div>
+        <div class="col-head">location</div>
         <div class="col-head">event</div>
         <div class="col-head">technique</div>
       </div>
@@ -627,11 +631,16 @@ function makeRow(e, isNew = false) {
   row.dataset.hasAttack = e.attack ? '1' : '0';
 
   const ec = eventClass(e.eventid);
+  const geoStr = e.geo
+    ? [e.geo.city, e.geo.country].filter(Boolean).join(', ')
+    : '—';
+
   row.innerHTML = `
     <div class="cell-time">${fmt(e.ts)}</div>
     <div class="cell-proto">${escHtml(e.protocol ?? 'ssh')}</div>
     <div class="cell-ip">${escHtml(e.src_ip ?? '—')}</div>
     <div class="cell-sensor">${escHtml(e.sensor ?? '—')}</div>
+    <div class="cell-geo">${escHtml(geoStr)}</div>
     <div class="cell-event">
       <span class="event-tag ${ec}">${eventLabel(e.eventid)}</span>
       <span class="cell-detail">${eventDetail(e)}</span>

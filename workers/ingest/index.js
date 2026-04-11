@@ -186,10 +186,53 @@ function classifyAttack(event) {
 
 const MAX_EVENTS = 10_000;   // rolling window size kept in KV
 const KV_KEY     = "events"; // single key storing the JSON array
+const GEO_TTL    = 60 * 60 * 24 * 30; // cache geo results for 30 days
 
 // IPs we never want to appear in the feed even anonymized
 // (RFC 5737 documentation ranges, loopback, your own Pi's LAN IP)
 const BLOCKLIST  = ["192.168.", "127.", "10.", "172.16.", "::1"];
+
+/**
+ * Look up geo data for a raw IP address.
+ * Checks KV cache first — only calls ip-api.com on a cache miss.
+ * Returns { country, city } or null on failure.
+ * Raw IP is never stored — only the location result.
+ */
+async function geoLookup(ip, env) {
+  const cacheKey = `geo:${ip}`;
+  try {
+    const cached = await env.EVENTS.get(cacheKey);
+    if (cached) return JSON.parse(cached);
+
+    const resp = await fetch(
+      `http://ip-api.com/json/${ip}?fields=status,country,city`,
+      { signal: AbortSignal.timeout(2000) }
+    );
+    if (!resp.ok) return null;
+
+    const data = await resp.json();
+    if (data.status !== 'success') return null;
+
+    const geo = { country: data.country ?? null, city: data.city ?? null };
+    // Cache the result — fire and forget, don't block ingest
+    env.EVENTS.put(cacheKey, JSON.stringify(geo), { expirationTtl: GEO_TTL });
+    return geo;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Build a geo cache for all unique raw IPs in a batch.
+ * Returns a Map of raw_ip -> { country, city }.
+ */
+async function batchGeoLookup(rawIps, env) {
+  const unique = [...new Set(rawIps.filter(ip => ip && !isBlocked(ip)))];
+  const results = await Promise.all(unique.map(ip => geoLookup(ip, env)));
+  const map = new Map();
+  unique.forEach((ip, i) => { if (results[i]) map.set(ip, results[i]); });
+  return map;
+}
 
 /**
  * Anonymize an IP address:
@@ -214,9 +257,9 @@ function isBlocked(ip) {
 
 /**
  * Normalize a raw Cowrie event into what we store and serve.
- * Drops fields we don't need, anonymizes IPs.
+ * Drops fields we don't need, anonymizes IPs, attaches geo.
  */
-function normalize(raw) {
+function normalize(raw, geo) {
   if (isBlocked(raw.src_ip)) return null;
 
   const anon_ip = anonymize(raw.src_ip);
@@ -230,6 +273,8 @@ function normalize(raw) {
     src_ip:    anon_ip,
     protocol:  raw.protocol ?? "ssh",
     sensor:    raw.sensor ?? "honeypot-pi",
+    // Geo attached here — raw IP never stored
+    geo:       geo ?? null,
   };
 
   // Attach event-type-specific fields
@@ -252,8 +297,6 @@ function normalize(raw) {
       event = {
         ...base,
         username: raw.username,
-        // Don't store passwords verbatim — mask them so patterns
-        // are visible without leaking real credentials
         password_hash: raw.password
           ? raw.password.slice(0, 2) + "***" + raw.password.slice(-1)
           : null,
@@ -304,9 +347,13 @@ async function handleIngest(request, env) {
     return new Response("Expected { events: [...] }", { status: 400 });
   }
 
+  // ── Geo lookup (batch, raw IPs, before anonymization) ─────────────────────
+  const rawIps = body.events.map(e => e.src_ip).filter(Boolean);
+  const geoMap = await batchGeoLookup(rawIps, env);
+
   // ── Normalize ─────────────────────────────────────────────────────────────
   const incoming = body.events
-    .map(normalize)
+    .map(e => normalize(e, geoMap.get(e.src_ip) ?? null))
     .filter(Boolean);
 
   if (incoming.length === 0) {
