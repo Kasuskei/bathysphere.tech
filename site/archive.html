@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>bathysphere.tech // archive</title>
+<meta name="description" content="Full historical archive of SSH honeypot events. Real attack data from day one.">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --ink:        #080c10;
+  --deep:       #060a0e;
+  --surface:    #0b1118;
+  --glass:      #0f1822;
+  --rim:        rgba(120,180,220,0.08);
+  --rim-hover:  rgba(120,180,220,0.14);
+  --glow:       #7ab4dc;
+  --glow-dim:   rgba(122,180,220,0.18);
+  --glow-faint: rgba(122,180,220,0.06);
+  --bio:        #4de8b0;
+  --bio-dim:    rgba(77,232,176,0.12);
+  --amber:      #f0a94a;
+  --amber-dim:  rgba(240,169,74,0.12);
+  --red:        #e05c5c;
+  --red-dim:    rgba(224,92,92,0.10);
+  --coral:      #e07060;
+  --text:       #a8c4d8;
+  --text-dim:   #4a6878;
+  --text-mid:   #6a8fa8;
+  --text-bright:#d4e8f4;
+  --serif: 'Instrument Serif', Georgia, serif;
+  --mono:  'DM Mono', 'Courier New', monospace;
+
+  --tactic-recon:     #7ab4dc;
+  --tactic-initial:   #4de8b0;
+  --tactic-exec:      #a78bfa;
+  --tactic-persist:   #f0a94a;
+  --tactic-defense:   #e07060;
+  --tactic-cred:      #e05c5c;
+  --tactic-discovery: #60b8e0;
+  --tactic-collect:   #f0c94a;
+  --tactic-c2:        #e05c9c;
+  --tactic-lateral:   #8be07a;
+  --tactic-impact:    #e05c5c;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  background: var(--ink);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.025) 2px, rgba(0,0,0,0.025) 4px);
+  pointer-events: none; z-index: 999;
+}
+
+/* ── Nav ── */
+nav {
+  position: sticky; top: 0; z-index: 100;
+  border-bottom: 1px solid var(--rim);
+  background: rgba(6,10,14,0.92);
+  backdrop-filter: blur(12px);
+}
+.nav-inner {
+  max-width: 1400px; margin: 0 auto; padding: 0 2rem;
+  height: 52px; display: flex; align-items: center; justify-content: space-between;
+}
+.nav-logo {
+  font-family: var(--mono); font-size: 13px; color: var(--glow);
+  text-decoration: none; display: flex; align-items: center; gap: 10px;
+}
+.ping { width: 7px; height: 7px; border-radius: 50%; background: var(--bio); position: relative; flex-shrink: 0; }
+.ping::after {
+  content: ''; position: absolute; inset: -3px; border-radius: 50%;
+  border: 1px solid var(--bio); animation: sonar 3s ease-out infinite; opacity: 0;
+}
+@keyframes sonar { 0% { transform: scale(1); opacity: 0.7; } 100% { transform: scale(3); opacity: 0; } }
+.nav-links { display: flex; align-items: center; gap: 2rem; list-style: none; }
+.nav-links a { color: var(--text-dim); text-decoration: none; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; transition: color 0.2s; }
+.nav-links a:hover { color: var(--glow); }
+.nav-links a.active { color: var(--bio); }
+
+/* ── Page layout ── */
+.page { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+
+/* ── Header ── */
+.archive-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  margin-bottom: 2rem; gap: 2rem;
+}
+.archive-title-group {}
+.archive-label {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.2em;
+  color: var(--text-dim); margin-bottom: 0.75rem;
+  display: flex; align-items: center; gap: 10px;
+}
+.archive-label::before { content: ''; display: block; width: 20px; height: 1px; background: var(--text-dim); }
+.archive-title {
+  font-family: var(--serif); font-size: clamp(1.4rem, 3vw, 2rem);
+  font-weight: 400; color: var(--text-bright); line-height: 1.2;
+}
+.archive-title em { font-style: italic; color: var(--glow); }
+.archive-meta { font-size: 11px; color: var(--text-dim); margin-top: 0.5rem; }
+.archive-meta span { color: var(--text-mid); }
+
+/* ── Filters ── */
+.filters {
+  background: var(--surface); border: 1px solid var(--rim);
+  padding: 1.25rem 1.5rem; margin-bottom: 1.5rem;
+  display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;
+}
+.filter-group { display: flex; align-items: center; gap: 8px; }
+.filter-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-dim); }
+.filter-select {
+  font-family: var(--mono); font-size: 11px; color: var(--text);
+  background: var(--glass); border: 1px solid var(--rim);
+  padding: 4px 10px; border-radius: 2px; cursor: pointer;
+  outline: none; transition: border-color 0.2s;
+  appearance: none; -webkit-appearance: none;
+}
+.filter-select:hover, .filter-select:focus { border-color: var(--rim-hover); }
+.filter-select option { background: var(--glass); }
+
+.filter-btn {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em;
+  text-transform: uppercase; padding: 4px 12px; border-radius: 2px;
+  border: 1px solid var(--rim); background: transparent; color: var(--text-dim);
+  cursor: pointer; transition: all 0.15s;
+}
+.filter-btn:hover { border-color: var(--rim-hover); color: var(--text); }
+.filter-btn.active { border-color: rgba(77,232,176,0.3); background: var(--bio-dim); color: var(--bio); }
+
+.filter-divider { width: 1px; height: 20px; background: var(--rim); }
+
+.filter-apply {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em;
+  text-transform: uppercase; padding: 5px 16px; border-radius: 2px;
+  border: 1px solid rgba(122,180,220,0.3); background: var(--glow-faint);
+  color: var(--glow); cursor: pointer; transition: all 0.15s; margin-left: auto;
+}
+.filter-apply:hover { background: var(--glow-dim); }
+
+/* ── Table ── */
+.archive-table {
+  border: 1px solid var(--rim);
+  background: var(--surface);
+}
+
+.table-cols {
+  display: grid;
+  grid-template-columns: 148px 52px 110px 110px 200px 1fr 160px 160px;
+  gap: 0; padding: 0.5rem 1.5rem;
+  border-bottom: 1px solid var(--rim);
+  background: rgba(0,0,0,0.2);
+}
+.col-head { font-size: 9px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-dim); }
+
+.table-body { min-height: 200px; }
+
+.table-row {
+  display: grid;
+  grid-template-columns: 148px 52px 110px 110px 200px 1fr 160px 160px;
+  gap: 0; padding: 0.5rem 1.5rem;
+  border-bottom: 1px solid rgba(15,24,34,0.7);
+  align-items: center; transition: background 0.1s; cursor: pointer;
+}
+.table-row:hover { background: var(--glass); }
+.table-row:last-child { border-bottom: none; }
+.table-row.expanded { background: var(--glass); border-bottom: none; }
+
+/* ── Cell styles (same as feed) ── */
+.cell-time   { font-size: 12px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.cell-proto  { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+.cell-ip     { font-size: 12px; color: var(--glow); font-variant-numeric: tabular-nums; }
+.cell-sensor { font-size: 11px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cell-geo    { font-size: 11px; color: var(--text-mid); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cell-event  { display: flex; align-items: center; gap: 8px; }
+.cell-detail { font-size: 11px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 400px; }
+.cell-ioc    { display: flex; flex-direction: column; gap: 2px; overflow: hidden; }
+
+.event-tag { font-size: 11px; font-weight: 500; letter-spacing: 0.04em; white-space: nowrap; }
+.event-tag.connect   { color: var(--text-dim); }
+.event-tag.login-ok  { color: var(--bio); }
+.event-tag.login-fail{ color: var(--red); }
+.event-tag.command   { color: var(--glow); }
+.event-tag.upload    { color: var(--amber); }
+.event-tag.download  { color: var(--amber); }
+.event-tag.tunnel    { color: var(--coral); }
+.event-tag.other     { color: var(--text-mid); }
+
+.ioc-tag {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 9px; letter-spacing: 0.06em; padding: 2px 6px;
+  border-radius: 2px; white-space: nowrap; border: 1px solid transparent;
+  font-weight: 500; text-transform: uppercase; cursor: default;
+}
+.ioc-critical { color: #ff4444; border-color: rgba(255,68,68,0.3);  background: rgba(255,68,68,0.08); }
+.ioc-high     { color: #f0a94a; border-color: rgba(240,169,74,0.3); background: rgba(240,169,74,0.08); }
+.ioc-medium   { color: #7ab4dc; border-color: rgba(122,180,220,0.3);background: rgba(122,180,220,0.08); }
+.ioc-low      { color: #4a6878; border-color: rgba(74,104,120,0.3); background: rgba(74,104,120,0.08); }
+
+.attack-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10px; letter-spacing: 0.06em; padding: 2px 8px;
+  border-radius: 2px; white-space: nowrap; max-width: 155px;
+  overflow: hidden; text-overflow: ellipsis; border: 1px solid transparent;
+}
+.tac-Reconnaissance     { color: var(--tactic-recon);     border-color: rgba(122,180,220,0.2);  background: rgba(122,180,220,0.06); }
+.tac-Initial\ Access    { color: var(--tactic-initial);   border-color: rgba(77,232,176,0.2);   background: rgba(77,232,176,0.06); }
+.tac-Execution          { color: var(--tactic-exec);      border-color: rgba(167,139,250,0.2);  background: rgba(167,139,250,0.06); }
+.tac-Persistence        { color: var(--tactic-persist);   border-color: rgba(240,169,74,0.2);   background: rgba(240,169,74,0.06); }
+.tac-Defense\ Evasion   { color: var(--tactic-defense);   border-color: rgba(224,112,96,0.2);   background: rgba(224,112,96,0.06); }
+.tac-Credential\ Access { color: var(--tactic-cred);      border-color: rgba(224,92,92,0.2);    background: rgba(224,92,92,0.06); }
+.tac-Discovery          { color: var(--tactic-discovery); border-color: rgba(96,184,224,0.2);   background: rgba(96,184,224,0.06); }
+.tac-Collection         { color: var(--tactic-collect);   border-color: rgba(240,201,74,0.2);   background: rgba(240,201,74,0.06); }
+.tac-Command\ and\ Control { color: var(--tactic-c2);     border-color: rgba(224,92,156,0.2);   background: rgba(224,92,156,0.06); }
+.tac-Lateral\ Movement  { color: var(--tactic-lateral);   border-color: rgba(139,224,122,0.2);  background: rgba(139,224,122,0.06); }
+.tac-Impact             { color: var(--tactic-impact);    border-color: rgba(224,92,92,0.25);   background: rgba(224,92,92,0.08); }
+
+/* ── Row detail panel ── */
+.row-detail {
+  grid-column: 1 / -1;
+  background: var(--glass); border-bottom: 1px solid var(--rim);
+  border-top: 1px solid var(--rim-hover); padding: 1rem 1.5rem;
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem;
+  animation: detailIn 0.15s ease forwards;
+}
+@keyframes detailIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+.detail-group { display: flex; flex-direction: column; gap: 0.5rem; }
+.detail-group-title { font-size: 9px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-dim); margin-bottom: 0.25rem; }
+.detail-field { display: flex; flex-direction: column; gap: 2px; }
+.detail-field-label { font-size: 9px; color: var(--text-dim); letter-spacing: 0.1em; text-transform: uppercase; }
+.detail-field-value { font-size: 11px; color: var(--text); font-family: var(--mono); word-break: break-all; }
+.detail-ioc-list { display: flex; flex-direction: column; gap: 4px; }
+.detail-ioc-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text); }
+.detail-ioc-item .ioc-tag { font-size: 9px; flex-shrink: 0; }
+.detail-no-data { font-size: 11px; color: var(--text-dim); font-style: italic; }
+
+/* ── Load more ── */
+.load-more-wrap {
+  padding: 1.5rem; text-align: center;
+  border-top: 1px solid var(--rim);
+}
+.load-more-btn {
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em;
+  text-transform: uppercase; padding: 10px 28px; border-radius: 2px;
+  border: 1px solid var(--rim); background: transparent; color: var(--text-dim);
+  cursor: pointer; transition: all 0.2s;
+}
+.load-more-btn:hover { border-color: var(--glow); color: var(--glow); background: var(--glow-faint); }
+.load-more-btn:disabled { opacity: 0.4; cursor: default; }
+.load-more-count { font-size: 11px; color: var(--text-dim); margin-top: 0.75rem; }
+
+/* ── Empty / loading states ── */
+.state-msg { padding: 4rem 2rem; text-align: center; color: var(--text-dim); font-size: 12px; }
+
+/* ── Floating tooltip ── */
+#floating-tip {
+  position: fixed; background: var(--glass); border: 1px solid var(--rim-hover);
+  color: var(--text); font-family: var(--mono); font-size: 10px;
+  letter-spacing: 0.02em; padding: 5px 8px; border-radius: 3px;
+  pointer-events: none; white-space: nowrap; z-index: 200;
+  opacity: 0; transition: opacity 0.12s;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--rim); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--rim-hover); }
+
+@media (max-width: 900px) {
+  .table-cols, .table-row { grid-template-columns: 148px 110px 1fr 120px; }
+  .cell-proto, .cell-sensor, .cell-geo { display: none; }
+  .filters { gap: 0.75rem; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">
+      <div class="ping"></div>
+      bathysphere.tech
+    </a>
+    <ul class="nav-links">
+      <li><a href="/">about</a></li>
+      <li><a href="/feed.html">feed</a></li>
+      <li><a href="/archive.html" class="active">archive</a></li>
+      <li><a href="https://github.com/Kasuskei/bathysphere.tech" target="_blank">github</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="page">
+
+  <div class="archive-header">
+    <div class="archive-title-group">
+      <div class="archive-label">full event archive</div>
+      <div class="archive-title">Everything that came<br>to the <em>light.</em></div>
+      <div class="archive-meta">
+        <span id="meta-total">—</span> events &nbsp;·&nbsp;
+        from <span id="meta-oldest">—</span> to <span id="meta-newest">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters">
+    <div class="filter-group">
+      <div class="filter-label">event</div>
+      <select class="filter-select" id="f-eventid">
+        <option value="">all</option>
+        <option value="cowrie.session.connect">connect</option>
+        <option value="cowrie.login.success">auth ok</option>
+        <option value="cowrie.login.failed">auth fail</option>
+        <option value="cowrie.command.input">command</option>
+        <option value="cowrie.session.file_upload">upload</option>
+        <option value="cowrie.session.file_download">download</option>
+        <option value="cowrie.direct-tcpip.request">tunnel</option>
+        <option value="cowrie.client.version">client</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <div class="filter-label">sensor</div>
+      <select class="filter-select" id="f-sensor">
+        <option value="">all</option>
+        <option value="honeypot-pi">honeypot-pi</option>
+      </select>
+    </div>
+    <div class="filter-divider"></div>
+    <button class="filter-btn" id="f-ioc" data-active="0">IoC only</button>
+    <button class="filter-btn" id="f-attack" data-active="0">ATT&amp;CK only</button>
+    <div class="filter-divider"></div>
+    <button class="filter-apply" id="apply-filters">apply</button>
+  </div>
+
+  <!-- Table -->
+  <div class="archive-table">
+    <div class="table-cols">
+      <div class="col-head">time</div>
+      <div class="col-head">proto</div>
+      <div class="col-head">source IP</div>
+      <div class="col-head">sensor</div>
+      <div class="col-head">location</div>
+      <div class="col-head">event</div>
+      <div class="col-head">IoC</div>
+      <div class="col-head">technique</div>
+    </div>
+    <div class="table-body" id="table-body">
+      <div class="state-msg">Loading archive…</div>
+    </div>
+    <div class="load-more-wrap" id="load-more-wrap" style="display:none">
+      <button class="load-more-btn" id="load-more-btn">load more</button>
+      <div class="load-more-count" id="load-more-count"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Floating tooltip -->
+<div id="floating-tip"></div>
+
+<script>
+const READ_URL   = 'https://bathysphere-read.kasuskei.workers.dev';
+const PAGE_SIZE  = 100;
+
+let oldestTs    = null;
+let totalEvents = 0;
+let loadedCount = 0;
+let loading     = false;
+let filters     = { eventid: '', sensor: '', has_ioc: false, has_attack: false };
+
+// ── Helpers (same as feed.html) ───────────────────────────────────────────────
+function fmt(ts) {
+  if (!ts) return '—';
+  const d = new Date(ts);
+  const date = d.toLocaleDateString('en-CA');
+  const time = d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  return `${date} ${time}`;
+}
+
+function fmtDate(ts) {
+  if (!ts) return '—';
+  return new Date(ts).toLocaleDateString('en-CA');
+}
+
+function escHtml(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function eventClass(eventid) {
+  if (eventid === 'cowrie.login.success')        return 'login-ok';
+  if (eventid === 'cowrie.login.failed')         return 'login-fail';
+  if (eventid === 'cowrie.command.input' || eventid === 'cowrie.command.failed') return 'command';
+  if (eventid === 'cowrie.session.file_upload')  return 'upload';
+  if (eventid === 'cowrie.session.file_download')return 'download';
+  if (eventid === 'cowrie.direct-tcpip.request') return 'tunnel';
+  if (eventid === 'cowrie.session.connect')      return 'connect';
+  return 'other';
+}
+
+function eventLabel(eventid) {
+  const map = {
+    'cowrie.session.connect': 'CONNECT', 'cowrie.session.closed': 'CLOSED',
+    'cowrie.client.version': 'CLIENT',   'cowrie.login.success': 'AUTH OK',
+    'cowrie.login.failed': 'AUTH FAIL',  'cowrie.command.input': 'COMMAND',
+    'cowrie.command.failed': 'CMD FAIL', 'cowrie.session.file_upload': 'UPLOAD',
+    'cowrie.session.file_download': 'DOWNLOAD', 'cowrie.direct-tcpip.request': 'TUNNEL',
+  };
+  return map[eventid] ?? eventid.split('.').pop().toUpperCase();
+}
+
+function eventDetail(e) {
+  if (e.eventid === 'cowrie.login.success' || e.eventid === 'cowrie.login.failed')
+    return `<span style="color:var(--text-mid)">${escHtml(e.username ?? '?')} / ${escHtml(e.password_hash ?? '?')}</span>`;
+  if (e.eventid === 'cowrie.command.input' || e.eventid === 'cowrie.command.failed')
+    return `<span style="color:var(--text)">${escHtml((e.input ?? '').slice(0, 60))}</span>`;
+  if (e.eventid === 'cowrie.session.file_upload')
+    return `<span style="color:var(--amber)">${escHtml(e.filename ?? e.shasum?.slice(0,12) ?? '?')}</span>`;
+  if (e.eventid === 'cowrie.session.file_download')
+    return `<span style="color:var(--amber)">${escHtml((e.url ?? e.shasum ?? '').slice(0, 50))}</span>`;
+  if (e.eventid === 'cowrie.client.version') return `<span>${escHtml(e.version ?? '')}</span>`;
+  if (e.eventid === 'cowrie.direct-tcpip.request') return `<span>TCP tunnel attempt</span>`;
+  return '';
+}
+
+const IOC_SHORT = { credential:'CRED', malware:'MAL', persistence:'PERSIST', exfiltration:'EXFIL', recon:'RECON', c2:'C2', scanner:'SCAN', reputation:'REP' };
+
+function iocTags(iocs) {
+  if (!iocs || !iocs.length) return '';
+  return iocs.slice(0, 2).map(ioc =>
+    `<span class="ioc-tag ioc-${escHtml(ioc.severity ?? 'low')}" data-tip="${escHtml(ioc.label)}">${IOC_SHORT[ioc.type] ?? 'IOC'}</span>`
+  ).join('');
+}
+
+function attackTag(attack) {
+  if (!attack) return '';
+  const tip = `${escHtml(attack.id)} · ${escHtml(attack.name)} · ${escHtml(attack.tactic)}`;
+  return `<span class="attack-tag tac-${escHtml(attack.tactic ?? '')}" data-tip="${tip}">${escHtml(attack.id)}</span>`;
+}
+
+// ── Detail panel (same as feed.html) ─────────────────────────────────────────
+function buildDetailPanel(e) {
+  const panel = document.createElement('div');
+  panel.className = 'row-detail';
+  const geoStr = e.geo ? [e.geo.city, e.geo.country].filter(Boolean).join(', ') : '—';
+
+  let eventFields = '';
+  if (e.username)      eventFields += `<div class="detail-field"><div class="detail-field-label">Username</div><div class="detail-field-value">${escHtml(e.username)}</div></div>`;
+  if (e.password_hash) eventFields += `<div class="detail-field"><div class="detail-field-label">Password</div><div class="detail-field-value">${escHtml(e.password_hash)} (${e.password_len ?? '?'} chars)</div></div>`;
+  if (e.input)         eventFields += `<div class="detail-field"><div class="detail-field-label">Command</div><div class="detail-field-value">${escHtml(e.input)}</div></div>`;
+  if (e.filename)      eventFields += `<div class="detail-field"><div class="detail-field-label">Filename</div><div class="detail-field-value">${escHtml(e.filename)}</div></div>`;
+  if (e.shasum)        eventFields += `<div class="detail-field"><div class="detail-field-label">SHA256</div><div class="detail-field-value">${escHtml(e.shasum)}</div></div>`;
+  if (e.version)       eventFields += `<div class="detail-field"><div class="detail-field-label">Client version</div><div class="detail-field-value">${escHtml(e.version)}</div></div>`;
+  if (e.duration != null) eventFields += `<div class="detail-field"><div class="detail-field-label">Duration</div><div class="detail-field-value">${e.duration}s</div></div>`;
+  if (!eventFields)    eventFields = `<div class="detail-no-data">No additional event data</div>`;
+
+  let iocHtml = e.iocs?.length
+    ? `<div class="detail-ioc-list">${e.iocs.map(ioc => `<div class="detail-ioc-item"><span class="ioc-tag ioc-${escHtml(ioc.severity ?? 'low')}">${IOC_SHORT[ioc.type] ?? 'IOC'}</span><span>${escHtml(ioc.label)}${ioc.reports ? ` (${ioc.reports} reports)` : ''}</span></div>`).join('')}</div>`
+    : `<div class="detail-no-data">No IoCs matched</div>`;
+
+  const attackHtml = e.attack
+    ? `<div class="detail-field" style="margin-top:0.75rem"><div class="detail-field-label">ATT&amp;CK technique</div><div class="detail-field-value">${escHtml(e.attack.id)} · ${escHtml(e.attack.name)}</div><div class="detail-field-label" style="margin-top:4px">Tactic</div><div class="detail-field-value">${escHtml(e.attack.tactic)}</div></div>`
+    : `<div class="detail-no-data" style="margin-top:0.75rem">No ATT&amp;CK technique mapped</div>`;
+
+  panel.innerHTML = `
+    <div class="detail-group">
+      <div class="detail-group-title">Connection</div>
+      <div class="detail-field"><div class="detail-field-label">Timestamp</div><div class="detail-field-value">${escHtml(e.ts ?? '—')}</div></div>
+      <div class="detail-field"><div class="detail-field-label">Source IP</div><div class="detail-field-value">${escHtml(e.src_ip ?? '—')}</div></div>
+      <div class="detail-field"><div class="detail-field-label">Location</div><div class="detail-field-value">${escHtml(geoStr)}</div></div>
+      <div class="detail-field"><div class="detail-field-label">Sensor</div><div class="detail-field-value">${escHtml(e.sensor ?? '—')}</div></div>
+      <div class="detail-field"><div class="detail-field-label">Session</div><div class="detail-field-value">${escHtml(e.session ?? '—')}</div></div>
+    </div>
+    <div class="detail-group"><div class="detail-group-title">Event detail</div>${eventFields}</div>
+    <div class="detail-group"><div class="detail-group-title">Threat intel</div>${iocHtml}${attackHtml}</div>
+  `;
+  return panel;
+}
+
+// ── Row renderer ──────────────────────────────────────────────────────────────
+function makeRow(e) {
+  const row = document.createElement('div');
+  row.className = 'table-row';
+  const ec = eventClass(e.eventid);
+  const geoStr = e.geo ? [e.geo.city, e.geo.country].filter(Boolean).join(', ') : '—';
+
+  row.innerHTML = `
+    <div class="cell-time">${fmt(e.ts)}</div>
+    <div class="cell-proto">${escHtml(e.protocol ?? 'ssh')}</div>
+    <div class="cell-ip">${escHtml(e.src_ip ?? '—')}</div>
+    <div class="cell-sensor">${escHtml(e.sensor ?? '—')}</div>
+    <div class="cell-geo">${escHtml(geoStr)}</div>
+    <div class="cell-event">
+      <span class="event-tag ${ec}">${eventLabel(e.eventid)}</span>
+      <span class="cell-detail">${eventDetail(e)}</span>
+    </div>
+    <div class="cell-ioc">${iocTags(e.iocs)}</div>
+    <div>${attackTag(e.attack)}</div>
+  `;
+
+  row.addEventListener('click', () => {
+    const existing = document.querySelector('.row-detail');
+    const wasThisRow = existing && existing.previousSibling === row;
+    if (existing) existing.remove();
+    row.classList.remove('expanded');
+    if (!wasThisRow) {
+      row.after(buildDetailPanel(e));
+      row.classList.add('expanded');
+    }
+  });
+
+  return row;
+}
+
+// ── Fetch and render ──────────────────────────────────────────────────────────
+async function buildUrl(before) {
+  const p = new URLSearchParams({ limit: PAGE_SIZE });
+  if (before)             p.set('before', before);
+  if (filters.eventid)    p.set('eventid', filters.eventid);
+  if (filters.sensor)     p.set('sensor', filters.sensor);
+  if (filters.has_ioc)    p.set('has_ioc', '1');
+  if (filters.has_attack) p.set('has_attack', '1');
+  return `${READ_URL}/archive?${p}`;
+}
+
+async function load(append = false) {
+  if (loading) return;
+  loading = true;
+
+  const btn = document.getElementById('load-more-btn');
+  if (btn) btn.disabled = true;
+
+  const before = append ? oldestTs : null;
+  const body   = document.getElementById('table-body');
+
+  if (!append) {
+    body.innerHTML = '<div class="state-msg">Loading…</div>';
+    loadedCount = 0;
+    oldestTs = null;
+  }
+
+  try {
+    const resp = await fetch(await buildUrl(before));
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+
+    const events = data.events ?? [];
+    totalEvents  = data.total  ?? 0;
+
+    if (!append) body.innerHTML = '';
+
+    if (events.length === 0 && !append) {
+      body.innerHTML = '<div class="state-msg">No events found. The archive is still populating — check back soon.</div>';
+      document.getElementById('load-more-wrap').style.display = 'none';
+      loading = false;
+      return;
+    }
+
+    const frag = document.createDocumentFragment();
+    events.forEach(e => frag.appendChild(makeRow(e)));
+    body.appendChild(frag);
+
+    loadedCount += events.length;
+    if (events.length > 0) oldestTs = events[events.length - 1].ts;
+
+    // Update meta
+    if (!append) {
+      document.getElementById('meta-total').textContent  = totalEvents.toLocaleString();
+      document.getElementById('meta-oldest').textContent = fmtDate(data.oldest);
+      document.getElementById('meta-newest').textContent = fmtDate(data.newest);
+    }
+
+    // Load more button
+    const wrap  = document.getElementById('load-more-wrap');
+    const count = document.getElementById('load-more-count');
+    if (loadedCount < totalEvents && events.length === PAGE_SIZE) {
+      wrap.style.display = 'block';
+      count.textContent  = `${loadedCount.toLocaleString()} of ${totalEvents.toLocaleString()} events loaded`;
+      if (btn) btn.disabled = false;
+    } else {
+      wrap.style.display = 'none';
+    }
+
+  } catch (err) {
+    if (!append) body.innerHTML = `<div class="state-msg">Failed to load archive: ${escHtml(err.message)}</div>`;
+    console.error(err);
+  }
+
+  loading = false;
+}
+
+// ── Filter controls ───────────────────────────────────────────────────────────
+document.getElementById('apply-filters').addEventListener('click', () => {
+  filters.eventid    = document.getElementById('f-eventid').value;
+  filters.sensor     = document.getElementById('f-sensor').value;
+  filters.has_ioc    = document.getElementById('f-ioc').dataset.active === '1';
+  filters.has_attack = document.getElementById('f-attack').dataset.active === '1';
+  load(false);
+});
+
+['f-ioc', 'f-attack'].forEach(id => {
+  document.getElementById(id).addEventListener('click', function() {
+    const active = this.dataset.active === '1';
+    this.dataset.active = active ? '0' : '1';
+    this.classList.toggle('active', !active);
+  });
+});
+
+document.getElementById('load-more-btn').addEventListener('click', () => load(true));
+
+// ── Floating tooltip ──────────────────────────────────────────────────────────
+const tip = document.getElementById('floating-tip');
+const MARGIN = 12;
+
+document.addEventListener('mouseover', e => {
+  const el = e.target.closest('[data-tip]');
+  if (!el) { tip.style.opacity = '0'; return; }
+  tip.textContent = el.dataset.tip;
+  tip.style.opacity = '1';
+});
+
+document.addEventListener('mousemove', e => {
+  if (tip.style.opacity === '0') return;
+  const tw = tip.offsetWidth, th = tip.offsetHeight;
+  let x = e.clientX - tw / 2;
+  let y = e.clientY + MARGIN;
+  if (y + th > window.innerHeight - 8) y = e.clientY - th - MARGIN;
+  if (x < 8) x = 8;
+  if (x + tw > window.innerWidth - 8) x = window.innerWidth - tw - 8;
+  tip.style.left = x + 'px';
+  tip.style.top  = y + 'px';
+});
+
+document.addEventListener('mouseout', e => {
+  if (!e.target.closest('[data-tip]')) tip.style.opacity = '0';
+});
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+load(false);
+</script>
+</body>
+</html>
