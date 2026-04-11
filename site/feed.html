@@ -164,6 +164,24 @@ nav {
 }
 .stat-tip-icon:hover { opacity: 1; border-color: var(--glow); color: var(--glow); }
 
+/* Floating tooltip — positioned via JS */
+#floating-tip {
+  position: fixed;
+  background: var(--glass);
+  border: 1px solid var(--rim-hover);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  padding: 5px 8px;
+  border-radius: 3px;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 200;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+
 /* ── Main grid ── */
 .main-grid {
   display: grid; grid-template-columns: 1fr 280px;
@@ -394,37 +412,37 @@ nav {
     <div class="stat">
       <div class="stat-value" id="s-total">—</div>
       <div class="stat-label">events captured
-        <span class="stat-tip"><i class="stat-tip-icon" title="All telemetry including connections, handshakes, login attempts, and commands">?</i></span>
+        <span class="stat-tip"><i class="stat-tip-icon" data-tip="All telemetry including connections, handshakes, login attempts, and commands">?</i></span>
       </div>
     </div>
     <div class="stat">
       <div class="stat-value highlight" id="s-sessions">—</div>
       <div class="stat-label">sessions
-        <span class="stat-tip"><i class="stat-tip-icon" title="Unique TCP connections opened to the honeypot">?</i></span>
+        <span class="stat-tip"><i class="stat-tip-icon" data-tip="Unique TCP connections opened to the honeypot">?</i></span>
       </div>
     </div>
     <div class="stat">
       <div class="stat-value" id="s-ips">—</div>
       <div class="stat-label">unique IPs
-        <span class="stat-tip"><i class="stat-tip-icon" title="Distinct anonymized source addresses seen across all sessions">?</i></span>
+        <span class="stat-tip"><i class="stat-tip-icon" data-tip="Distinct anonymized source addresses seen across all sessions">?</i></span>
       </div>
     </div>
     <div class="stat">
       <div class="stat-value" id="s-logins">—</div>
       <div class="stat-label">login attempts
-        <span class="stat-tip"><i class="stat-tip-icon" title="Total credential pairs tried — both failed and successful auths">?</i></span>
+        <span class="stat-tip"><i class="stat-tip-icon" data-tip="Total credential pairs tried — both failed and successful auths">?</i></span>
       </div>
     </div>
     <div class="stat">
       <div class="stat-value" id="s-cmds">—</div>
       <div class="stat-label">commands
-        <span class="stat-tip"><i class="stat-tip-icon" title="Shell commands run by attackers inside the captured honeypot session">?</i></span>
+        <span class="stat-tip"><i class="stat-tip-icon" data-tip="Shell commands run by attackers inside the captured honeypot session">?</i></span>
       </div>
     </div>
     <div class="stat">
       <div class="stat-value" id="s-uploads">—</div>
       <div class="stat-label">file uploads
-        <span class="stat-tip"><i class="stat-tip-icon" title="Files transferred to the honeypot via SFTP — malware, scripts, binaries">?</i></span>
+        <span class="stat-tip"><i class="stat-tip-icon" data-tip="Files transferred to the honeypot via SFTP — malware, scripts, binaries">?</i></span>
       </div>
     </div>
   </div>
@@ -790,6 +808,47 @@ setInterval(() => {
   poll(false);
   startCountdown();
 }, POLL_MS);
+</script>
+<!-- Floating tooltip -->
+<div id="floating-tip"></div>
+
+<script>
+// ── Floating tooltip ──────────────────────────────────────────────────────────
+const tip = document.getElementById('floating-tip');
+const MARGIN = 12; // px from cursor
+
+document.querySelectorAll('[data-tip]').forEach(el => {
+  el.addEventListener('mouseenter', e => {
+    tip.textContent = el.dataset.tip;
+    tip.style.opacity = '1';
+    position(e);
+  });
+  el.addEventListener('mousemove', position);
+  el.addEventListener('mouseleave', () => {
+    tip.style.opacity = '0';
+  });
+});
+
+function position(e) {
+  const tw = tip.offsetWidth;
+  const th = tip.offsetHeight;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+
+  // Default: above and centered on cursor
+  let x = e.clientX - tw / 2;
+  let y = e.clientY - th - MARGIN;
+
+  // Flip below if too close to top
+  if (y < 8) y = e.clientY + MARGIN;
+
+  // Keep within horizontal bounds
+  if (x < 8) x = 8;
+  if (x + tw > vw - 8) x = vw - tw - 8;
+
+  tip.style.left = x + 'px';
+  tip.style.top  = y + 'px';
+}
 </script>
 </body>
 </html>
