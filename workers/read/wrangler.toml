@@ -6,6 +6,11 @@ compatibility_date = "2025-01-01"
 binding = "EVENTS"
 id      = "c68aceb05a0e4c8bacda7cc2bafc829b"
 
+[[d1_databases]]
+binding = "DB"
+database_name = "bathysphere"
+database_id = "accaedaa-1f20-422b-b955-cfb6e7c7df86"
+
 # [[routes]]
 # pattern = "bathysphere.tech/events"
 # zone_name = "bathysphere.tech"

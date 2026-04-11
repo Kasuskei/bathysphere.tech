@@ -516,7 +516,7 @@ async function handleIngest(request, env) {
     });
   }
 
-  // ── Read existing, append, trim ───────────────────────────────────────────
+  // ── Write to KV (rolling window for live feed) ───────────────────────────
   const existing = JSON.parse(
     (await env.EVENTS.get(KV_KEY)) ?? "[]"
   );
@@ -528,10 +528,68 @@ async function handleIngest(request, env) {
 
   await env.EVENTS.put(KV_KEY, JSON.stringify(trimmed));
 
+  // ── Write to D1 (permanent archive) ──────────────────────────────────────
+  if (env.DB) {
+    await writeToD1(incoming, env.DB);
+  }
+
   return new Response(
     JSON.stringify({ stored: incoming.length, total: trimmed.length }),
     { headers: { "Content-Type": "application/json" } }
   );
+}
+
+/**
+ * Insert a batch of normalized events into D1.
+ * Uses INSERT OR IGNORE to handle duplicate IDs gracefully.
+ */
+async function writeToD1(events, db) {
+  // D1 batch API — execute multiple statements in one round trip
+  const stmts = events.map(e =>
+    db.prepare(`
+      INSERT OR IGNORE INTO events (
+        id, ts, eventid, session, src_ip, protocol, sensor,
+        geo_country, geo_city,
+        dst_port, duration, version,
+        username, password_hash, password_len,
+        input, filename, shasum, url,
+        attack_id, attack_name, attack_tactic,
+        iocs, abuse_score
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+      e.id,
+      e.ts,
+      e.eventid,
+      e.session ?? null,
+      e.src_ip ?? null,
+      e.protocol ?? 'ssh',
+      e.sensor ?? 'honeypot-pi',
+      e.geo?.country ?? null,
+      e.geo?.city ?? null,
+      e.dst_port ?? null,
+      e.duration ?? null,
+      e.version ?? null,
+      e.username ?? null,
+      e.password_hash ?? null,
+      e.password_len ?? null,
+      e.input ?? null,
+      e.filename ?? null,
+      e.shasum ?? null,
+      e.url ?? null,
+      e.attack?.id ?? null,
+      e.attack?.name ?? null,
+      e.attack?.tactic ?? null,
+      e.iocs ? JSON.stringify(e.iocs) : null,
+      e.iocs?.find(i => i.type === 'reputation')?.score ?? null
+    )
+  );
+
+  try {
+    await db.batch(stmts);
+  } catch (err) {
+    // Log but don't fail the ingest — KV write already succeeded
+    console.error('D1 write failed:', err.message);
+  }
 }
 
 export default {
