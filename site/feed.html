@@ -213,7 +213,7 @@ nav {
 /* ── Column headers ── */
 .feed-cols {
   display: grid;
-  grid-template-columns: 148px 52px 110px 110px 200px 1fr 160px;
+  grid-template-columns: 148px 52px 110px 110px 200px 1fr 160px 160px;
   gap: 0; padding: 0.5rem 1.5rem;
   border-bottom: 1px solid var(--rim);
   background: rgba(0,0,0,0.2); flex-shrink: 0;
@@ -227,7 +227,7 @@ nav {
 
 .feed-row {
   display: grid;
-  grid-template-columns: 148px 52px 110px 110px 200px 1fr 160px;
+  grid-template-columns: 148px 52px 110px 110px 200px 1fr 160px 160px;
   gap: 0; padding: 0.5rem 1.5rem;
   border-bottom: 1px solid rgba(15,24,34,0.7);
   align-items: center; transition: background 0.1s; cursor: default;
@@ -250,6 +250,18 @@ nav {
 .cell-ip    { font-size: 12px; color: var(--glow); font-variant-numeric: tabular-nums; }
 .cell-sensor{ font-size: 11px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cell-geo   { font-size: 11px; color: var(--text-mid); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cell-ioc   { display: flex; flex-direction: column; gap: 2px; overflow: hidden; }
+
+.ioc-tag {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 9px; letter-spacing: 0.05em; padding: 1px 5px;
+  border-radius: 2px; white-space: nowrap; max-width: 155px;
+  overflow: hidden; text-overflow: ellipsis; border: 1px solid transparent;
+}
+.ioc-critical { color: #ff4444; border-color: rgba(255,68,68,0.3);  background: rgba(255,68,68,0.08); }
+.ioc-high     { color: #f0a94a; border-color: rgba(240,169,74,0.3); background: rgba(240,169,74,0.08); }
+.ioc-medium   { color: #7ab4dc; border-color: rgba(122,180,220,0.3);background: rgba(122,180,220,0.08); }
+.ioc-low      { color: #4a6878; border-color: rgba(74,104,120,0.3); background: rgba(74,104,120,0.08); }
 
 .cell-event { display: flex; align-items: center; gap: 8px; }
 .event-tag {
@@ -477,6 +489,7 @@ nav {
         <div class="col-head">sensor</div>
         <div class="col-head">location</div>
         <div class="col-head">event</div>
+        <div class="col-head">IoC</div>
         <div class="col-head">technique</div>
       </div>
 
@@ -599,7 +612,12 @@ function eventDetail(e) {
   return '';
 }
 
-function attackTag(attack) {
+function iocTags(iocs) {
+  if (!iocs || iocs.length === 0) return '';
+  return iocs.slice(0, 2).map(ioc =>
+    `<span class="ioc-tag ioc-${escHtml(ioc.severity ?? 'low')}" title="${escHtml(ioc.label)}">${escHtml(ioc.label)}</span>`
+  ).join('');
+}
   if (!attack) return '';
   const tactic = attack.tactic ?? '';
   const cls = 'tac-' + tactic;
@@ -645,6 +663,7 @@ function makeRow(e, isNew = false) {
       <span class="event-tag ${ec}">${eventLabel(e.eventid)}</span>
       <span class="cell-detail">${eventDetail(e)}</span>
     </div>
+    <div class="cell-ioc">${iocTags(e.iocs)}</div>
     <div>${attackTag(e.attack)}</div>
   `;
   return row;

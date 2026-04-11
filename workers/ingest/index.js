@@ -184,13 +184,169 @@ function classifyAttack(event) {
   return null;
 }
 
-const MAX_EVENTS = 10_000;   // rolling window size kept in KV
-const KV_KEY     = "events"; // single key storing the JSON array
-const GEO_TTL    = 60 * 60 * 24 * 30; // cache geo results for 30 days
+const MAX_EVENTS   = 10_000;
+const KV_KEY       = "events";
+const GEO_TTL      = 60 * 60 * 24 * 30;  // 30 days
+const ABUSE_TTL    = 60 * 60 * 24 * 7;   // 7 days — abuse scores change more often
 
 // IPs we never want to appear in the feed even anonymized
-// (RFC 5737 documentation ranges, loopback, your own Pi's LAN IP)
-const BLOCKLIST  = ["192.168.", "127.", "10.", "172.16.", "::1"];
+const BLOCKLIST = ["192.168.", "127.", "10.", "172.16.", "::1"];
+
+// ── Local IoC signatures ───────────────────────────────────────────────────
+// Each rule checks a normalized event and returns an IoC object if matched.
+// { type, label, severity }
+//   severity: "critical" | "high" | "medium" | "low"
+
+const IOC_SIGNATURES = [
+  // Known Mirai credential pair
+  {
+    match: e => (e.eventid === 'cowrie.login.failed' || e.eventid === 'cowrie.login.success') &&
+      e.username === '345gs5662d34',
+    ioc: { type: 'credential', label: 'Mirai botnet credential', severity: 'high' },
+  },
+  // mdrfckr SSH backdoor key
+  {
+    match: e => e.eventid === 'cowrie.command.input' &&
+      /mdrfckr/.test(e.input ?? ''),
+    ioc: { type: 'persistence', label: 'mdrfckr SSH backdoor key', severity: 'critical' },
+  },
+  // Redtail cryptominer
+  {
+    match: e => (e.eventid === 'cowrie.session.file_upload' || e.eventid === 'cowrie.session.file_download') &&
+      /redtail/i.test(e.filename ?? e.url ?? ''),
+    ioc: { type: 'malware', label: 'Redtail cryptominer', severity: 'critical' },
+  },
+  // Generic cryptominer upload
+  {
+    match: e => e.eventid === 'cowrie.session.file_upload' &&
+      /\.arm[0-9]|\.x86_64|\.i686|\.mips/.test(e.filename ?? ''),
+    ioc: { type: 'malware', label: 'Multi-arch malware dropper', severity: 'critical' },
+  },
+  // Telegram credential exfiltration
+  {
+    match: e => e.eventid === 'cowrie.command.input' &&
+      /TelegramDesktop|tdata/.test(e.input ?? ''),
+    ioc: { type: 'exfiltration', label: 'Telegram session theft attempt', severity: 'high' },
+  },
+  // Hidden directory dropper
+  {
+    match: e => e.eventid === 'cowrie.command.input' &&
+      /chmod\s+\+x\s+\.\/\.[^\/]+\//.test(e.input ?? ''),
+    ioc: { type: 'malware', label: 'Hidden directory dropper', severity: 'high' },
+  },
+  // SSH authorized_keys injection
+  {
+    match: e => e.eventid === 'cowrie.command.input' &&
+      /authorized_keys/.test(e.input ?? ''),
+    ioc: { type: 'persistence', label: 'SSH key injection', severity: 'high' },
+  },
+  // Miner process check — attacker looking for existing miners
+  {
+    match: e => e.eventid === 'cowrie.command.input' &&
+      /grep.*[Mm]iner/.test(e.input ?? ''),
+    ioc: { type: 'recon', label: 'Cryptominer recon', severity: 'medium' },
+  },
+  // Solana node targeting
+  {
+    match: e => (e.eventid === 'cowrie.login.failed' || e.eventid === 'cowrie.login.success') &&
+      /sol|solana/.test(e.username ?? ''),
+    ioc: { type: 'credential', label: 'Solana node targeting', severity: 'medium' },
+  },
+  // TCP tunnel / proxy abuse
+  {
+    match: e => e.eventid === 'cowrie.direct-tcpip.request',
+    ioc: { type: 'c2', label: 'TCP tunnel / proxy attempt', severity: 'medium' },
+  },
+  // ZGrab scanner
+  {
+    match: e => e.eventid === 'cowrie.client.version' &&
+      /ZGrab/i.test(e.version ?? ''),
+    ioc: { type: 'scanner', label: 'ZGrab internet scanner', severity: 'low' },
+  },
+  // clean.sh — typically used to remove competing malware
+  {
+    match: e => e.eventid === 'cowrie.session.file_upload' &&
+      /clean\.sh/i.test(e.filename ?? ''),
+    ioc: { type: 'malware', label: 'Competing malware cleanup script', severity: 'high' },
+  },
+];
+
+/**
+ * Run local signature matching against a normalized event.
+ * Returns array of matched IoC objects (may be empty).
+ */
+function matchLocalIocs(event) {
+  const matched = [];
+  for (const sig of IOC_SIGNATURES) {
+    try {
+      if (sig.match(event)) matched.push(sig.ioc);
+    } catch { /* skip */ }
+  }
+  return matched;
+}
+
+// ── AbuseIPDB lookup ───────────────────────────────────────────────────────
+
+/**
+ * Look up an IP's abuse confidence score from AbuseIPDB.
+ * Caches results in KV for 7 days.
+ * Returns { score, categories } or null on failure.
+ * Raw IP is used for lookup but never stored.
+ */
+async function abuseIpLookup(ip, env) {
+  if (!env.ABUSEIPDB_KEY) return null;
+  const cacheKey = `abuse:${ip}`;
+  try {
+    const cached = await env.EVENTS.get(cacheKey);
+    if (cached) return JSON.parse(cached);
+
+    const resp = await fetch(
+      `https://api.abuseipdb.com/api/v2/check?ipAddress=${encodeURIComponent(ip)}&maxAgeInDays=90`,
+      {
+        headers: {
+          'Key': env.ABUSEIPDB_KEY,
+          'Accept': 'application/json',
+        },
+        signal: AbortSignal.timeout(3000),
+      }
+    );
+    if (!resp.ok) return null;
+
+    const data = await resp.json();
+    const d = data?.data;
+    if (!d) return null;
+
+    const result = {
+      score:      d.abuseConfidenceScore ?? 0,
+      reports:    d.totalReports ?? 0,
+      categories: d.reports?.slice(0,3).map(r => r.categories).flat().slice(0,5) ?? [],
+    };
+    env.EVENTS.put(cacheKey, JSON.stringify(result), { expirationTtl: ABUSE_TTL });
+    return result;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Batch AbuseIPDB + geo lookup for all unique IPs in a batch.
+ * Returns Map of raw_ip -> { geo, abuse }
+ */
+async function batchEnrich(rawIps, env) {
+  const unique = [...new Set(rawIps.filter(ip => ip && !isBlocked(ip)))];
+  const [geoResults, abuseResults] = await Promise.all([
+    Promise.all(unique.map(ip => geoLookup(ip, env))),
+    Promise.all(unique.map(ip => abuseIpLookup(ip, env))),
+  ]);
+  const map = new Map();
+  unique.forEach((ip, i) => {
+    map.set(ip, {
+      geo:   geoResults[i]   ?? null,
+      abuse: abuseResults[i] ?? null,
+    });
+  });
+  return map;
+}
 
 /**
  * Look up geo data for a raw IP address.
@@ -222,17 +378,7 @@ async function geoLookup(ip, env) {
   }
 }
 
-/**
- * Build a geo cache for all unique raw IPs in a batch.
- * Returns a Map of raw_ip -> { country, city }.
- */
-async function batchGeoLookup(rawIps, env) {
-  const unique = [...new Set(rawIps.filter(ip => ip && !isBlocked(ip)))];
-  const results = await Promise.all(unique.map(ip => geoLookup(ip, env)));
-  const map = new Map();
-  unique.forEach((ip, i) => { if (results[i]) map.set(ip, results[i]); });
-  return map;
-}
+
 
 /**
  * Anonymize an IP address:
@@ -257,9 +403,9 @@ function isBlocked(ip) {
 
 /**
  * Normalize a raw Cowrie event into what we store and serve.
- * Drops fields we don't need, anonymizes IPs, attaches geo.
+ * Drops fields we don't need, anonymizes IPs, attaches geo + IoCs.
  */
-function normalize(raw, geo) {
+function normalize(raw, enrichment) {
   if (isBlocked(raw.src_ip)) return null;
 
   const anon_ip = anonymize(raw.src_ip);
@@ -273,8 +419,7 @@ function normalize(raw, geo) {
     src_ip:    anon_ip,
     protocol:  raw.protocol ?? "ssh",
     sensor:    raw.sensor ?? "honeypot-pi",
-    // Geo attached here — raw IP never stored
-    geo:       geo ?? null,
+    geo:       enrichment?.geo ?? null,
   };
 
   // Attach event-type-specific fields
@@ -283,15 +428,12 @@ function normalize(raw, geo) {
     case "cowrie.session.connect":
       event = { ...base, dst_port: raw.dst_port };
       break;
-
     case "cowrie.session.closed":
       event = { ...base, duration: parseFloat(raw.duration) };
       break;
-
     case "cowrie.client.version":
       event = { ...base, version: raw.version };
       break;
-
     case "cowrie.login.success":
     case "cowrie.login.failed":
       event = {
@@ -303,20 +445,16 @@ function normalize(raw, geo) {
         password_len: raw.password?.length ?? null,
       };
       break;
-
     case "cowrie.command.input":
     case "cowrie.command.failed":
       event = { ...base, input: raw.input };
       break;
-
     case "cowrie.session.file_upload":
       event = { ...base, filename: raw.filename, shasum: raw.shasum };
       break;
-
     case "cowrie.session.file_download":
       event = { ...base, url: raw.url, shasum: raw.shasum };
       break;
-
     default:
       event = base;
   }
@@ -324,6 +462,22 @@ function normalize(raw, geo) {
   // ── ATT&CK classification ─────────────────────────────────────────────────
   const technique = classifyAttack(event);
   if (technique) event.attack = technique;
+
+  // ── IoC enrichment ────────────────────────────────────────────────────────
+  const localIocs = matchLocalIocs(event);
+
+  // Add AbuseIPDB as an IoC if score is significant (>25)
+  const abuse = enrichment?.abuse;
+  if (abuse && abuse.score > 25) {
+    localIocs.push({
+      type:     'reputation',
+      label:    `AbuseIPDB ${abuse.score}% confidence`,
+      severity: abuse.score >= 75 ? 'critical' : abuse.score >= 50 ? 'high' : 'medium',
+      reports:  abuse.reports,
+    });
+  }
+
+  if (localIocs.length > 0) event.iocs = localIocs;
 
   return event;
 }
@@ -347,13 +501,13 @@ async function handleIngest(request, env) {
     return new Response("Expected { events: [...] }", { status: 400 });
   }
 
-  // ── Geo lookup (batch, raw IPs, before anonymization) ─────────────────────
+  // ── Enrichment (geo + AbuseIPDB, batch, raw IPs before anonymization) ──────
   const rawIps = body.events.map(e => e.src_ip).filter(Boolean);
-  const geoMap = await batchGeoLookup(rawIps, env);
+  const enrichMap = await batchEnrich(rawIps, env);
 
   // ── Normalize ─────────────────────────────────────────────────────────────
   const incoming = body.events
-    .map(e => normalize(e, geoMap.get(e.src_ip) ?? null))
+    .map(e => normalize(e, enrichMap.get(e.src_ip) ?? null))
     .filter(Boolean);
 
   if (incoming.length === 0) {
