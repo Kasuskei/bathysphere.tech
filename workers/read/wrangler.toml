@@ -4,7 +4,7 @@ compatibility_date = "2025-01-01"
 
 [[kv_namespaces]]
 binding = "EVENTS"
-id      = ""
+id      = "c68aceb05a0e4c8bacda7cc2bafc829b"
 
 # [[routes]]
 # pattern = "bathysphere.tech/events"
