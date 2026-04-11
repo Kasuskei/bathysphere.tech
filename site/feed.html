@@ -212,7 +212,7 @@ nav {
 /* ── Column headers ── */
 .feed-cols {
   display: grid;
-  grid-template-columns: 72px 52px 100px 110px 1fr 140px;
+  grid-template-columns: 148px 52px 100px 110px 1fr 140px;
   gap: 0; padding: 0.5rem 1.5rem;
   border-bottom: 1px solid var(--rim);
   background: rgba(0,0,0,0.2);
@@ -226,7 +226,7 @@ nav {
 
 .feed-row {
   display: grid;
-  grid-template-columns: 72px 52px 100px 110px 1fr 140px;
+  grid-template-columns: 148px 52px 100px 110px 1fr 140px;
   gap: 0; padding: 0.45rem 1.5rem;
   border-bottom: 1px solid rgba(15,24,34,0.7);
   align-items: center; transition: background 0.1s; cursor: default;
@@ -536,7 +536,9 @@ let countdownTimer;
 function fmt(ts) {
   if (!ts) return '—';
   const d = new Date(ts);
-  return d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const date = d.toLocaleDateString('en-CA'); // YYYY-MM-DD
+  const time = d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  return `${date} ${time}`;
 }
 
 function eventClass(eventid) {
