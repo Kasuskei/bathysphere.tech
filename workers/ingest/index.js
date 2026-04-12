@@ -718,8 +718,7 @@ export default {
       );
     }
 
-    // ── Backfill endpoint — accepts pre-normalized events directly ────────────
-    // Used by geo_backfill.js to replace KV contents with geo-enriched events
+    // ── Backfill endpoint — accepts pre-normalized events, writes to D1 ─────────
     if (url.pathname === "/backfill" && request.method === "POST") {
       const secret = request.headers.get("X-Bathysphere-Secret");
       if (!secret || secret !== env.BATHYSPHERE_SECRET) {
@@ -732,7 +731,13 @@ export default {
       if (!Array.isArray(body?.events)) {
         return new Response("Expected { events: [...] }", { status: 400 });
       }
-      await env.EVENTS.put(KV_KEY, JSON.stringify(body.events));
+
+      if (!env.DB) {
+        return new Response("D1 not configured", { status: 503 });
+      }
+
+      await writeToD1(body.events, env.DB);
+
       return new Response(
         JSON.stringify({ stored: body.events.length }),
         { headers: { "Content-Type": "application/json" } }

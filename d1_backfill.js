@@ -21,7 +21,7 @@ const crypto   = require('crypto');
 // ── Config ────────────────────────────────────────────────────────────────────
 const LOG_FILE      = path.join(__dirname, 'logs', 'cowrie_full.json');
 const STATE_FILE    = path.join(__dirname, 'd1_backfill_state.json');
-const INGEST_URL    = 'https://bathysphere-ingest.kasuskei.workers.dev/ingest-d1';
+const INGEST_URL    = 'https://bathysphere-ingest.kasuskei.workers.dev/backfill';
 const SHARED_SECRET = process.env.SHARED_SECRET;
 const ABUSEIPDB_KEY = process.env.ABUSEIPDB_KEY;
 const BATCH_SIZE    = 50;    // events per POST to ingest Worker
