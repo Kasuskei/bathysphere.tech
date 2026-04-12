@@ -836,6 +836,7 @@ function buildDetailPanel(e) {
 }
 
 // ── Render a single row ───────────────────────────────────────────────────────
+function makeRow(e, isNew = false) {
   const row = document.createElement('div');
   row.className = 'feed-row' + (isNew ? ' new' : '');
   row.dataset.eventid = e.eventid;
