@@ -347,11 +347,67 @@ async function batchEnrich(rawIps, env) {
 }
 
 /**
- * Look up geo data for a raw IP address.
+ * Look up geo + network data for a raw IP address.
  * Checks KV cache first — only calls ip-api.com on a cache miss.
- * Returns { country, city } or null on failure.
- * Raw IP is never stored — only the location result.
+ * Returns { country, city, asn, isp, rdns, cloud } or null on failure.
+ * Raw IP is never stored — only the enrichment result.
  */
+
+// Known cloud provider ASNs — expanded as needed
+const CLOUD_ASNS = new Set([
+  // AWS
+  14618, 16509,
+  // Google / GCP
+  15169, 396982,
+  // Microsoft / Azure
+  8075, 8069,
+  // DigitalOcean
+  14061,
+  // Linode / Akamai
+  63949,
+  // Vultr
+  20473,
+  // Hetzner
+  24940,
+  // OVH
+  16276,
+  // Cloudflare
+  13335,
+  // Shodan
+  398324,
+  // Censys
+  398705,
+]);
+
+// Known cloud provider ASN name patterns
+const CLOUD_PATTERNS = [
+  { pattern: /amazon|aws/i,        name: 'AWS' },
+  { pattern: /google|gcp/i,        name: 'GCP' },
+  { pattern: /microsoft|azure/i,   name: 'Azure' },
+  { pattern: /digitalocean/i,      name: 'DigitalOcean' },
+  { pattern: /linode|akamai/i,     name: 'Linode' },
+  { pattern: /vultr/i,             name: 'Vultr' },
+  { pattern: /hetzner/i,           name: 'Hetzner' },
+  { pattern: /ovh/i,               name: 'OVH' },
+  { pattern: /cloudflare/i,        name: 'Cloudflare' },
+  { pattern: /shodan/i,            name: 'Shodan' },
+  { pattern: /censys/i,            name: 'Censys' },
+  { pattern: /alibaba/i,           name: 'Alibaba Cloud' },
+  { pattern: /tencent/i,           name: 'Tencent Cloud' },
+  { pattern: /huawei/i,            name: 'Huawei Cloud' },
+];
+
+function detectCloud(asn, ispName) {
+  if (asn && CLOUD_ASNS.has(asn)) {
+    const match = CLOUD_PATTERNS.find(p => p.pattern.test(ispName ?? ''));
+    return match?.name ?? 'Cloud/VPS';
+  }
+  for (const { pattern, name } of CLOUD_PATTERNS) {
+    if (pattern.test(ispName ?? '')) return name;
+  }
+  return null;
+}
+
 async function geoLookup(ip, env) {
   const cacheKey = `geo:${ip}`;
   try {
@@ -359,7 +415,7 @@ async function geoLookup(ip, env) {
     if (cached) return JSON.parse(cached);
 
     const resp = await fetch(
-      `http://ip-api.com/json/${ip}?fields=status,country,city`,
+      `http://ip-api.com/json/${ip}?fields=status,country,city,as,isp,reverse`,
       { signal: AbortSignal.timeout(2000) }
     );
     if (!resp.ok) return null;
@@ -367,8 +423,20 @@ async function geoLookup(ip, env) {
     const data = await resp.json();
     if (data.status !== 'success') return null;
 
-    const geo = { country: data.country ?? null, city: data.city ?? null };
-    // Cache the result — fire and forget, don't block ingest
+    // Parse ASN number from "AS14061 DigitalOcean" format
+    const asnMatch = (data.as ?? '').match(/^AS(\d+)/);
+    const asnNum = asnMatch ? parseInt(asnMatch[1]) : null;
+    const ispName = data.isp ?? null;
+
+    const geo = {
+      country: data.country ?? null,
+      city:    data.city    ?? null,
+      asn:     data.as      ?? null,
+      isp:     ispName,
+      rdns:    data.reverse && data.reverse !== '' ? data.reverse : null,
+      cloud:   detectCloud(asnNum, ispName),
+    };
+
     env.EVENTS.put(cacheKey, JSON.stringify(geo), { expirationTtl: GEO_TTL });
     return geo;
   } catch {
@@ -542,22 +610,21 @@ async function handleIngest(request, env) {
  * Uses INSERT OR IGNORE to handle duplicate IDs gracefully.
  */
 async function writeToD1(events, db) {
-  // Helper to ensure no undefined values reach D1
   const n = v => (v === undefined ? null : v ?? null);
 
   const stmts = events
-    .filter(e => e.id && e.ts && e.eventid) // skip malformed events
+    .filter(e => e.id && e.ts && e.eventid)
     .map(e =>
       db.prepare(`
         INSERT OR IGNORE INTO events (
           id, ts, eventid, session, src_ip, protocol, sensor,
-          geo_country, geo_city,
+          geo_country, geo_city, geo_asn, geo_isp, geo_rdns, geo_cloud,
           dst_port, duration, version,
           username, password_hash, password_len,
           input, filename, shasum, url,
           attack_id, attack_name, attack_tactic,
           iocs, abuse_score
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).bind(
         n(e.id),
         n(e.ts),
@@ -568,6 +635,10 @@ async function writeToD1(events, db) {
         n(e.sensor)   ?? 'honeypot-pi',
         n(e.geo?.country),
         n(e.geo?.city),
+        n(e.geo?.asn),
+        n(e.geo?.isp),
+        n(e.geo?.rdns),
+        n(e.geo?.cloud),
         n(e.dst_port),
         n(e.duration),
         n(e.version),
@@ -589,13 +660,12 @@ async function writeToD1(events, db) {
   if (stmts.length === 0) return;
 
   try {
-    // D1 batch limit is 100 statements — chunk if needed
     for (let i = 0; i < stmts.length; i += 100) {
       await db.batch(stmts.slice(i, i + 100));
     }
   } catch (err) {
     console.error('D1 write failed:', err.message);
-    throw err; // re-throw so handleIngest can return proper error
+    throw err;
   }
 }
 

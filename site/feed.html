@@ -563,6 +563,11 @@ nav {
       </div>
 
       <div class="sidebar-section">
+        <div class="sidebar-title">Top ASNs</div>
+        <div id="asn-list"></div>
+      </div>
+
+      <div class="sidebar-section">
         <div class="sidebar-title">Top credentials</div>
         <div id="cred-list"></div>
       </div>
@@ -803,12 +808,34 @@ function buildDetailPanel(e) {
       ${attackHtml}
     </div>`;
 
-  panel.innerHTML = g1 + g2 + g3;
+  // Network group
+  const g4 = `
+    <div class="detail-group">
+      <div class="detail-group-title">Network</div>
+      <div class="detail-field">
+        <div class="detail-field-label">ASN</div>
+        <div class="detail-field-value">${escHtml(e.geo?.asn ?? '—')}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-field-label">ISP</div>
+        <div class="detail-field-value">${escHtml(e.geo?.isp ?? '—')}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-field-label">rDNS</div>
+        <div class="detail-field-value">${escHtml(e.geo?.rdns ?? '—')}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-field-label">Cloud / Provider</div>
+        <div class="detail-field-value">${escHtml(e.geo?.cloud ?? '—')}</div>
+      </div>
+    </div>`;
+
+  panel.innerHTML = g1 + g2 + g3 + g4;
+  panel.style.gridTemplateColumns = 'repeat(4, 1fr)';
   return panel;
 }
 
 // ── Render a single row ───────────────────────────────────────────────────────
-function makeRow(e, isNew = false) {
   const row = document.createElement('div');
   row.className = 'feed-row' + (isNew ? ' new' : '');
   row.dataset.eventid = e.eventid;
@@ -908,6 +935,18 @@ function updateSidebar(events) {
       <div class="tactic-bar-bg"><div class="tactic-bar-fill" style="width:${Math.round(n/tacMax*100)}%"></div></div>
       <div class="tactic-count">${n}</div>
     </div>`).join('');
+
+  // Top ASNs
+  const asns = {};
+  events.forEach(e => {
+    if (e.geo?.asn) asns[e.geo.asn] = (asns[e.geo.asn] ?? 0) + 1;
+  });
+  const asnSorted = Object.entries(asns).sort((a,b) => b[1]-a[1]).slice(0, 6);
+  document.getElementById('asn-list').innerHTML = asnSorted.map(([asn, n]) => `
+    <div class="cred-row">
+      <span class="cred-user" style="min-width:unset;flex:1;font-size:10px">${escHtml(asn)}</span>
+      <span class="cred-n">${n}</span>
+    </div>`).join('') || '<div style="font-size:10px;color:var(--text-dim)">No data yet</div>';
 
   // Top credentials
   const creds = {};

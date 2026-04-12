@@ -40,7 +40,16 @@ function rowToEvent(row) {
     session: row.session, src_ip: row.src_ip,
     protocol: row.protocol, sensor: row.sensor,
   };
-  if (row.geo_country || row.geo_city) e.geo = { country: row.geo_country, city: row.geo_city };
+  if (row.geo_country || row.geo_city || row.geo_asn || row.geo_isp || row.geo_rdns || row.geo_cloud) {
+    e.geo = {
+      country: row.geo_country,
+      city:    row.geo_city,
+      asn:     row.geo_asn,
+      isp:     row.geo_isp,
+      rdns:    row.geo_rdns,
+      cloud:   row.geo_cloud,
+    };
+  }
   if (row.dst_port)      e.dst_port      = row.dst_port;
   if (row.duration)      e.duration      = row.duration;
   if (row.version)       e.version       = row.version;
