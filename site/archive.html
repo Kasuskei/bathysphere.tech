@@ -111,7 +111,6 @@ nav {
   display: flex; align-items: flex-start; justify-content: space-between;
   margin-bottom: 2rem; gap: 2rem;
 }
-.archive-title-group {}
 .archive-label {
   font-size: 10px; text-transform: uppercase; letter-spacing: 0.2em;
   color: var(--text-dim); margin-bottom: 0.75rem;
@@ -169,10 +168,11 @@ nav {
   background: var(--surface);
 }
 
+/* Grid: time | proto | ip | sensor | location | event | ioc | technique */
 .table-cols {
   display: grid;
-  grid-template-columns: 148px 52px 110px 110px 200px 1fr 160px 160px;
-  gap: 0; padding: 0.5rem 1.5rem;
+  grid-template-columns: 148px 48px 108px 100px 180px 1fr 130px 130px;
+  gap: 0; padding: 0.5rem 1rem;
   border-bottom: 1px solid var(--rim);
   background: rgba(0,0,0,0.2);
 }
@@ -182,70 +182,88 @@ nav {
 
 .table-row {
   display: grid;
-  grid-template-columns: 148px 52px 110px 110px 200px 1fr 160px 160px;
-  gap: 0; padding: 0.5rem 1.5rem;
+  grid-template-columns: 148px 48px 108px 100px 180px 1fr 130px 130px;
+  gap: 0; padding: 0.4rem 1rem;
   border-bottom: 1px solid rgba(15,24,34,0.7);
-  align-items: center; transition: background 0.1s; cursor: pointer;
+  align-items: start; /* start so tall ioc cells don't stretch others */
+  transition: background 0.1s; cursor: pointer;
 }
 .table-row:hover { background: var(--glass); }
 .table-row:last-child { border-bottom: none; }
 .table-row.expanded { background: var(--glass); border-bottom: none; }
 
-/* ── Cell styles (same as feed) ── */
-.cell-time   { font-size: 12px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
-.cell-proto  { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
-.cell-ip     { font-size: 12px; color: var(--glow); font-variant-numeric: tabular-nums; }
-.cell-sensor { font-size: 11px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.cell-geo    { font-size: 11px; color: var(--text-mid); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.cell-event  { display: flex; align-items: center; gap: 8px; }
-.cell-detail { font-size: 11px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 400px; }
-.cell-ioc    { display: flex; flex-direction: column; gap: 2px; overflow: hidden; }
+/* ── Cell styles ── */
+.cell-time   { font-size: 11px; color: var(--text-dim); font-variant-numeric: tabular-nums; padding-top: 2px; }
+.cell-proto  { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; padding-top: 2px; }
+.cell-ip     { font-size: 12px; color: var(--glow); font-variant-numeric: tabular-nums; padding-top: 2px; }
+.cell-sensor { font-size: 11px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-top: 2px; }
+.cell-geo    { font-size: 11px; color: var(--text-mid); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-top: 2px; }
+.cell-event  { display: flex; align-items: flex-start; gap: 6px; padding-top: 2px; min-width: 0; }
+.cell-detail { font-size: 11px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 
-.event-tag { font-size: 11px; font-weight: 500; letter-spacing: 0.04em; white-space: nowrap; }
-.event-tag.connect   { color: var(--text-dim); }
-.event-tag.login-ok  { color: var(--bio); }
-.event-tag.login-fail{ color: var(--red); }
-.event-tag.command   { color: var(--glow); }
-.event-tag.upload    { color: var(--amber); }
-.event-tag.download  { color: var(--amber); }
-.event-tag.tunnel    { color: var(--coral); }
-.event-tag.other     { color: var(--text-mid); }
+/* IoC cell: wraps tags onto multiple lines, never overflows */
+.cell-ioc {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  overflow: hidden;
+}
+
+/* Technique cell */
+.cell-attack {
+  overflow: hidden;
+}
+
+.event-tag { font-size: 11px; font-weight: 500; letter-spacing: 0.04em; white-space: nowrap; flex-shrink: 0; }
+.event-tag.connect    { color: var(--text-dim); }
+.event-tag.login-ok   { color: var(--bio); }
+.event-tag.login-fail { color: var(--red); }
+.event-tag.command    { color: var(--glow); }
+.event-tag.upload     { color: var(--amber); }
+.event-tag.download   { color: var(--amber); }
+.event-tag.tunnel     { color: var(--coral); }
+.event-tag.other      { color: var(--text-mid); }
 
 .ioc-tag {
   display: inline-flex; align-items: center; gap: 3px;
-  font-size: 9px; letter-spacing: 0.06em; padding: 2px 6px;
+  font-size: 9px; letter-spacing: 0.06em; padding: 2px 5px;
   border-radius: 2px; white-space: nowrap; border: 1px solid transparent;
   font-weight: 500; text-transform: uppercase; cursor: default;
+  max-width: 124px; overflow: hidden; text-overflow: ellipsis;
 }
-.ioc-critical { color: #ff4444; border-color: rgba(255,68,68,0.3);  background: rgba(255,68,68,0.08); }
-.ioc-high     { color: #f0a94a; border-color: rgba(240,169,74,0.3); background: rgba(240,169,74,0.08); }
-.ioc-medium   { color: #7ab4dc; border-color: rgba(122,180,220,0.3);background: rgba(122,180,220,0.08); }
-.ioc-low      { color: #4a6878; border-color: rgba(74,104,120,0.3); background: rgba(74,104,120,0.08); }
+.ioc-critical { color: #ff4444; border-color: rgba(255,68,68,0.3);   background: rgba(255,68,68,0.08); }
+.ioc-high     { color: #f0a94a; border-color: rgba(240,169,74,0.3);  background: rgba(240,169,74,0.08); }
+.ioc-medium   { color: #7ab4dc; border-color: rgba(122,180,220,0.3); background: rgba(122,180,220,0.08); }
+.ioc-low      { color: #4a6878; border-color: rgba(74,104,120,0.3);  background: rgba(74,104,120,0.08); }
 
 .attack-tag {
-  display: inline-flex; align-items: center; gap: 4px;
-  font-size: 10px; letter-spacing: 0.06em; padding: 2px 8px;
-  border-radius: 2px; white-space: nowrap; max-width: 155px;
-  overflow: hidden; text-overflow: ellipsis; border: 1px solid transparent;
+  display: inline-flex; align-items: center;
+  font-size: 10px; letter-spacing: 0.06em; padding: 2px 6px;
+  border-radius: 2px; white-space: nowrap;
+  max-width: 124px; overflow: hidden; text-overflow: ellipsis;
+  border: 1px solid transparent;
 }
-.tac-Reconnaissance     { color: var(--tactic-recon);     border-color: rgba(122,180,220,0.2);  background: rgba(122,180,220,0.06); }
-.tac-Initial\ Access    { color: var(--tactic-initial);   border-color: rgba(77,232,176,0.2);   background: rgba(77,232,176,0.06); }
-.tac-Execution          { color: var(--tactic-exec);      border-color: rgba(167,139,250,0.2);  background: rgba(167,139,250,0.06); }
-.tac-Persistence        { color: var(--tactic-persist);   border-color: rgba(240,169,74,0.2);   background: rgba(240,169,74,0.06); }
-.tac-Defense\ Evasion   { color: var(--tactic-defense);   border-color: rgba(224,112,96,0.2);   background: rgba(224,112,96,0.06); }
-.tac-Credential\ Access { color: var(--tactic-cred);      border-color: rgba(224,92,92,0.2);    background: rgba(224,92,92,0.06); }
-.tac-Discovery          { color: var(--tactic-discovery); border-color: rgba(96,184,224,0.2);   background: rgba(96,184,224,0.06); }
-.tac-Collection         { color: var(--tactic-collect);   border-color: rgba(240,201,74,0.2);   background: rgba(240,201,74,0.06); }
-.tac-Command\ and\ Control { color: var(--tactic-c2);     border-color: rgba(224,92,156,0.2);   background: rgba(224,92,156,0.06); }
-.tac-Lateral\ Movement  { color: var(--tactic-lateral);   border-color: rgba(139,224,122,0.2);  background: rgba(139,224,122,0.06); }
-.tac-Impact             { color: var(--tactic-impact);    border-color: rgba(224,92,92,0.25);   background: rgba(224,92,92,0.08); }
+.tac-Reconnaissance       { color: var(--tactic-recon);     border-color: rgba(122,180,220,0.2); background: rgba(122,180,220,0.06); }
+.tac-Initial-Access       { color: var(--tactic-initial);   border-color: rgba(77,232,176,0.2);  background: rgba(77,232,176,0.06); }
+.tac-Execution            { color: var(--tactic-exec);      border-color: rgba(167,139,250,0.2); background: rgba(167,139,250,0.06); }
+.tac-Persistence          { color: var(--tactic-persist);   border-color: rgba(240,169,74,0.2);  background: rgba(240,169,74,0.06); }
+.tac-Defense-Evasion      { color: var(--tactic-defense);   border-color: rgba(224,112,96,0.2);  background: rgba(224,112,96,0.06); }
+.tac-Credential-Access    { color: var(--tactic-cred);      border-color: rgba(224,92,92,0.2);   background: rgba(224,92,92,0.06); }
+.tac-Discovery            { color: var(--tactic-discovery); border-color: rgba(96,184,224,0.2);  background: rgba(96,184,224,0.06); }
+.tac-Collection           { color: var(--tactic-collect);   border-color: rgba(240,201,74,0.2);  background: rgba(240,201,74,0.06); }
+.tac-Command-and-Control  { color: var(--tactic-c2);        border-color: rgba(224,92,156,0.2);  background: rgba(224,92,156,0.06); }
+.tac-Lateral-Movement     { color: var(--tactic-lateral);   border-color: rgba(139,224,122,0.2); background: rgba(139,224,122,0.06); }
+.tac-Impact               { color: var(--tactic-impact);    border-color: rgba(224,92,92,0.25);  background: rgba(224,92,92,0.08); }
 
 /* ── Row detail panel ── */
 .row-detail {
-  grid-column: 1 / -1;
-  background: var(--glass); border-bottom: 1px solid var(--rim);
-  border-top: 1px solid var(--rim-hover); padding: 1rem 1.5rem;
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem;
+  background: var(--glass);
+  border-bottom: 1px solid var(--rim);
+  border-top: 1px solid var(--rim-hover);
+  padding: 1rem 1rem;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
   animation: detailIn 0.15s ease forwards;
 }
 @keyframes detailIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
@@ -293,9 +311,10 @@ nav {
 ::-webkit-scrollbar-thumb:hover { background: var(--rim-hover); }
 
 @media (max-width: 900px) {
-  .table-cols, .table-row { grid-template-columns: 148px 110px 1fr 120px; }
+  .table-cols, .table-row { grid-template-columns: 130px 100px 1fr 110px; }
   .cell-proto, .cell-sensor, .cell-geo { display: none; }
   .filters { gap: 0.75rem; }
+  .row-detail { grid-template-columns: repeat(2, 1fr); }
 }
 </style>
 </head>
@@ -390,8 +409,8 @@ nav {
 <div id="floating-tip"></div>
 
 <script>
-const READ_URL   = 'https://bathysphere-read.kasuskei.workers.dev';
-const PAGE_SIZE  = 100;
+const READ_URL  = 'https://bathysphere-read.kasuskei.workers.dev';
+const PAGE_SIZE = 100;
 
 let oldestTs    = null;
 let totalEvents = 0;
@@ -399,7 +418,7 @@ let loadedCount = 0;
 let loading     = false;
 let filters     = { eventid: '', sensor: '', has_ioc: false, has_attack: false };
 
-// ── Helpers (same as feed.html) ───────────────────────────────────────────────
+// ── Helpers ──────────────────────────────────────────────────────────────────
 function fmt(ts) {
   if (!ts) return '—';
   const d = new Date(ts);
@@ -418,23 +437,28 @@ function escHtml(s) {
 }
 
 function eventClass(eventid) {
-  if (eventid === 'cowrie.login.success')        return 'login-ok';
-  if (eventid === 'cowrie.login.failed')         return 'login-fail';
+  if (eventid === 'cowrie.login.success')         return 'login-ok';
+  if (eventid === 'cowrie.login.failed')          return 'login-fail';
   if (eventid === 'cowrie.command.input' || eventid === 'cowrie.command.failed') return 'command';
-  if (eventid === 'cowrie.session.file_upload')  return 'upload';
-  if (eventid === 'cowrie.session.file_download')return 'download';
-  if (eventid === 'cowrie.direct-tcpip.request') return 'tunnel';
-  if (eventid === 'cowrie.session.connect')      return 'connect';
+  if (eventid === 'cowrie.session.file_upload')   return 'upload';
+  if (eventid === 'cowrie.session.file_download') return 'download';
+  if (eventid === 'cowrie.direct-tcpip.request')  return 'tunnel';
+  if (eventid === 'cowrie.session.connect')       return 'connect';
   return 'other';
 }
 
 function eventLabel(eventid) {
   const map = {
-    'cowrie.session.connect': 'CONNECT', 'cowrie.session.closed': 'CLOSED',
-    'cowrie.client.version': 'CLIENT',   'cowrie.login.success': 'AUTH OK',
-    'cowrie.login.failed': 'AUTH FAIL',  'cowrie.command.input': 'COMMAND',
-    'cowrie.command.failed': 'CMD FAIL', 'cowrie.session.file_upload': 'UPLOAD',
-    'cowrie.session.file_download': 'DOWNLOAD', 'cowrie.direct-tcpip.request': 'TUNNEL',
+    'cowrie.session.connect':      'CONNECT',
+    'cowrie.session.closed':       'CLOSED',
+    'cowrie.client.version':       'CLIENT',
+    'cowrie.login.success':        'AUTH OK',
+    'cowrie.login.failed':         'AUTH FAIL',
+    'cowrie.command.input':        'COMMAND',
+    'cowrie.command.failed':       'CMD FAIL',
+    'cowrie.session.file_upload':  'UPLOAD',
+    'cowrie.session.file_download':'DOWNLOAD',
+    'cowrie.direct-tcpip.request': 'TUNNEL',
   };
   return map[eventid] ?? eventid.split('.').pop().toUpperCase();
 }
@@ -448,71 +472,136 @@ function eventDetail(e) {
     return `<span style="color:var(--amber)">${escHtml(e.filename ?? e.shasum?.slice(0,12) ?? '?')}</span>`;
   if (e.eventid === 'cowrie.session.file_download')
     return `<span style="color:var(--amber)">${escHtml((e.url ?? e.shasum ?? '').slice(0, 50))}</span>`;
-  if (e.eventid === 'cowrie.client.version') return `<span>${escHtml(e.version ?? '')}</span>`;
-  if (e.eventid === 'cowrie.direct-tcpip.request') return `<span>TCP tunnel attempt</span>`;
+  if (e.eventid === 'cowrie.client.version')
+    return `<span>${escHtml(e.version ?? '')}</span>`;
+  if (e.eventid === 'cowrie.direct-tcpip.request')
+    return `<span>TCP tunnel attempt</span>`;
   return '';
 }
 
-const IOC_SHORT = { credential:'CRED', malware:'MAL', persistence:'PERSIST', exfiltration:'EXFIL', recon:'RECON', c2:'C2', scanner:'SCAN', reputation:'REP' };
+// D1 returns flat iocs as a JSON string — parse it
+function parseIocs(e) {
+  if (!e.iocs) return null;
+  if (Array.isArray(e.iocs)) return e.iocs;
+  try { return JSON.parse(e.iocs); } catch { return null; }
+}
+
+// D1 returns flat attack fields — synthesise the attack object
+function parseAttack(e) {
+  if (e.attack) return e.attack; // live ingest nested format
+  if (e.attack_id) return { id: e.attack_id, name: e.attack_name, tactic: e.attack_tactic };
+  return null;
+}
+
+// D1 returns flat geo fields — synthesise geo object
+function parseGeo(e) {
+  if (e.geo && (e.geo.country || e.geo.city)) return e.geo; // live ingest nested format
+  if (e.geo_country || e.geo_city) return { country: e.geo_country, city: e.geo_city, asn: e.geo_asn, isp: e.geo_isp, rdns: e.geo_rdns, cloud: e.geo_cloud };
+  return null;
+}
+
+const IOC_SHORT = {
+  credential: 'CRED', malware: 'MAL', persistence: 'PERSIST',
+  exfiltration: 'EXFIL', recon: 'RECON', c2: 'C2', scanner: 'SCAN', reputation: 'REP'
+};
 
 function iocTags(iocs) {
   if (!iocs || !iocs.length) return '';
-  return iocs.slice(0, 2).map(ioc =>
+  return iocs.slice(0, 3).map(ioc =>
     `<span class="ioc-tag ioc-${escHtml(ioc.severity ?? 'low')}" data-tip="${escHtml(ioc.label)}">${IOC_SHORT[ioc.type] ?? 'IOC'}</span>`
   ).join('');
 }
 
 function attackTag(attack) {
   if (!attack) return '';
+  // CSS class uses hyphens since spaces break class names
+  const tacClass = (attack.tactic ?? '').replace(/\s+/g, '-');
   const tip = `${escHtml(attack.id)} · ${escHtml(attack.name)} · ${escHtml(attack.tactic)}`;
-  return `<span class="attack-tag tac-${escHtml(attack.tactic ?? '')}" data-tip="${tip}">${escHtml(attack.id)}</span>`;
+  return `<span class="attack-tag tac-${escHtml(tacClass)}" data-tip="${tip}">${escHtml(attack.id)}</span>`;
 }
 
-// ── Detail panel (same as feed.html) ─────────────────────────────────────────
+// ── Detail panel ─────────────────────────────────────────────────────────────
 function buildDetailPanel(e) {
   const panel = document.createElement('div');
   panel.className = 'row-detail';
-  const geoStr = e.geo ? [e.geo.city, e.geo.country].filter(Boolean).join(', ') : '—';
+
+  const geo    = parseGeo(e);
+  const attack = parseAttack(e);
+  const iocs   = parseIocs(e);
+  const geoStr = geo ? [geo.city, geo.country].filter(Boolean).join(', ') : '—';
 
   let eventFields = '';
-  if (e.username)      eventFields += `<div class="detail-field"><div class="detail-field-label">Username</div><div class="detail-field-value">${escHtml(e.username)}</div></div>`;
-  if (e.password_hash) eventFields += `<div class="detail-field"><div class="detail-field-label">Password</div><div class="detail-field-value">${escHtml(e.password_hash)} (${e.password_len ?? '?'} chars)</div></div>`;
-  if (e.input)         eventFields += `<div class="detail-field"><div class="detail-field-label">Command</div><div class="detail-field-value">${escHtml(e.input)}</div></div>`;
-  if (e.filename)      eventFields += `<div class="detail-field"><div class="detail-field-label">Filename</div><div class="detail-field-value">${escHtml(e.filename)}</div></div>`;
-  if (e.shasum)        eventFields += `<div class="detail-field"><div class="detail-field-label">SHA256</div><div class="detail-field-value">${escHtml(e.shasum)}</div></div>`;
-  if (e.version)       eventFields += `<div class="detail-field"><div class="detail-field-label">Client version</div><div class="detail-field-value">${escHtml(e.version)}</div></div>`;
-  if (e.duration != null) eventFields += `<div class="detail-field"><div class="detail-field-label">Duration</div><div class="detail-field-value">${e.duration}s</div></div>`;
-  if (!eventFields)    eventFields = `<div class="detail-no-data">No additional event data</div>`;
+  if (e.username)         eventFields += df('Username', e.username);
+  if (e.password_hash)    eventFields += df('Password', `${e.password_hash} (${e.password_len ?? '?'} chars)`);
+  if (e.input)            eventFields += df('Command', e.input);
+  if (e.filename)         eventFields += df('Filename', e.filename);
+  if (e.shasum)           eventFields += df('SHA256', e.shasum);
+  if (e.version)          eventFields += df('Client version', e.version);
+  if (e.duration != null) eventFields += df('Duration', `${e.duration}s`);
+  if (!eventFields)       eventFields = `<div class="detail-no-data">No additional event data</div>`;
 
-  let iocHtml = e.iocs?.length
-    ? `<div class="detail-ioc-list">${e.iocs.map(ioc => `<div class="detail-ioc-item"><span class="ioc-tag ioc-${escHtml(ioc.severity ?? 'low')}">${IOC_SHORT[ioc.type] ?? 'IOC'}</span><span>${escHtml(ioc.label)}${ioc.reports ? ` (${ioc.reports} reports)` : ''}</span></div>`).join('')}</div>`
+  const iocHtml = iocs?.length
+    ? `<div class="detail-ioc-list">${iocs.map(ioc =>
+        `<div class="detail-ioc-item">
+          <span class="ioc-tag ioc-${escHtml(ioc.severity ?? 'low')}">${IOC_SHORT[ioc.type] ?? 'IOC'}</span>
+          <span>${escHtml(ioc.label)}${ioc.reports ? ` (${ioc.reports} reports)` : ''}</span>
+        </div>`).join('')}</div>`
     : `<div class="detail-no-data">No IoCs matched</div>`;
 
-  const attackHtml = e.attack
-    ? `<div class="detail-field" style="margin-top:0.75rem"><div class="detail-field-label">ATT&amp;CK technique</div><div class="detail-field-value">${escHtml(e.attack.id)} · ${escHtml(e.attack.name)}</div><div class="detail-field-label" style="margin-top:4px">Tactic</div><div class="detail-field-value">${escHtml(e.attack.tactic)}</div></div>`
-    : `<div class="detail-no-data" style="margin-top:0.75rem">No ATT&amp;CK technique mapped</div>`;
+  const attackHtml = attack
+    ? `${df('ATT&CK technique', `${attack.id} · ${attack.name}`)}${df('Tactic', attack.tactic)}`
+    : `<div class="detail-no-data">No ATT&CK technique mapped</div>`;
+
+  const networkHtml = geo
+    ? `${geo.asn  ? df('ASN', geo.asn)   : ''}
+       ${geo.isp  ? df('ISP', geo.isp)   : ''}
+       ${geo.rdns ? df('rDNS', geo.rdns) : ''}
+       ${geo.cloud ? df('Cloud', geo.cloud) : ''}`
+    : `<div class="detail-no-data">No network data</div>`;
 
   panel.innerHTML = `
     <div class="detail-group">
       <div class="detail-group-title">Connection</div>
-      <div class="detail-field"><div class="detail-field-label">Timestamp</div><div class="detail-field-value">${escHtml(e.ts ?? '—')}</div></div>
-      <div class="detail-field"><div class="detail-field-label">Source IP</div><div class="detail-field-value">${escHtml(e.src_ip ?? '—')}</div></div>
-      <div class="detail-field"><div class="detail-field-label">Location</div><div class="detail-field-value">${escHtml(geoStr)}</div></div>
-      <div class="detail-field"><div class="detail-field-label">Sensor</div><div class="detail-field-value">${escHtml(e.sensor ?? '—')}</div></div>
-      <div class="detail-field"><div class="detail-field-label">Session</div><div class="detail-field-value">${escHtml(e.session ?? '—')}</div></div>
+      ${df('Timestamp', e.ts ?? '—')}
+      ${df('Source IP', e.src_ip ?? '—')}
+      ${df('Location', geoStr)}
+      ${df('Sensor', e.sensor ?? '—')}
+      ${df('Session', e.session ?? '—')}
     </div>
-    <div class="detail-group"><div class="detail-group-title">Event detail</div>${eventFields}</div>
-    <div class="detail-group"><div class="detail-group-title">Threat intel</div>${iocHtml}${attackHtml}</div>
+    <div class="detail-group">
+      <div class="detail-group-title">Event detail</div>
+      ${eventFields}
+    </div>
+    <div class="detail-group">
+      <div class="detail-group-title">Threat intel</div>
+      ${iocHtml}
+      <div style="margin-top:0.75rem">${attackHtml}</div>
+    </div>
+    <div class="detail-group">
+      <div class="detail-group-title">Network</div>
+      ${networkHtml}
+    </div>
   `;
   return panel;
 }
 
-// ── Row renderer ──────────────────────────────────────────────────────────────
+function df(label, value) {
+  return `<div class="detail-field">
+    <div class="detail-field-label">${label}</div>
+    <div class="detail-field-value">${escHtml(String(value ?? '—'))}</div>
+  </div>`;
+}
+
+// ── Row renderer ─────────────────────────────────────────────────────────────
 function makeRow(e) {
   const row = document.createElement('div');
   row.className = 'table-row';
-  const ec = eventClass(e.eventid);
-  const geoStr = e.geo ? [e.geo.city, e.geo.country].filter(Boolean).join(', ') : '—';
+
+  const geo    = parseGeo(e);
+  const attack = parseAttack(e);
+  const iocs   = parseIocs(e);
+  const ec     = eventClass(e.eventid);
+  const geoStr = geo ? [geo.city, geo.country].filter(Boolean).join(', ') : '—';
 
   row.innerHTML = `
     <div class="cell-time">${fmt(e.ts)}</div>
@@ -524,8 +613,8 @@ function makeRow(e) {
       <span class="event-tag ${ec}">${eventLabel(e.eventid)}</span>
       <span class="cell-detail">${eventDetail(e)}</span>
     </div>
-    <div class="cell-ioc">${iocTags(e.iocs)}</div>
-    <div>${attackTag(e.attack)}</div>
+    <div class="cell-ioc">${iocTags(iocs)}</div>
+    <div class="cell-attack">${attackTag(attack)}</div>
   `;
 
   row.addEventListener('click', () => {
@@ -557,7 +646,7 @@ async function load(append = false) {
   if (loading) return;
   loading = true;
 
-  const btn = document.getElementById('load-more-btn');
+  const btn  = document.getElementById('load-more-btn');
   if (btn) btn.disabled = true;
 
   const before = append ? oldestTs : null;
@@ -580,7 +669,7 @@ async function load(append = false) {
     if (!append) body.innerHTML = '';
 
     if (events.length === 0 && !append) {
-      body.innerHTML = '<div class="state-msg">No events found. The archive is still populating — check back soon.</div>';
+      body.innerHTML = '<div class="state-msg">No events found.</div>';
       document.getElementById('load-more-wrap').style.display = 'none';
       loading = false;
       return;
@@ -593,14 +682,12 @@ async function load(append = false) {
     loadedCount += events.length;
     if (events.length > 0) oldestTs = events[events.length - 1].ts;
 
-    // Update meta
     if (!append) {
       document.getElementById('meta-total').textContent  = totalEvents.toLocaleString();
       document.getElementById('meta-oldest').textContent = fmtDate(data.oldest);
       document.getElementById('meta-newest').textContent = fmtDate(data.newest);
     }
 
-    // Load more button
     const wrap  = document.getElementById('load-more-wrap');
     const count = document.getElementById('load-more-count');
     if (loadedCount < totalEvents && events.length === PAGE_SIZE) {
@@ -639,7 +726,7 @@ document.getElementById('apply-filters').addEventListener('click', () => {
 document.getElementById('load-more-btn').addEventListener('click', () => load(true));
 
 // ── Floating tooltip ──────────────────────────────────────────────────────────
-const tip = document.getElementById('floating-tip');
+const tip    = document.getElementById('floating-tip');
 const MARGIN = 12;
 
 document.addEventListener('mouseover', e => {
