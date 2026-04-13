@@ -1,5 +1,5 @@
 /**
- * bathysphere — ingest Worker
+ * bathysphere â€" ingest Worker
  * Receives event batches from the Pi pusher and writes them to KV.
  *
  * Bindings required (wrangler.toml):
@@ -8,10 +8,10 @@
  *   id = "<your KV namespace ID>"
  *
  * Secrets required (wrangler secret put):
- *   BATHYSPHERE_SECRET   — must match SHARED_SECRET on the Pi
+ *   BATHYSPHERE_SECRET   â€" must match SHARED_SECRET on the Pi
  */
 
-// ── MITRE ATT&CK mapping ───────────────────────────────────────────────────
+// â"€â"€ MITRE ATT&CK mapping â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 //
 // Each rule is evaluated in order. The first match wins.
 // Rules can match on eventid, and optionally inspect the event payload
@@ -20,7 +20,7 @@
 // technique: { id, name, tactic } maps to ATT&CK Enterprise.
 
 const ATTACK_RULES = [
-  // ── Reconnaissance / Initial Access ───────────────────────────────────────
+  // â"€â"€ Reconnaissance / Initial Access â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
   {
     match: e => e.eventid === "cowrie.session.connect",
     technique: { id: "T1595.002", name: "Vulnerability Scanning", tactic: "Reconnaissance" },
@@ -30,7 +30,7 @@ const ATTACK_RULES = [
     technique: { id: "T1595.001", name: "Scanning IP Blocks", tactic: "Reconnaissance" },
   },
 
-  // ── Credential Access ──────────────────────────────────────────────────────
+  // â"€â"€ Credential Access â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
   {
     match: e => e.eventid === "cowrie.login.failed",
     technique: { id: "T1110.001", name: "Password Guessing", tactic: "Credential Access" },
@@ -45,7 +45,7 @@ const ATTACK_RULES = [
     technique: { id: "T1078", name: "Valid Accounts", tactic: "Initial Access" },
   },
 
-  // ── Discovery ─────────────────────────────────────────────────────────────
+  // â"€â"€ Discovery â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
   {
     match: e => e.eventid === "cowrie.command.input" &&
       /uname|\/proc\/version|\/etc\/os-release/.test(e.input),
@@ -87,7 +87,7 @@ const ATTACK_RULES = [
     technique: { id: "T1082", name: "System Information Discovery", tactic: "Discovery" },
   },
 
-  // ── Persistence ───────────────────────────────────────────────────────────
+  // â"€â"€ Persistence â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
   {
     match: e => e.eventid === "cowrie.command.input" &&
       /authorized_keys/.test(e.input),
@@ -104,7 +104,7 @@ const ATTACK_RULES = [
     technique: { id: "T1543", name: "Create or Modify System Process", tactic: "Persistence" },
   },
 
-  // ── Defense Evasion ───────────────────────────────────────────────────────
+  // â"€â"€ Defense Evasion â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
   {
     match: e => e.eventid === "cowrie.command.input" &&
       /rm -rf|shred|unlink/.test(e.input),
@@ -122,7 +122,7 @@ const ATTACK_RULES = [
     technique: { id: "T1564.001", name: "Hidden Files and Directories", tactic: "Defense Evasion" },
   },
 
-  // ── Collection / Exfiltration ─────────────────────────────────────────────
+  // â"€â"€ Collection / Exfiltration â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
   {
     match: e => e.eventid === "cowrie.command.input" &&
       /TelegramDesktop|tdata|ttyGSM|ttyUSB|smsd|qmuxd|modem/.test(e.input),
@@ -134,13 +134,13 @@ const ATTACK_RULES = [
     technique: { id: "T1005", name: "Data from Local System", tactic: "Collection" },
   },
 
-  // ── Command and Control ───────────────────────────────────────────────────
+  // â"€â"€ Command and Control â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
   {
     match: e => e.eventid === "cowrie.direct-tcpip.request",
     technique: { id: "T1572", name: "Protocol Tunneling", tactic: "Command and Control" },
   },
 
-  // ── Impact ────────────────────────────────────────────────────────────────
+  // â"€â"€ Impact â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
   {
     match: e => e.eventid === "cowrie.command.input" &&
       /[Mm]iner|xmrig|xmr|monero|stratum\+/.test(e.input),
@@ -153,15 +153,15 @@ const ATTACK_RULES = [
     technique: { id: "T1496", name: "Resource Hijacking", tactic: "Impact" },
   },
 
-  // ── Execution ─────────────────────────────────────────────────────────────
+  // â"€â"€ Execution â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
   {
-    // Generic shell command execution — catch-all for command events not
+    // Generic shell command execution â€" catch-all for command events not
     // matched by a more specific rule above
     match: e => e.eventid === "cowrie.command.input",
     technique: { id: "T1059.004", name: "Unix Shell", tactic: "Execution" },
   },
 
-  // ── Lateral Movement ─────────────────────────────────────────────────────
+  // â"€â"€ Lateral Movement â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
   {
     match: e => (e.eventid === "cowrie.session.file_upload" ||
                  e.eventid === "cowrie.session.file_download"),
@@ -169,16 +169,12 @@ const ATTACK_RULES = [
   },
 ];
 
-/**
- * Return the first matching ATT&CK technique for a normalized event,
- * or null if no rule matches.
- */
 function classifyAttack(event) {
   for (const rule of ATTACK_RULES) {
     try {
       if (rule.match(event)) return rule.technique;
     } catch {
-      // match function threw (e.g. regex on undefined field) — skip
+      // match function threw (e.g. regex on undefined field) â€" skip
     }
   }
   return null;
@@ -187,83 +183,65 @@ function classifyAttack(event) {
 const MAX_EVENTS   = 10_000;
 const KV_KEY       = "events";
 const GEO_TTL      = 60 * 60 * 24 * 30;  // 30 days
-const ABUSE_TTL    = 60 * 60 * 24 * 7;   // 7 days — abuse scores change more often
+const ABUSE_TTL    = 60 * 60 * 24 * 7;   // 7 days
 
-// IPs we never want to appear in the feed even anonymized
 const BLOCKLIST = ["192.168.", "127.", "10.", "172.16.", "::1"];
 
-// ── Local IoC signatures ───────────────────────────────────────────────────
-// Each rule checks a normalized event and returns an IoC object if matched.
-// { type, label, severity }
-//   severity: "critical" | "high" | "medium" | "low"
-
 const IOC_SIGNATURES = [
-  // Known Mirai credential pair
   {
     match: e => (e.eventid === 'cowrie.login.failed' || e.eventid === 'cowrie.login.success') &&
       e.username === '345gs5662d34',
     ioc: { type: 'credential', label: 'Mirai botnet credential', severity: 'high' },
   },
-  // mdrfckr SSH backdoor key
   {
     match: e => e.eventid === 'cowrie.command.input' &&
       /mdrfckr/.test(e.input ?? ''),
     ioc: { type: 'persistence', label: 'mdrfckr SSH backdoor key', severity: 'critical' },
   },
-  // Redtail cryptominer
   {
     match: e => (e.eventid === 'cowrie.session.file_upload' || e.eventid === 'cowrie.session.file_download') &&
       /redtail/i.test(e.filename ?? e.url ?? ''),
     ioc: { type: 'malware', label: 'Redtail cryptominer', severity: 'critical' },
   },
-  // Generic cryptominer upload
   {
     match: e => e.eventid === 'cowrie.session.file_upload' &&
       /\.arm[0-9]|\.x86_64|\.i686|\.mips/.test(e.filename ?? ''),
     ioc: { type: 'malware', label: 'Multi-arch malware dropper', severity: 'critical' },
   },
-  // Telegram credential exfiltration
   {
     match: e => e.eventid === 'cowrie.command.input' &&
       /TelegramDesktop|tdata/.test(e.input ?? ''),
     ioc: { type: 'exfiltration', label: 'Telegram session theft attempt', severity: 'high' },
   },
-  // Hidden directory dropper
   {
     match: e => e.eventid === 'cowrie.command.input' &&
       /chmod\s+\+x\s+\.\/\.[^\/]+\//.test(e.input ?? ''),
     ioc: { type: 'malware', label: 'Hidden directory dropper', severity: 'high' },
   },
-  // SSH authorized_keys injection
   {
     match: e => e.eventid === 'cowrie.command.input' &&
       /authorized_keys/.test(e.input ?? ''),
     ioc: { type: 'persistence', label: 'SSH key injection', severity: 'high' },
   },
-  // Miner process check — attacker looking for existing miners
   {
     match: e => e.eventid === 'cowrie.command.input' &&
       /grep.*[Mm]iner/.test(e.input ?? ''),
     ioc: { type: 'recon', label: 'Cryptominer recon', severity: 'medium' },
   },
-  // Solana node targeting
   {
     match: e => (e.eventid === 'cowrie.login.failed' || e.eventid === 'cowrie.login.success') &&
       /sol|solana/.test(e.username ?? ''),
     ioc: { type: 'credential', label: 'Solana node targeting', severity: 'medium' },
   },
-  // TCP tunnel / proxy abuse
   {
     match: e => e.eventid === 'cowrie.direct-tcpip.request',
     ioc: { type: 'c2', label: 'TCP tunnel / proxy attempt', severity: 'medium' },
   },
-  // ZGrab scanner
   {
     match: e => e.eventid === 'cowrie.client.version' &&
       /ZGrab/i.test(e.version ?? ''),
     ioc: { type: 'scanner', label: 'ZGrab internet scanner', severity: 'low' },
   },
-  // clean.sh — typically used to remove competing malware
   {
     match: e => e.eventid === 'cowrie.session.file_upload' &&
       /clean\.sh/i.test(e.filename ?? ''),
@@ -271,10 +249,6 @@ const IOC_SIGNATURES = [
   },
 ];
 
-/**
- * Run local signature matching against a normalized event.
- * Returns array of matched IoC objects (may be empty).
- */
 function matchLocalIocs(event) {
   const matched = [];
   for (const sig of IOC_SIGNATURES) {
@@ -285,14 +259,6 @@ function matchLocalIocs(event) {
   return matched;
 }
 
-// ── AbuseIPDB lookup ───────────────────────────────────────────────────────
-
-/**
- * Look up an IP's abuse confidence score from AbuseIPDB.
- * Caches results in KV for 7 days.
- * Returns { score, categories } or null on failure.
- * Raw IP is used for lookup but never stored.
- */
 async function abuseIpLookup(ip, env) {
   if (!env.ABUSEIPDB_KEY) return null;
   const cacheKey = `abuse:${ip}`;
@@ -303,10 +269,7 @@ async function abuseIpLookup(ip, env) {
     const resp = await fetch(
       `https://api.abuseipdb.com/api/v2/check?ipAddress=${encodeURIComponent(ip)}&maxAgeInDays=90`,
       {
-        headers: {
-          'Key': env.ABUSEIPDB_KEY,
-          'Accept': 'application/json',
-        },
+        headers: { 'Key': env.ABUSEIPDB_KEY, 'Accept': 'application/json' },
         signal: AbortSignal.timeout(3000),
       }
     );
@@ -328,11 +291,6 @@ async function abuseIpLookup(ip, env) {
   }
 }
 
-/**
- * Batch AbuseIPDB + geo lookup for all unique IPs in a batch.
- * Sequential to avoid stalled HTTP response warnings in Workers.
- * Returns Map of raw_ip -> { geo, abuse }
- */
 async function batchEnrich(rawIps, env) {
   const unique = [...new Set(rawIps.filter(ip => ip && !isBlocked(ip)))];
   const map = new Map();
@@ -346,40 +304,20 @@ async function batchEnrich(rawIps, env) {
   return map;
 }
 
-/**
- * Look up geo + network data for a raw IP address.
- * Checks KV cache first — only calls ip-api.com on a cache miss.
- * Returns { country, city, asn, isp, rdns, cloud } or null on failure.
- * Raw IP is never stored — only the enrichment result.
- */
-
-// Known cloud provider ASNs — expanded as needed
 const CLOUD_ASNS = new Set([
-  // AWS
-  14618, 16509,
-  // Google / GCP
-  15169, 396982,
-  // Microsoft / Azure
-  8075, 8069,
-  // DigitalOcean
-  14061,
-  // Linode / Akamai
-  63949,
-  // Vultr
-  20473,
-  // Hetzner
-  24940,
-  // OVH
-  16276,
-  // Cloudflare
-  13335,
-  // Shodan
-  398324,
-  // Censys
-  398705,
+  14618, 16509,   // AWS
+  15169, 396982,  // Google / GCP
+  8075, 8069,     // Microsoft / Azure
+  14061,          // DigitalOcean
+  63949,          // Linode / Akamai
+  20473,          // Vultr
+  24940,          // Hetzner
+  16276,          // OVH
+  13335,          // Cloudflare
+  398324,         // Shodan
+  398705,         // Censys
 ]);
 
-// Known cloud provider ASN name patterns
 const CLOUD_PATTERNS = [
   { pattern: /amazon|aws/i,        name: 'AWS' },
   { pattern: /google|gcp/i,        name: 'GCP' },
@@ -423,7 +361,6 @@ async function geoLookup(ip, env) {
     const data = await resp.json();
     if (data.status !== 'success') return null;
 
-    // Parse ASN number from "AS14061 DigitalOcean" format
     const asnMatch = (data.as ?? '').match(/^AS(\d+)/);
     const asnNum = asnMatch ? parseInt(asnMatch[1]) : null;
     const ispName = data.isp ?? null;
@@ -444,17 +381,9 @@ async function geoLookup(ip, env) {
   }
 }
 
-
-
-/**
- * Anonymize an IP address:
- *   IPv4  → keep first two octets, replace last two with x.x  (e.g. 165.154.x.x)
- *   IPv6  → keep first group only                              (e.g. 2001:x:x:x)
- */
 function anonymize(ip) {
   if (!ip) return null;
   if (ip.includes(":")) {
-    // IPv6
     const parts = ip.split(":");
     return parts[0] + ":x:x:x:x:x:x:x";
   }
@@ -467,10 +396,6 @@ function isBlocked(ip) {
   return BLOCKLIST.some(prefix => ip?.startsWith(prefix));
 }
 
-/**
- * Normalize a raw Cowrie event into what we store and serve.
- * Drops fields we don't need, anonymizes IPs, attaches geo + IoCs.
- */
 function normalize(raw, enrichment) {
   if (isBlocked(raw.src_ip)) return null;
 
@@ -478,7 +403,7 @@ function normalize(raw, enrichment) {
   if (!anon_ip) return null;
 
   const base = {
-    id:        raw.uuid  ?? crypto.randomUUID(),
+    id:        raw.uuid ? `${raw.uuid}-${raw.eventid}-${raw.timestamp}` : crypto.randomUUID(),
     ts:        raw.timestamp,
     eventid:   raw.eventid,
     session:   raw.session,
@@ -488,7 +413,6 @@ function normalize(raw, enrichment) {
     geo:       enrichment?.geo ?? null,
   };
 
-  // Attach event-type-specific fields
   let event;
   switch (raw.eventid) {
     case "cowrie.session.connect":
@@ -525,14 +449,11 @@ function normalize(raw, enrichment) {
       event = base;
   }
 
-  // ── ATT&CK classification ─────────────────────────────────────────────────
   const technique = classifyAttack(event);
   if (technique) event.attack = technique;
 
-  // ── IoC enrichment ────────────────────────────────────────────────────────
   const localIocs = matchLocalIocs(event);
 
-  // Add AbuseIPDB as an IoC if score is significant (>25)
   const abuse = enrichment?.abuse;
   if (abuse && abuse.score > 25) {
     localIocs.push({
@@ -549,13 +470,11 @@ function normalize(raw, enrichment) {
 }
 
 async function handleIngest(request, env) {
-  // ── Auth ──────────────────────────────────────────────────────────────────
   const secret = request.headers.get("X-Bathysphere-Secret");
   if (!secret || secret !== env.BATHYSPHERE_SECRET) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  // ── Parse body ────────────────────────────────────────────────────────────
   let body;
   try {
     body = await request.json();
@@ -567,11 +486,9 @@ async function handleIngest(request, env) {
     return new Response("Expected { events: [...] }", { status: 400 });
   }
 
-  // ── Enrichment (geo + AbuseIPDB, batch, raw IPs before anonymization) ──────
   const rawIps = body.events.map(e => e.src_ip).filter(Boolean);
   const enrichMap = await batchEnrich(rawIps, env);
 
-  // ── Normalize ─────────────────────────────────────────────────────────────
   const incoming = body.events
     .map(e => normalize(e, enrichMap.get(e.src_ip) ?? null))
     .filter(Boolean);
@@ -582,7 +499,6 @@ async function handleIngest(request, env) {
     });
   }
 
-  // ── Write to KV (rolling window for live feed) ───────────────────────────
   const existing = JSON.parse(
     (await env.EVENTS.get(KV_KEY)) ?? "[]"
   );
@@ -594,7 +510,6 @@ async function handleIngest(request, env) {
 
   await env.EVENTS.put(KV_KEY, JSON.stringify(trimmed));
 
-  // ── Write to D1 (permanent archive) ──────────────────────────────────────
   if (env.DB) {
     await writeToD1(incoming, env.DB);
   }
@@ -608,6 +523,10 @@ async function handleIngest(request, env) {
 /**
  * Insert a batch of normalized events into D1.
  * Uses INSERT OR IGNORE to handle duplicate IDs gracefully.
+ *
+ * Accepts both:
+ *   - Live ingest format: nested geo object (e.geo.country) + nested attack (e.attack.id)
+ *   - Backfill format:    flat fields (e.geo_country, e.attack_id, etc.)
  */
 async function writeToD1(events, db) {
   const n = v => (v === undefined ? null : v ?? null);
@@ -633,12 +552,13 @@ async function writeToD1(events, db) {
         n(e.src_ip),
         n(e.protocol) ?? 'ssh',
         n(e.sensor)   ?? 'honeypot-pi',
-        n(e.geo?.country),
-        n(e.geo?.city),
-        n(e.geo?.asn),
-        n(e.geo?.isp),
-        n(e.geo?.rdns),
-        n(e.geo?.cloud),
+        // geo: accept flat fields (backfill) or nested object (live ingest)
+        n(e.geo_country ?? e.geo?.country),
+        n(e.geo_city    ?? e.geo?.city),
+        n(e.geo_asn     ?? e.geo?.asn),
+        n(e.geo_isp     ?? e.geo?.isp),
+        n(e.geo_rdns    ?? e.geo?.rdns),
+        n(e.geo_cloud   ?? e.geo?.cloud),
         n(e.dst_port),
         n(e.duration),
         n(e.version),
@@ -649,18 +569,21 @@ async function writeToD1(events, db) {
         n(e.filename),
         n(e.shasum),
         n(e.url),
-        n(e.attack?.id),
-        n(e.attack?.name),
-        n(e.attack?.tactic),
-        e.iocs?.length ? JSON.stringify(e.iocs) : null,
-        n(e.iocs?.find(i => i.type === 'reputation')?.score)
+        // attack: accept flat fields (backfill) or nested object (live ingest)
+        n(e.attack_id     ?? e.attack?.id),
+        n(e.attack_name   ?? e.attack?.name),
+        n(e.attack_tactic ?? e.attack?.tactic),
+        // iocs: accept pre-stringified (backfill) or array (live ingest)
+        typeof e.iocs === 'string' ? e.iocs : (e.iocs?.length ? JSON.stringify(e.iocs) : null),
+        // abuse_score: accept flat field (backfill) or extract from iocs array (live ingest)
+        n(e.abuse_score ?? e.iocs?.find?.(i => i.type === 'reputation')?.score)
       )
     );
 
   if (stmts.length === 0) return;
 
   try {
-    for (let i = 0; i < stmts.length; i += 100) {
+    for (let i = 0; i < stmts.length; i += 10) {
       await db.batch(stmts.slice(i, i + 100));
     }
   } catch (err) {
@@ -677,9 +600,7 @@ export default {
       return handleIngest(request, env);
     }
 
-    // ── D1-only ingest — bypasses KV entirely, used by backfill script ────────
-    // Normalizes and enriches events then writes only to D1, never touches KV.
-    // This prevents backfill runs from burning through the KV daily read limit.
+    // â"€â"€ D1-only ingest â€" bypasses KV entirely, used by backfill script
     if (url.pathname === "/ingest-d1" && request.method === "POST") {
       const secret = request.headers.get("X-Bathysphere-Secret");
       if (!secret || secret !== env.BATHYSPHERE_SECRET) {
@@ -718,7 +639,7 @@ export default {
       );
     }
 
-    // ── Backfill endpoint — accepts pre-normalized events, writes to D1 ─────────
+    // â"€â"€ Backfill endpoint â€" accepts pre-normalized events, writes directly to D1
     if (url.pathname === "/backfill" && request.method === "POST") {
       const secret = request.headers.get("X-Bathysphere-Secret");
       if (!secret || secret !== env.BATHYSPHERE_SECRET) {
