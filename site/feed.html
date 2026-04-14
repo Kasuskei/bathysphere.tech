@@ -573,8 +573,8 @@ nav {
         <div id="asn-list"></div>
       </div>
       <div class="sidebar-section">
-        <div class="sidebar-title">Top credentials</div>
-        <div id="cred-list"></div>
+        <div class="sidebar-title">Top source countries</div>
+        <div id="country-list"></div>
       </div>
       <div class="sidebar-section">
         <div class="sidebar-title">Top commands</div>
@@ -1000,20 +1000,16 @@ function updateSidebar(events) {
       <span class="cred-n">${n}</span>
     </div>`).join('') || '<div style="font-size:10px;color:var(--text-dim)">No data yet</div>';
 
-  const creds = {};
-  events.filter(e => e.eventid === 'cowrie.login.failed' || e.eventid === 'cowrie.login.success')
-    .forEach(e => { const k = `${e.username}|||${e.password_hash}`; creds[k] = (creds[k] ?? 0) + 1; });
-  document.getElementById('cred-list').innerHTML = Object.entries(creds)
-    .sort((a,b) => b[1]-a[1]).slice(0,7)
-    .map(([k, n]) => {
-      const [u, p] = k.split('|||');
-      return `<div class="cred-row">
-        <span class="cred-user">${escHtml(u)}</span>
-        <span class="cred-sep">/</span>
-        <span class="cred-pass">${escHtml(p ?? '?')}</span>
-        <span class="cred-n">${n}</span>
-      </div>`;
-    }).join('');
+  const countries = {};
+  events.forEach(e => { if (e.geo?.country) countries[e.geo.country] = (countries[e.geo.country] ?? 0) + 1; });
+  const countryMax = Math.max(...Object.values(countries), 1);
+  document.getElementById('country-list').innerHTML = Object.entries(countries)
+    .sort((a,b) => b[1]-a[1]).slice(0,8)
+    .map(([country, n]) => `<div class="tactic-row">
+      <div class="tactic-name">${escHtml(country)}</div>
+      <div class="tactic-bar-bg"><div class="tactic-bar-fill" style="width:${Math.round(n/countryMax*100)}%"></div></div>
+      <div class="tactic-count">${n}</div>
+    </div>`).join('') || '<div style="font-size:10px;color:var(--text-dim)">No data yet</div>';
 
   const cmds = {};
   events.filter(e => e.eventid === 'cowrie.command.input')
