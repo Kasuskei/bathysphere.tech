@@ -225,121 +225,53 @@ nav { position:sticky; top:0; z-index:100; border-bottom:1px solid var(--rim); b
 #floating-tip { position:fixed; background:var(--glass); border:1px solid var(--rim-hover); color:var(--text); font-family:var(--mono); font-size:10px; padding:5px 8px; border-radius:3px; pointer-events:none; white-space:nowrap; z-index:200; opacity:0; transition:opacity 0.12s; }
 
 
-/* ── Process tree lines (MDE-style) ── */
-.session-group.expanded-group > .session-row {
-  background: var(--glass);
-  border-left: 2px solid var(--glow);
-}
-.session-group.expanded-group > .session-events {
-  position: relative;
-  padding-left: 0;
-  background: rgba(6,10,14,0.6);
-  border-top: 1px solid var(--rim);
-}
-/* Vertical trunk line running down the left of the events panel */
-.session-group.expanded-group > .session-events::before {
-  content: '';
-  position: absolute;
-  left: 18px;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  background: linear-gradient(to bottom, var(--glow), rgba(122,180,220,0.15));
-  pointer-events: none;
-}
-/* Each event row gets a horizontal branch line */
-.session-group.expanded-group > .session-events > .event-row {
-  position: relative;
-  padding-left: 44px;
-}
-.session-group.expanded-group > .session-events > .event-row::before {
-  content: '';
-  position: absolute;
-  left: 19px;
-  top: 50%;
-  width: 18px;
-  height: 1px;
-  background: rgba(122,180,220,0.35);
-  pointer-events: none;
-}
-/* Small node dot at the branch point */
-.session-group.expanded-group > .session-events > .event-row::after {
-  content: '';
-  position: absolute;
-  left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--glass);
-  border: 1px solid rgba(122,180,220,0.4);
-  pointer-events: none;
-}
-/* Last event row — trunk line ends halfway */
-.session-group.expanded-group > .session-events > .event-row:last-child::before {
-  background: rgba(122,180,220,0.35);
-}
-.session-group.expanded-group > .session-events > .event-row:last-child {
-  position: relative;
-}
-/* Clip the trunk line at the last child */
-.session-group.expanded-group > .session-events > .event-row:last-of-type::before {
-  background: rgba(122,180,220,0.35);
-}
 
-::-webkit-scrollbar { width:4px; }
-::-webkit-scrollbar-track { background:transparent; }
-::-webkit-scrollbar-thumb { background:var(--rim); border-radius:2px; }
-::-webkit-scrollbar-thumb:hover { background:var(--rim-hover); }
 
-@media (max-width:900px) {
-  .table-cols,.session-row,.event-row { grid-template-columns:130px 100px 1fr 110px; }
-  .cell-proto,.cell-sensor,.cell-geo,.col-head:nth-child(2),.col-head:nth-child(4),.col-head:nth-child(5) { display:none; }
-  .row-detail { grid-template-columns:repeat(2,1fr); }
-  .filters { flex-direction:column; align-items:stretch; }
-  .filter-search-wrap { width:100%; }
-}
 
 /* ── Process tree lines (MDE-style) ── */
 .session-group.expanded-group > .session-row {
   border-left: 2px solid var(--glow);
 }
 .session-group.expanded-group > .session-events {
-  position: relative;
   border-left: 2px solid var(--glow);
-}
-.session-group.expanded-group > .session-events::before {
-  content: '';
-  position: absolute;
-  left: 16px;
-  top: 0;
-  bottom: 8px;
-  width: 1px;
-  background: linear-gradient(to bottom, rgba(122,180,220,0.5), rgba(122,180,220,0.08));
-  pointer-events: none;
-  z-index: 1;
 }
 .session-group.expanded-group > .session-events > .event-row {
   position: relative;
   padding-left: 42px !important;
 }
+/* Trunk segment — each row draws its own vertical piece */
 .session-group.expanded-group > .session-events > .event-row::before {
+  content: '';
+  position: absolute;
+  left: 16px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(122,180,220,0.35);
+  pointer-events: none;
+  z-index: 1;
+}
+/* Last child only draws top half of trunk — terminates at midpoint */
+.session-group.expanded-group > .session-events > .event-row:last-child::before {
+  bottom: 50%;
+}
+/* Horizontal branch — sits on top of trunk */
+.session-group.expanded-group > .session-events > .event-row::after {
   content: '';
   position: absolute;
   left: 17px;
   top: 50%;
   transform: translateY(-50%);
-  width: 16px;
+  width: 20px;
   height: 1px;
   background: rgba(122,180,220,0.3);
   pointer-events: none;
-  z-index: 1;
+  z-index: 2;
 }
-.session-group.expanded-group > .session-events > .event-row::after {
-  content: '';
+/* Node dot — drawn via JS-injected span to avoid pseudo conflict */
+.tree-node {
   position: absolute;
-  left: 32px;
+  left: 33px;
   top: 50%;
   transform: translateY(-50%);
   width: 5px;
@@ -347,8 +279,9 @@ nav { position:sticky; top:0; z-index:100; border-bottom:1px solid var(--rim); b
   border-radius: 50%;
   background: var(--glass);
   border: 1px solid rgba(122,180,220,0.45);
+  z-index: 3;
   pointer-events: none;
-  z-index: 2;
+  flex-shrink: 0;
 }
 </style>
 </head>
@@ -624,6 +557,10 @@ function makeEventRow(e) {
     <div class="cell-ioc">${iocTags(iocs)}</div>
     <div class="cell-attack">${attackTag(attack)}</div>
   `;
+  const node = document.createElement('span');
+  node.className = 'tree-node';
+  row.appendChild(node);
+
   row.addEventListener('click', ev => {
     ev.stopPropagation();
     const wasOpen = row.nextSibling?.classList.contains('row-detail');
