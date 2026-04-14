@@ -238,6 +238,7 @@ export default {
     if (url.pathname === "/events")   return handleEvents(url, env);
     if (url.pathname === "/archive")  return handleArchive(url, env);
     if (url.pathname === "/stats")    return handleStats(env);
+    if (url.pathname === "/signal")   return handleSignal(env);
     return json({ error: "not found" }, 404);
   },
 };
