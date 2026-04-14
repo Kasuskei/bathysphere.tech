@@ -510,7 +510,7 @@ nav {
 .session-group.expanded-group > .session-events > .event-row::after {
   content: '';
   position: absolute;
-  left: 12px;
+  left: 32px;
   top: 50%;
   transform: translateY(-50%);
   width: 5px;
@@ -918,30 +918,12 @@ function makeEventRow(e) {
 
 // ── Session inline detail ────────────────────────────────────────────────────────
 function sessionDetail(events) {
-  // Show top credentials if auth events present
-  const authEvents = events.filter(e => e.eventid === 'cowrie.login.failed' || e.eventid === 'cowrie.login.success');
-  if (authEvents.length > 0) {
-    const seen = new Set();
-    const creds = [];
-    for (const e of authEvents) {
-      const key = `${e.username}|${e.password_hash}`;
-      if (!seen.has(key) && e.username) { seen.add(key); creds.push(`${escHtml(e.username)} / ${escHtml(e.password_hash ?? '?')}`); }
-      if (creds.length >= 2) break;
-    }
-    const more = authEvents.length > 2 ? ` <span style="color:var(--text-dim)">+${authEvents.length - 2} more</span>` : '';
-    return `<span style="color:var(--text-dim);font-size:10px">${creds.join(' &nbsp;·&nbsp; ')}${more}</span>`;
-  }
-  // Show first command if command events present
+  // Show first command if present
   const cmdEvents = events.filter(e => e.eventid === 'cowrie.command.input' && e.input);
   if (cmdEvents.length > 0) {
-    const cmd = cmdEvents[0].input.slice(0, 55);
-    const truncated = cmdEvents[0].input.length > 55 ? '…' : '';
+    const cmd = cmdEvents[0].input.slice(0, 60);
+    const truncated = cmdEvents[0].input.length > 60 ? '…' : '';
     return `<span style="color:var(--text-dim);font-size:10px">${escHtml(cmd)}${truncated}</span>`;
-  }
-  // Show client version if present
-  const clientEvent = events.find(e => e.eventid === 'cowrie.client.version' && e.version);
-  if (clientEvent) {
-    return `<span style="color:var(--text-dim);font-size:10px">${escHtml(clientEvent.version.slice(0, 55))}</span>`;
   }
   return '';
 }
