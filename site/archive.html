@@ -136,13 +136,15 @@ nav { position:sticky; top:0; z-index:100; border-bottom:1px solid var(--rim); b
   transition:background 0.1s; position:relative;
 }
 .session-row:hover { background:var(--glass); }
-.session-row.expanded { background:var(--glass); }
+.session-row.expanded { background:var(--glass); border-left:2px solid var(--glow); }
 .session-chevron { position:absolute; left:4px; top:50%; transform:translateY(-50%); color:var(--text-dim); font-size:8px; transition:transform 0.2s; }
+.session-row.expanded + .session-events { border-left:2px solid rgba(122,180,220,0.3); }
 .session-row.expanded .session-chevron { transform:translateY(-50%) rotate(90deg); }
 
-.session-events { background:rgba(6,10,14,0.6); border-top:1px solid var(--rim); }
+.session-events { background:rgba(6,10,14,0.6); border-top:1px solid var(--rim); border-left:2px solid transparent; }
 
 .event-row {
+  border-left:2px solid transparent;
   display:grid; grid-template-columns:148px 52px 110px 110px 200px 1fr 160px 160px;
   gap:0; padding:0.4rem 1.5rem 0.4rem 2.5rem;
   border-bottom:1px solid rgba(15,24,34,0.5); align-items:center; cursor:pointer; transition:background 0.1s;
