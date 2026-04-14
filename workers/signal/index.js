@@ -66,7 +66,43 @@ function scoreSession(session) {
 async function fetchNotableSessions(db) {
   const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-  const result = await db.prepare(`
+  // Pass 1: aggregate query to find the top candidate sessions.
+  // Uses idx_events_timestamp index, groups by session, filters and ranks
+  // entirely in SQL — touches many rows but returns only 10.
+  const topSessions = await db.prepare(`
+    SELECT
+      session,
+      MAX(src_ip)     as src_ip,
+      MAX(geo_country) as geo_country,
+      MAX(geo_city)    as geo_city,
+      MAX(geo_asn)     as geo_asn,
+      MAX(geo_isp)     as geo_isp,
+      MAX(sensor)      as sensor,
+      MAX(protocol)    as protocol,
+      COUNT(*)         as event_count,
+      SUM(CASE WHEN iocs IS NOT NULL THEN 1 ELSE 0 END)                      as ioc_count,
+      SUM(CASE WHEN attack_id IS NOT NULL THEN 1 ELSE 0 END)                 as attack_count,
+      SUM(CASE WHEN eventid = 'cowrie.command.input' THEN 1 ELSE 0 END)      as cmd_count,
+      SUM(CASE WHEN eventid = 'cowrie.session.file_upload' THEN 1 ELSE 0 END)   as upload_count,
+      SUM(CASE WHEN eventid = 'cowrie.session.file_download' THEN 1 ELSE 0 END) as download_count,
+      SUM(CASE WHEN eventid = 'cowrie.login.success' THEN 1 ELSE 0 END)      as auth_ok_count
+    FROM events
+    WHERE ts > ? AND session IS NOT NULL
+    GROUP BY session
+    HAVING cmd_count >= ? AND (ioc_count > 0 OR attack_count > 0)
+    ORDER BY (ioc_count * 4 + upload_count * 5 + download_count * 5 + auth_ok_count * 3 + cmd_count) DESC
+    LIMIT 10
+  `).bind(since, MIN_COMMANDS).all();
+
+  const rows = topSessions.results ?? [];
+  if (rows.length === 0) return [];
+
+  // Pass 2: fetch full event details for only the top 10 sessions.
+  // This is a small targeted fetch — at most a few hundred rows total.
+  const sessionIds = rows.map(r => r.session);
+  const placeholders = sessionIds.map(() => '?').join(',');
+
+  const eventResult = await db.prepare(`
     SELECT id, ts, eventid, session, src_ip, protocol, sensor,
            geo_country, geo_city, geo_asn, geo_isp,
            username, password_hash, password_len,
@@ -74,45 +110,41 @@ async function fetchNotableSessions(db) {
            attack_id, attack_name, attack_tactic,
            iocs, abuse_score
     FROM events
-    WHERE ts > ?
+    WHERE session IN (${placeholders})
     ORDER BY ts ASC
-  `).bind(since).all();
+  `).bind(...sessionIds).all();
 
-  const rows = result.results ?? [];
+  const events = eventResult.results ?? [];
 
-  // Group by session
+  // Group events by session
   const sessionMap = new Map();
-  for (const row of rows) {
-    const key = row.session ?? row.id;
-    if (!sessionMap.has(key)) {
-      sessionMap.set(key, {
-        session_id: key,
-        src_ip: row.src_ip,
-        geo_country: row.geo_country,
-        geo_city: row.geo_city,
-        geo_asn: row.geo_asn,
-        geo_isp: row.geo_isp,
-        sensor: row.sensor,
-        protocol: row.protocol,
-        events: [],
-      });
-    }
-    sessionMap.get(key).events.push(row);
+  for (const meta of rows) {
+    sessionMap.set(meta.session, {
+      session_id: meta.session,
+      src_ip:     meta.src_ip,
+      geo_country: meta.geo_country,
+      geo_city:   meta.geo_city,
+      geo_asn:    meta.geo_asn,
+      geo_isp:    meta.geo_isp,
+      sensor:     meta.sensor,
+      protocol:   meta.protocol,
+      events:     [],
+    });
+  }
+  for (const e of events) {
+    if (sessionMap.has(e.session)) sessionMap.get(e.session).events.push(e);
   }
 
-  // Score and filter
+  // Score and return top 5
   const candidates = [];
   for (const [, session] of sessionMap) {
     const { score, tactics } = scoreSession(session);
-    const commandCount = session.events.filter(e => e.eventid === 'cowrie.command.input').length;
     const hasInterestingTactic = [...tactics].some(t => INTERESTING_TACTICS.has(t));
-
-    if (commandCount >= MIN_COMMANDS && hasInterestingTactic) {
+    if (hasInterestingTactic) {
       candidates.push({ ...session, score, tactics: [...tactics] });
     }
   }
 
-  // Sort by score descending, return top 5 for Claude to pick from
   return candidates.sort((a, b) => b.score - a.score).slice(0, 5);
 }
 
@@ -144,9 +176,14 @@ async function generatePost(sessions, apiKey) {
       return Math.round((Math.max(...times) - Math.min(...times)) / 1000);
     })();
 
+    const sessionDate = s.events[0]?.ts
+      ? s.events[0].ts.slice(0, 10)
+      : new Date().toISOString().slice(0, 10);
+
     return {
       index: i + 1,
       session_id: s.session_id,
+      actual_date: sessionDate,
       src_ip: s.src_ip,
       location: [s.geo_city, s.geo_country].filter(Boolean).join(', ') || null,
       asn: s.geo_asn ?? null,
@@ -182,7 +219,7 @@ ${JSON.stringify(sessionSummaries, null, 2)}
 OUTPUT FORMAT — respond with a single JSON object exactly matching this structure:
 {
   "selected_session_id": "the session_id you chose",
-  "date": "YYYY-MM-DD",
+  "date": "use the actual_date field from the selected session exactly as provided — do not invent a date",
   "sensor": "honeypot-pi",
   "tags": ["one or more of: campaign, commands, credentials, iot, lateral"],
   "title": "A short, specific, factual title — no hype, no metaphor. Describe what actually happened.",
@@ -242,10 +279,11 @@ Respond with only the JSON object or null. No preamble, no explanation.`;
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 2000,
       messages: [{ role: 'user', content: prompt }],
     }),
+    signal: AbortSignal.timeout(25000),
   });
 
   if (!resp.ok) {
