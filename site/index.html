@@ -707,7 +707,17 @@ footer { border-top: 1px solid var(--rim); padding: 2.5rem 0; }
           <circle cx="16" cy="16" r="1.5" fill="var(--glow)" opacity="0.6"/>
         </svg>
         <div class="card-title">Expanding</div>
-        <div class="card-body">HTTP, FTP, DNS, and database surfaces planned across a stack of Pi nodes. All feeding this feed.</div>
+        <div class="card-body">
+          Additional attack surfaces planned across a stack of Pi nodes, each feeding this feed.
+          <div style="margin-top:0.75rem;display:flex;flex-direction:column;gap:4px;">
+            <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text-dim)"><span style="width:5px;height:5px;border-radius:50%;background:rgba(122,180,220,0.3);flex-shrink:0"></span>FTP // credential sprays</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text-dim)"><span style="width:5px;height:5px;border-radius:50%;background:rgba(122,180,220,0.3);flex-shrink:0"></span>Web server // scanner fingerprints</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text-dim)"><span style="width:5px;height:5px;border-radius:50%;background:rgba(122,180,220,0.3);flex-shrink:0"></span>DNS // amplification &amp; exfil</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text-dim)"><span style="width:5px;height:5px;border-radius:50%;background:rgba(122,180,220,0.3);flex-shrink:0"></span>Redis &amp; Elasticsearch</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text-dim)"><span style="width:5px;height:5px;border-radius:50%;background:rgba(122,180,220,0.3);flex-shrink:0"></span>Database honeypots (MySQL / PostgreSQL)</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text-dim)"><span style="width:5px;height:5px;border-radius:50%;background:rgba(122,180,220,0.3);flex-shrink:0"></span>MQTT // IoT broker targeting</div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
