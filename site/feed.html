@@ -922,6 +922,9 @@ function makeEventRow(e) {
     }
   });
 
+  const node = document.createElement('span');
+  node.className = 'tree-node';
+  row.appendChild(node);
   return row;
 }
 

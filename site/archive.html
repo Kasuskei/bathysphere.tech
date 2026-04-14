@@ -557,10 +557,6 @@ function makeEventRow(e) {
     <div class="cell-ioc">${iocTags(iocs)}</div>
     <div class="cell-attack">${attackTag(attack)}</div>
   `;
-  const node = document.createElement('span');
-  node.className = 'tree-node';
-  row.insertBefore(node, row.firstChild);
-
   row.addEventListener('click', ev => {
     ev.stopPropagation();
     const wasOpen = row.nextSibling?.classList.contains('row-detail');
@@ -568,6 +564,9 @@ function makeEventRow(e) {
     row.closest('.session-events')?.querySelectorAll('.event-row.expanded').forEach(r=>r.classList.remove('expanded'));
     if (!wasOpen) { row.classList.add('expanded'); row.after(buildDetailPanel(e)); }
   });
+  const node = document.createElement('span');
+  node.className = 'tree-node';
+  row.appendChild(node);
   return row;
 }
 
