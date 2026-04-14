@@ -36,7 +36,6 @@
   --serif: 'Instrument Serif', Georgia, serif;
   --mono:  'DM Mono', 'Courier New', monospace;
 
-  /* Tactic color map */
   --tactic-recon:     #7ab4dc;
   --tactic-initial:   #4de8b0;
   --tactic-exec:      #a78bfa;
@@ -61,7 +60,6 @@ body {
   overflow-x: hidden;
 }
 
-/* ── Scanlines ── */
 body::before {
   content: '';
   position: fixed; inset: 0;
@@ -107,7 +105,6 @@ nav {
 .nav-links a:hover { color: var(--glow); }
 .nav-links a.active { color: var(--bio); }
 
-/* ── Live indicator ── */
 .live-badge {
   display: flex; align-items: center; gap: 6px;
   font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase;
@@ -147,6 +144,7 @@ nav {
 .stat-value {
   font-family: var(--mono); font-size: 1.5rem; font-weight: 300;
   color: var(--glow); letter-spacing: -0.03em; line-height: 1; margin-bottom: 0.35rem;
+  transition: color 0.2s;
 }
 .stat-value.highlight { color: var(--bio); }
 .stat-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-dim); display: flex; align-items: center; gap: 4px; }
@@ -165,7 +163,6 @@ nav {
 }
 .stat-tip-icon:hover { opacity: 1; border-color: var(--glow); color: var(--glow); }
 
-/* Floating tooltip — positioned via JS */
 #floating-tip {
   position: fixed;
   background: var(--glass);
@@ -222,79 +219,82 @@ nav {
   font-size: 9px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-dim);
 }
 
-/* ── Feed rows ── */
+/* ── Feed body ── */
 .feed-body { flex: 1; overflow-y: auto; overflow-x: hidden; min-height: 0; }
 
-.feed-row {
-  display: grid;
-  grid-template-columns: 148px 52px 110px 110px 200px 1fr 160px 160px;
-  gap: 0; padding: 0.5rem 1.5rem;
+/* ── Session group row ── */
+.session-group {
   border-bottom: 1px solid rgba(15,24,34,0.7);
-  align-items: center; transition: background 0.1s; cursor: default;
   animation: rowIn 0.25s ease forwards; opacity: 0;
 }
+.session-group.new { animation: rowNew 0.4s ease forwards; }
 @keyframes rowIn {
   from { opacity: 0; background: rgba(77,232,176,0.04); }
   to   { opacity: 1; background: transparent; }
 }
-.feed-row:hover { background: var(--glass); }
-.feed-row.new { animation: rowNew 0.4s ease forwards; }
 @keyframes rowNew {
   0%   { opacity: 0; background: rgba(77,232,176,0.08); }
   60%  { opacity: 1; background: rgba(77,232,176,0.05); }
   100% { opacity: 1; background: transparent; }
 }
 
-.cell-time  { font-size: 12px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
-.cell-proto { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
-.cell-ip    { font-size: 12px; color: var(--glow); font-variant-numeric: tabular-nums; }
-.cell-sensor{ font-size: 11px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.cell-geo   { font-size: 11px; color: var(--text-mid); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.cell-ioc   { display: flex; flex-direction: column; gap: 2px; overflow: hidden; }
-
-.ioc-tag {
-  display: inline-flex; align-items: center; gap: 3px;
-  font-size: 9px; letter-spacing: 0.06em; padding: 2px 6px;
-  border-radius: 2px; white-space: nowrap;
-  border: 1px solid transparent; cursor: default;
-  font-weight: 500; text-transform: uppercase;
+/* Session summary row — the clickable header */
+.session-row {
+  display: grid;
+  grid-template-columns: 148px 52px 110px 110px 200px 1fr 160px 160px;
+  gap: 0; padding: 0.5rem 1.5rem;
+  align-items: center; cursor: pointer;
+  transition: background 0.1s;
+  position: relative;
 }
-.ioc-critical { color: #ff4444; border-color: rgba(255,68,68,0.3);  background: rgba(255,68,68,0.08); }
-.ioc-high     { color: #f0a94a; border-color: rgba(240,169,74,0.3); background: rgba(240,169,74,0.08); }
-.ioc-medium   { color: #7ab4dc; border-color: rgba(122,180,220,0.3);background: rgba(122,180,220,0.08); }
-.ioc-low      { color: #4a6878; border-color: rgba(74,104,120,0.3); background: rgba(74,104,120,0.08); }
+.session-row:hover { background: var(--glass); }
+.session-row.expanded { background: var(--glass); }
 
-.cell-event { display: flex; align-items: center; gap: 8px; }
-.event-tag {
-  font-size: 11px; font-weight: 500; letter-spacing: 0.04em;
-  white-space: nowrap;
+/* Expand chevron */
+.session-chevron {
+  position: absolute; left: 4px; top: 50%; transform: translateY(-50%);
+  width: 10px; height: 10px; display: flex; align-items: center; justify-content: center;
+  color: var(--text-dim); font-size: 8px; transition: transform 0.2s;
 }
-.event-tag.connect  { color: var(--text-dim); }
-.event-tag.login-ok { color: var(--bio); }
-.event-tag.login-fail { color: var(--red); }
-.event-tag.command  { color: var(--glow); }
-.event-tag.upload   { color: var(--amber); }
-.event-tag.download { color: var(--amber); }
-.event-tag.tunnel   { color: var(--coral); }
-.event-tag.other    { color: var(--text-mid); }
+.session-row.expanded .session-chevron { transform: translateY(-50%) rotate(90deg); }
 
-.cell-detail {
-  font-size: 11px; color: var(--text-dim);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 400px;
+/* Event count badge */
+.event-count {
+  font-size: 11px; color: var(--text-mid);
+  display: flex; align-items: center; gap: 5px;
 }
-.detail-cred { color: var(--text-mid); }
-.detail-cmd  { color: var(--text); font-family: var(--mono); }
-.detail-file { color: var(--amber); }
+.event-count-n {
+  font-size: 12px; color: var(--glow); font-variant-numeric: tabular-nums;
+}
 
-/* ── Row detail panel ── */
+/* ── Session events panel ── */
+.session-events {
+  background: rgba(6,10,14,0.6);
+  border-top: 1px solid var(--rim);
+  overflow: hidden;
+}
+
+/* Individual event row inside a session */
+.event-row {
+  display: grid;
+  grid-template-columns: 148px 52px 110px 110px 200px 1fr 160px 160px;
+  gap: 0; padding: 0.4rem 1.5rem 0.4rem 2.5rem;
+  border-bottom: 1px solid rgba(15,24,34,0.5);
+  align-items: center; cursor: pointer;
+  transition: background 0.1s;
+}
+.event-row:hover { background: var(--glass); }
+.event-row:last-child { border-bottom: none; }
+.event-row.expanded { background: var(--glass); border-bottom: none; }
+
+/* ── Event detail panel (inside session) ── */
 .row-detail {
-  grid-column: 1 / -1;
   background: var(--glass);
   border-bottom: 1px solid var(--rim);
   border-top: 1px solid var(--rim-hover);
-  padding: 1rem 1.5rem;
+  padding: 1rem 1.5rem 1rem 2.5rem;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 1.25rem;
   animation: detailIn 0.15s ease forwards;
 }
@@ -321,8 +321,48 @@ nav {
 .detail-ioc-item .ioc-tag { font-size: 9px; flex-shrink: 0; }
 .detail-no-data { font-size: 11px; color: var(--text-dim); font-style: italic; }
 
-.feed-row { cursor: pointer; }
-.feed-row.expanded { background: var(--glass); border-bottom: none; }
+/* ── Cell styles ── */
+.cell-time  { font-size: 12px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.cell-proto { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+.cell-ip    { font-size: 12px; color: var(--glow); font-variant-numeric: tabular-nums; }
+.cell-sensor{ font-size: 11px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cell-geo   { font-size: 11px; color: var(--text-mid); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cell-ioc   { display: flex; flex-direction: column; gap: 2px; overflow: hidden; }
+
+.ioc-tag {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 9px; letter-spacing: 0.06em; padding: 2px 6px;
+  border-radius: 2px; white-space: nowrap;
+  border: 1px solid transparent; cursor: default;
+  font-weight: 500; text-transform: uppercase;
+}
+.ioc-critical { color: #ff4444; border-color: rgba(255,68,68,0.3);  background: rgba(255,68,68,0.08); }
+.ioc-high     { color: #f0a94a; border-color: rgba(240,169,74,0.3); background: rgba(240,169,74,0.08); }
+.ioc-medium   { color: #7ab4dc; border-color: rgba(122,180,220,0.3);background: rgba(122,180,220,0.08); }
+.ioc-low      { color: #4a6878; border-color: rgba(74,104,120,0.3); background: rgba(74,104,120,0.08); }
+
+.cell-event { display: flex; align-items: center; gap: 8px; }
+.event-tag {
+  font-size: 11px; font-weight: 500; letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.event-tag.connect    { color: var(--text-dim); }
+.event-tag.login-ok   { color: var(--bio); }
+.event-tag.login-fail { color: var(--red); }
+.event-tag.command    { color: var(--glow); }
+.event-tag.upload     { color: var(--amber); }
+.event-tag.download   { color: var(--amber); }
+.event-tag.tunnel     { color: var(--coral); }
+.event-tag.other      { color: var(--text-mid); }
+
+.cell-detail {
+  font-size: 11px; color: var(--text-dim);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 400px;
+}
+.detail-cred { color: var(--text-mid); }
+.detail-cmd  { color: var(--text); font-family: var(--mono); }
+.detail-file { color: var(--amber); }
+
 .attack-tag {
   display: inline-flex; align-items: center; gap: 4px;
   font-size: 10px; letter-spacing: 0.06em; padding: 2px 8px;
@@ -330,8 +370,6 @@ nav {
   overflow: hidden; text-overflow: ellipsis;
   border: 1px solid transparent;
 }
-
-/* tactic colors */
 .tac-Reconnaissance     { color: var(--tactic-recon);     border-color: rgba(122,180,220,0.2);  background: rgba(122,180,220,0.06); }
 .tac-Initial\ Access    { color: var(--tactic-initial);   border-color: rgba(77,232,176,0.2);   background: rgba(77,232,176,0.06); }
 .tac-Execution          { color: var(--tactic-exec);      border-color: rgba(167,139,250,0.2);  background: rgba(167,139,250,0.06); }
@@ -346,17 +384,9 @@ nav {
 
 /* ── Sidebar ── */
 .sidebar { background: var(--surface); border-left: 1px solid var(--rim); overflow-y: auto; }
+.sidebar-section { padding: 1rem 1.25rem; border-bottom: 1px solid var(--rim); }
+.sidebar-title { font-size: 9px; text-transform: uppercase; letter-spacing: 0.18em; color: var(--text-dim); margin-bottom: 1rem; }
 
-.sidebar-section {
-  padding: 1rem 1.25rem;
-  border-bottom: 1px solid var(--rim);
-}
-.sidebar-title {
-  font-size: 9px; text-transform: uppercase; letter-spacing: 0.18em;
-  color: var(--text-dim); margin-bottom: 1rem;
-}
-
-/* Tactic breakdown */
 .tactic-row {
   display: flex; align-items: center; gap: 8px;
   padding: 0.3rem 0; border-bottom: 1px solid rgba(15,24,34,0.6);
@@ -367,7 +397,6 @@ nav {
 .tactic-bar-fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--glow); opacity: 0.5; transition: width 0.5s ease; }
 .tactic-count { font-size: 10px; color: var(--text-dim); min-width: 24px; text-align: right; font-variant-numeric: tabular-nums; }
 
-/* Top credentials */
 .cred-row {
   display: flex; align-items: center; gap: 6px;
   padding: 0.3rem 0; border-bottom: 1px solid rgba(15,24,34,0.6);
@@ -379,7 +408,6 @@ nav {
 .cred-pass { color: var(--text-dim); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cred-n { color: var(--text-dim); font-variant-numeric: tabular-nums; min-width: 20px; text-align: right; }
 
-/* Top commands */
 .cmd-item {
   padding: 0.35rem 0; border-bottom: 1px solid rgba(15,24,34,0.6);
   font-size: 10px; color: var(--text-dim);
@@ -388,14 +416,12 @@ nav {
 .cmd-item:last-child { border-bottom: none; }
 .cmd-item span { color: var(--glow); }
 
-/* Sensor list */
 .sensor-row {
   display: flex; align-items: center; gap: 8px;
   padding: 0.4rem 0; border-bottom: 1px solid rgba(15,24,34,0.6);
 }
 .sensor-row:last-child { border-bottom: none; }
 .sensor-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--bio); box-shadow: 0 0 4px var(--bio); flex-shrink: 0; }
-.sensor-dot.offline { background: var(--text-dim); box-shadow: none; }
 .sensor-name { font-size: 10px; color: var(--text-mid); flex: 1; }
 .sensor-count { font-size: 10px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
 
@@ -406,34 +432,24 @@ nav {
   background: var(--surface); font-size: 10px; color: var(--text-dim);
   flex-shrink: 0;
 }
-.update-bar span { letter-spacing: 0.05em; }
 .next-update { color: var(--text-dim); font-variant-numeric: tabular-nums; }
 
-/* ── Empty state ── */
 .empty-state {
   padding: 4rem 2rem; text-align: center; color: var(--text-dim);
 }
 .empty-state p { font-size: 12px; line-height: 1.8; }
 
-/* ── Scrollbar ── */
 .feed-body::-webkit-scrollbar { width: 4px; }
 .feed-body::-webkit-scrollbar-track { background: transparent; }
 .feed-body::-webkit-scrollbar-thumb { background: var(--rim); border-radius: 2px; }
 .feed-body::-webkit-scrollbar-thumb:hover { background: var(--rim-hover); }
 
-/* ── Responsive ── */
 @media (max-width: 900px) {
   .main-grid { grid-template-columns: 1fr; }
   .sidebar { display: none; }
   .stats-bar { grid-template-columns: repeat(3, 1fr); }
-  .feed-cols, .feed-row { grid-template-columns: 65px 90px 1fr 120px; }
+  .feed-cols, .session-row, .event-row { grid-template-columns: 65px 90px 1fr 120px; }
   .col-head:nth-child(2), .cell-proto,
-  .col-head:nth-child(4), .cell-sensor,
-  .col-head:nth-child(5), .cell-geo { display: none; }
-}
-@media (max-width: 560px) {
-  .stats-bar { grid-template-columns: repeat(2, 1fr); }
-  .feed-cols, .feed-row { grid-template-columns: 65px 1fr 100px; }
   .col-head:nth-child(4), .cell-sensor,
   .col-head:nth-child(5), .cell-geo { display: none; }
 }
@@ -462,50 +478,46 @@ nav {
 
 <div class="page">
 
-  <!-- Stats bar -->
   <div class="stats-bar">
     <div class="stat">
       <div class="stat-value" id="s-total">—</div>
-      <div class="stat-label">events captured
-        <span class="stat-tip"><i class="stat-tip-icon" data-tip="All telemetry including connections, handshakes, login attempts, and commands">?</i></span>
+      <div class="stat-label">events
+        <span class="stat-tip"><i class="stat-tip-icon" data-tip="All events currently visible in the feed">?</i></span>
       </div>
     </div>
     <div class="stat">
       <div class="stat-value highlight" id="s-sessions">—</div>
       <div class="stat-label">sessions
-        <span class="stat-tip"><i class="stat-tip-icon" data-tip="Unique TCP connections opened to the honeypot">?</i></span>
+        <span class="stat-tip"><i class="stat-tip-icon" data-tip="Unique sessions in the current feed view">?</i></span>
       </div>
     </div>
     <div class="stat">
       <div class="stat-value" id="s-ips">—</div>
       <div class="stat-label">unique IPs
-        <span class="stat-tip"><i class="stat-tip-icon" data-tip="Distinct anonymized source addresses seen across all sessions">?</i></span>
+        <span class="stat-tip"><i class="stat-tip-icon" data-tip="Distinct source addresses in the current feed view">?</i></span>
       </div>
     </div>
     <div class="stat">
       <div class="stat-value" id="s-logins">—</div>
       <div class="stat-label">login attempts
-        <span class="stat-tip"><i class="stat-tip-icon" data-tip="Total credential pairs tried — both failed and successful auths">?</i></span>
+        <span class="stat-tip"><i class="stat-tip-icon" data-tip="Credential pairs tried in the current feed view">?</i></span>
       </div>
     </div>
     <div class="stat">
       <div class="stat-value" id="s-cmds">—</div>
       <div class="stat-label">commands
-        <span class="stat-tip"><i class="stat-tip-icon" data-tip="Shell commands run by attackers inside the captured honeypot session">?</i></span>
+        <span class="stat-tip"><i class="stat-tip-icon" data-tip="Shell commands run in the current feed view">?</i></span>
       </div>
     </div>
     <div class="stat">
       <div class="stat-value" id="s-uploads">—</div>
       <div class="stat-label">file uploads
-        <span class="stat-tip"><i class="stat-tip-icon" data-tip="Files transferred to the honeypot via SFTP — malware, scripts, binaries">?</i></span>
+        <span class="stat-tip"><i class="stat-tip-icon" data-tip="Files transferred in the current feed view">?</i></span>
       </div>
     </div>
   </div>
 
-  <!-- Main grid -->
   <div class="main-grid">
-
-    <!-- Feed column -->
     <div class="feed-col">
       <div class="feed-header">
         <div class="feed-header-left">
@@ -532,9 +544,7 @@ nav {
       </div>
 
       <div class="feed-body" id="feed-body">
-        <div class="empty-state">
-          <p>Connecting to feed…</p>
-        </div>
+        <div class="empty-state"><p>Connecting to feed…</p></div>
       </div>
 
       <div class="update-bar">
@@ -543,9 +553,7 @@ nav {
       </div>
     </div>
 
-    <!-- Sidebar -->
     <div class="sidebar">
-
       <div class="sidebar-section">
         <div class="sidebar-title">Sensors</div>
         <div id="sensor-list">
@@ -556,137 +564,119 @@ nav {
           </div>
         </div>
       </div>
-
       <div class="sidebar-section">
         <div class="sidebar-title">Tactics observed</div>
         <div id="tactic-list"></div>
       </div>
-
       <div class="sidebar-section">
         <div class="sidebar-title">Top ASNs</div>
         <div id="asn-list"></div>
       </div>
-
       <div class="sidebar-section">
         <div class="sidebar-title">Top credentials</div>
         <div id="cred-list"></div>
       </div>
-
       <div class="sidebar-section">
         <div class="sidebar-title">Top commands</div>
         <div id="cmd-list"></div>
       </div>
-
     </div>
   </div>
 </div>
 
-<script>
-// ── Config ────────────────────────────────────────────────────────────────────
-const READ_URL    = 'https://bathysphere-read.kasuskei.workers.dev';
-const POLL_MS     = 30_000;
-const MAX_ROWS    = 500;   // max rows kept in the DOM
+<div id="floating-tip"></div>
 
-// ── State ─────────────────────────────────────────────────────────────────────
-let newestTs      = null;
-let allEvents     = [];
-let activeFilter  = 'all';
-let countdownVal  = 30;
+<script>
+const READ_URL  = 'https://bathysphere-read.kasuskei.workers.dev';
+const POLL_MS   = 30_000;
+const MAX_ROWS  = 500;
+
+let newestTs     = null;
+let allEvents    = [];
+let activeFilter = 'all';
+let countdownVal = 30;
 let countdownTimer;
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Helpers ──────────────────────────────────────────────────────────────────
 function fmt(ts) {
   if (!ts) return '—';
   const d = new Date(ts);
-  const date = d.toLocaleDateString('en-CA'); // YYYY-MM-DD
+  const date = d.toLocaleDateString('en-CA');
   const time = d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
   return `${date} ${time}`;
 }
 
+function escHtml(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 function eventClass(eventid) {
-  if (eventid === 'cowrie.login.success')       return 'login-ok';
-  if (eventid === 'cowrie.login.failed')        return 'login-fail';
-  if (eventid === 'cowrie.command.input' ||
-      eventid === 'cowrie.command.failed')      return 'command';
-  if (eventid === 'cowrie.session.file_upload') return 'upload';
+  if (eventid === 'cowrie.login.success')         return 'login-ok';
+  if (eventid === 'cowrie.login.failed')          return 'login-fail';
+  if (eventid === 'cowrie.command.input' || eventid === 'cowrie.command.failed') return 'command';
+  if (eventid === 'cowrie.session.file_upload')   return 'upload';
   if (eventid === 'cowrie.session.file_download') return 'download';
-  if (eventid === 'cowrie.direct-tcpip.request') return 'tunnel';
-  if (eventid === 'cowrie.session.connect')     return 'connect';
+  if (eventid === 'cowrie.direct-tcpip.request')  return 'tunnel';
+  if (eventid === 'cowrie.session.connect')       return 'connect';
   return 'other';
 }
 
 function eventLabel(eventid) {
   const map = {
-    'cowrie.session.connect':          'CONNECT',
-    'cowrie.session.closed':           'CLOSED',
-    'cowrie.client.version':           'CLIENT',
-    'cowrie.login.success':            'AUTH OK',
-    'cowrie.login.failed':             'AUTH FAIL',
-    'cowrie.command.input':            'COMMAND',
-    'cowrie.command.failed':           'CMD FAIL',
-    'cowrie.session.file_upload':      'UPLOAD',
-    'cowrie.session.file_download':    'DOWNLOAD',
-    'cowrie.direct-tcpip.request':     'TUNNEL',
+    'cowrie.session.connect':      'CONNECT',
+    'cowrie.session.closed':       'CLOSED',
+    'cowrie.client.version':       'CLIENT',
+    'cowrie.login.success':        'AUTH OK',
+    'cowrie.login.failed':         'AUTH FAIL',
+    'cowrie.command.input':        'COMMAND',
+    'cowrie.command.failed':       'CMD FAIL',
+    'cowrie.session.file_upload':  'UPLOAD',
+    'cowrie.session.file_download':'DOWNLOAD',
+    'cowrie.direct-tcpip.request': 'TUNNEL',
   };
   return map[eventid] ?? eventid.split('.').pop().toUpperCase();
 }
 
 function eventDetail(e) {
-  if (e.eventid === 'cowrie.login.success' || e.eventid === 'cowrie.login.failed') {
-    return `<span class="detail-cred">${e.username ?? '?'} / ${e.password_hash ?? '?'}</span>`;
-  }
-  if (e.eventid === 'cowrie.command.input' || e.eventid === 'cowrie.command.failed') {
-    const cmd = (e.input ?? '').slice(0, 60);
-    return `<span class="detail-cmd">${escHtml(cmd)}</span>`;
-  }
-  if (e.eventid === 'cowrie.session.file_upload') {
+  if (e.eventid === 'cowrie.login.success' || e.eventid === 'cowrie.login.failed')
+    return `<span class="detail-cred">${escHtml(e.username ?? '?')} / ${escHtml(e.password_hash ?? '?')}</span>`;
+  if (e.eventid === 'cowrie.command.input' || e.eventid === 'cowrie.command.failed')
+    return `<span class="detail-cmd">${escHtml((e.input ?? '').slice(0, 60))}</span>`;
+  if (e.eventid === 'cowrie.session.file_upload')
     return `<span class="detail-file">${escHtml(e.filename ?? e.shasum?.slice(0,12) ?? '?')}</span>`;
-  }
-  if (e.eventid === 'cowrie.session.file_download') {
-    const u = (e.url ?? e.shasum ?? '').slice(0, 50);
-    return `<span class="detail-file">${escHtml(u)}</span>`;
-  }
-  if (e.eventid === 'cowrie.client.version') {
+  if (e.eventid === 'cowrie.session.file_download')
+    return `<span class="detail-file">${escHtml((e.url ?? e.shasum ?? '').slice(0, 50))}</span>`;
+  if (e.eventid === 'cowrie.client.version')
     return `<span>${escHtml(e.version ?? '')}</span>`;
-  }
-  if (e.eventid === 'cowrie.direct-tcpip.request') {
+  if (e.eventid === 'cowrie.direct-tcpip.request')
     return `<span>TCP tunnel attempt</span>`;
-  }
   return '';
 }
 
-// Short labels for IoC tags — keeps the column compact
 const IOC_SHORT = {
-  'credential':   'CREDENTIAL',
-  'malware':      'MALWARE',
-  'persistence':  'PERSISTENCE',
-  'exfiltration': 'EXFILTRATION',
-  'recon':        'RECON',
-  'c2':           'COMMAND & CONTROL',
-  'scanner':      'SCANNER',
-  'reputation':   'REPUTATION',
+  credential:   'CREDENTIAL',
+  malware:      'MALWARE',
+  persistence:  'PERSISTENCE',
+  exfiltration: 'EXFILTRATION',
+  recon:        'RECON',
+  c2:           'COMMAND & CONTROL',
+  scanner:      'SCANNER',
+  reputation:   'REPUTATION',
 };
 
-function iocTags(iocs) {
-  if (!iocs || iocs.length === 0) return '';
-  return iocs.slice(0, 2).map(ioc => {
-    const short = IOC_SHORT[ioc.type] ?? ioc.type?.toUpperCase() ?? 'IOC';
-    return `<span class="ioc-tag ioc-${escHtml(ioc.severity ?? 'low')}" data-tip="${escHtml(ioc.label)}">${short}</span>`;
-  }).join('');
+const IOC_SEVERITY_RANK = { critical: 4, high: 3, medium: 2, low: 1 };
+
+function iocTags(iocs, max = 2) {
+  if (!iocs || !iocs.length) return '';
+  return iocs.slice(0, max).map(ioc =>
+    `<span class="ioc-tag ioc-${escHtml(ioc.severity ?? 'low')}" data-tip="${escHtml(ioc.label)}">${IOC_SHORT[ioc.type] ?? 'IOC'}</span>`
+  ).join('');
 }
 
 function attackTag(attack) {
   if (!attack) return '';
-  const tactic = attack.tactic ?? '';
-  const cls = 'tac-' + tactic;
   const tip = `${escHtml(attack.id)} · ${escHtml(attack.name)} · ${escHtml(attack.tactic)}`;
-  return `<span class="attack-tag ${cls}" data-tip="${tip}">${escHtml(attack.id)}</span>`;
-}
-
-function escHtml(s) {
-  return String(s ?? '')
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;');
+  return `<span class="attack-tag tac-${escHtml(attack.tactic ?? '')}" data-tip="${tip}">${escHtml(attack.id)}</span>`;
 }
 
 function passesFilter(e) {
@@ -698,154 +688,137 @@ function passesFilter(e) {
   return true;
 }
 
-// ── Row detail panel ─────────────────────────────────────────────────────────
+// Label for count in session summary based on active filter
+function filterLabel(n) {
+  if (activeFilter === 'all')     return `${n} event${n !== 1 ? 's' : ''}`;
+  if (activeFilter === 'auth')    return `${n} auth attempt${n !== 1 ? 's' : ''}`;
+  if (activeFilter === 'command') return `${n} command${n !== 1 ? 's' : ''}`;
+  if (activeFilter === 'file')    return `${n} file${n !== 1 ? 's' : ''}`;
+  if (activeFilter === 'attack')  return `${n} technique${n !== 1 ? 's' : ''}`;
+  return `${n} event${n !== 1 ? 's' : ''}`;
+}
+
+// Pick highest-severity IoC across a set of events
+function topIoc(events) {
+  let best = null, bestRank = 0;
+  for (const e of events) {
+    for (const ioc of (e.iocs ?? [])) {
+      const r = IOC_SEVERITY_RANK[ioc.severity] ?? 0;
+      if (r > bestRank) { best = ioc; bestRank = r; }
+    }
+  }
+  return best;
+}
+
+// Pick best ATT&CK technique (prefer highest tactic rank, fallback to last seen)
+function topAttack(events) {
+  const tacticRank = { Impact: 11, 'Lateral Movement': 10, 'Command and Control': 9, Collection: 8, Exfiltration: 7, 'Defense Evasion': 6, Persistence: 5, 'Privilege Escalation': 4, 'Credential Access': 3, Discovery: 2, Execution: 1, 'Initial Access': 0, Reconnaissance: -1 };
+  let best = null, bestRank = -99;
+  for (const e of events) {
+    if (e.attack) {
+      const r = tacticRank[e.attack.tactic] ?? 0;
+      if (r > bestRank) { best = e.attack; bestRank = r; }
+    }
+  }
+  return best;
+}
+
+// ── Group events by session ───────────────────────────────────────────────────
+function groupBySessions(events) {
+  const sessionMap = new Map();
+  const sessionOrder = [];
+
+  for (const e of events) {
+    const key = e.session ?? e.id; // fallback for events with no session
+    if (!sessionMap.has(key)) {
+      sessionMap.set(key, { session: key, events: [], src_ip: e.src_ip, geo: e.geo, sensor: e.sensor, protocol: e.protocol });
+      sessionOrder.push(key);
+    }
+    sessionMap.get(key).events.push(e);
+  }
+
+  // Sort session order by most recent event timestamp
+  sessionOrder.sort((a, b) => {
+    const aTs = sessionMap.get(a).events[sessionMap.get(a).events.length - 1]?.ts ?? '';
+    const bTs = sessionMap.get(b).events[sessionMap.get(b).events.length - 1]?.ts ?? '';
+    return bTs > aTs ? 1 : -1;
+  });
+
+  return sessionOrder.map(k => sessionMap.get(k));
+}
+
+// ── Detail panel ─────────────────────────────────────────────────────────────
 function buildDetailPanel(e) {
   const panel = document.createElement('div');
   panel.className = 'row-detail';
 
-  const geoStr = e.geo
-    ? [e.geo.city, e.geo.country].filter(Boolean).join(', ')
-    : '—';
+  const geoStr = e.geo ? [e.geo.city, e.geo.country].filter(Boolean).join(', ') : '—';
 
-  // Group 1: Connection
-  const g1 = `
+  let eventFields = '';
+  if (e.username)         eventFields += df('Username', e.username);
+  if (e.password_hash)    eventFields += df('Password', `${e.password_hash} (${e.password_len ?? '?'} chars)`);
+  if (e.input)            eventFields += df('Command', e.input);
+  if (e.filename)         eventFields += df('Filename', e.filename);
+  if (e.shasum)           eventFields += df('SHA256', e.shasum);
+  if (e.version)          eventFields += df('Client version', e.version);
+  if (e.duration != null) eventFields += df('Duration', `${e.duration}s`);
+  if (!eventFields)       eventFields = `<div class="detail-no-data">No additional event data</div>`;
+
+  const iocHtml = e.iocs?.length
+    ? `<div class="detail-ioc-list">${e.iocs.map(ioc =>
+        `<div class="detail-ioc-item">
+          <span class="ioc-tag ioc-${escHtml(ioc.severity ?? 'low')}">${IOC_SHORT[ioc.type] ?? 'IOC'}</span>
+          <span>${escHtml(ioc.label)}${ioc.reports ? ` (${ioc.reports} reports)` : ''}</span>
+        </div>`).join('')}</div>`
+    : `<div class="detail-no-data">No IoCs matched</div>`;
+
+  const attackHtml = e.attack
+    ? `${df('ATT&CK technique', `${e.attack.id} · ${e.attack.name}`)}${df('Tactic', e.attack.tactic)}`
+    : `<div class="detail-no-data">No ATT&CK technique mapped</div>`;
+
+  panel.innerHTML = `
     <div class="detail-group">
       <div class="detail-group-title">Connection</div>
-      <div class="detail-field">
-        <div class="detail-field-label">Timestamp</div>
-        <div class="detail-field-value">${escHtml(e.ts ?? '—')}</div>
-      </div>
-      <div class="detail-field">
-        <div class="detail-field-label">Source IP</div>
-        <div class="detail-field-value">${escHtml(e.src_ip ?? '—')}</div>
-      </div>
-      <div class="detail-field">
-        <div class="detail-field-label">Location</div>
-        <div class="detail-field-value">${escHtml(geoStr)}</div>
-      </div>
-      <div class="detail-field">
-        <div class="detail-field-label">Sensor</div>
-        <div class="detail-field-value">${escHtml(e.sensor ?? '—')}</div>
-      </div>
-      <div class="detail-field">
-        <div class="detail-field-label">Session</div>
-        <div class="detail-field-value">${escHtml(e.session ?? '—')}</div>
-      </div>
-    </div>`;
-
-  // Group 2: Event detail
-  let eventFields = '';
-  if (e.username) eventFields += `
-    <div class="detail-field">
-      <div class="detail-field-label">Username</div>
-      <div class="detail-field-value">${escHtml(e.username)}</div>
-    </div>`;
-  if (e.password_hash) eventFields += `
-    <div class="detail-field">
-      <div class="detail-field-label">Password</div>
-      <div class="detail-field-value">${escHtml(e.password_hash)} (${e.password_len ?? '?'} chars)</div>
-    </div>`;
-  if (e.input) eventFields += `
-    <div class="detail-field">
-      <div class="detail-field-label">Command</div>
-      <div class="detail-field-value">${escHtml(e.input)}</div>
-    </div>`;
-  if (e.filename) eventFields += `
-    <div class="detail-field">
-      <div class="detail-field-label">Filename</div>
-      <div class="detail-field-value">${escHtml(e.filename)}</div>
-    </div>`;
-  if (e.shasum) eventFields += `
-    <div class="detail-field">
-      <div class="detail-field-label">SHA256</div>
-      <div class="detail-field-value">${escHtml(e.shasum)}</div>
-    </div>`;
-  if (e.version) eventFields += `
-    <div class="detail-field">
-      <div class="detail-field-label">Client version</div>
-      <div class="detail-field-value">${escHtml(e.version)}</div>
-    </div>`;
-  if (e.duration != null) eventFields += `
-    <div class="detail-field">
-      <div class="detail-field-label">Duration</div>
-      <div class="detail-field-value">${e.duration}s</div>
-    </div>`;
-  if (!eventFields) eventFields = `<div class="detail-no-data">No additional event data</div>`;
-
-  const g2 = `
+      ${df('Timestamp', e.ts ?? '—')}
+      ${df('Source IP', e.src_ip ?? '—')}
+      ${df('Location', geoStr)}
+      ${df('Sensor', e.sensor ?? '—')}
+      ${df('Session', e.session ?? '—')}
+    </div>
     <div class="detail-group">
       <div class="detail-group-title">Event detail</div>
       ${eventFields}
-    </div>`;
-
-  // Group 3: Threat intel
-  let iocHtml = '';
-  if (e.iocs && e.iocs.length > 0) {
-    iocHtml = `<div class="detail-ioc-list">` +
-      e.iocs.map(ioc => `
-        <div class="detail-ioc-item">
-          <span class="ioc-tag ioc-${escHtml(ioc.severity ?? 'low')}">${IOC_SHORT[ioc.type] ?? 'IOC'}</span>
-          <span>${escHtml(ioc.label)}${ioc.reports ? ` (${ioc.reports} reports)` : ''}</span>
-        </div>`).join('') +
-      `</div>`;
-  } else {
-    iocHtml = `<div class="detail-no-data">No IoCs matched</div>`;
-  }
-
-  const attackHtml = e.attack
-    ? `<div class="detail-field" style="margin-top:0.75rem">
-        <div class="detail-field-label">ATT&amp;CK technique</div>
-        <div class="detail-field-value">${escHtml(e.attack.id)} · ${escHtml(e.attack.name)}</div>
-        <div class="detail-field-label" style="margin-top:4px">Tactic</div>
-        <div class="detail-field-value">${escHtml(e.attack.tactic)}</div>
-      </div>`
-    : `<div class="detail-no-data" style="margin-top:0.75rem">No ATT&amp;CK technique mapped</div>`;
-
-  const g3 = `
+    </div>
     <div class="detail-group">
       <div class="detail-group-title">Threat intel</div>
       ${iocHtml}
-      ${attackHtml}
-    </div>`;
-
-  // Network group
-  const g4 = `
+      <div style="margin-top:0.75rem">${attackHtml}</div>
+    </div>
     <div class="detail-group">
       <div class="detail-group-title">Network</div>
-      <div class="detail-field">
-        <div class="detail-field-label">ASN</div>
-        <div class="detail-field-value">${escHtml(e.geo?.asn ?? '—')}</div>
-      </div>
-      <div class="detail-field">
-        <div class="detail-field-label">ISP</div>
-        <div class="detail-field-value">${escHtml(e.geo?.isp ?? '—')}</div>
-      </div>
-      <div class="detail-field">
-        <div class="detail-field-label">rDNS</div>
-        <div class="detail-field-value">${escHtml(e.geo?.rdns ?? '—')}</div>
-      </div>
-      <div class="detail-field">
-        <div class="detail-field-label">Cloud / Provider</div>
-        <div class="detail-field-value">${escHtml(e.geo?.cloud ?? '—')}</div>
-      </div>
-    </div>`;
-
-  panel.innerHTML = g1 + g2 + g3 + g4;
-  panel.style.gridTemplateColumns = 'repeat(4, 1fr)';
+      ${e.geo?.asn  ? df('ASN', e.geo.asn)   : ''}
+      ${e.geo?.isp  ? df('ISP', e.geo.isp)   : ''}
+      ${e.geo?.rdns ? df('rDNS', e.geo.rdns) : ''}
+      ${e.geo?.cloud ? df('Cloud', e.geo.cloud) : ''}
+      ${!e.geo ? '<div class="detail-no-data">No network data</div>' : ''}
+    </div>
+  `;
   return panel;
 }
 
-// ── Render a single row ───────────────────────────────────────────────────────
-function makeRow(e, isNew = false) {
-  const row = document.createElement('div');
-  row.className = 'feed-row' + (isNew ? ' new' : '');
-  row.dataset.eventid = e.eventid;
-  row.dataset.hasAttack = e.attack ? '1' : '0';
+function df(label, value) {
+  return `<div class="detail-field">
+    <div class="detail-field-label">${label}</div>
+    <div class="detail-field-value">${escHtml(String(value ?? '—'))}</div>
+  </div>`;
+}
 
+// ── Individual event row (inside session) ─────────────────────────────────────
+function makeEventRow(e) {
+  const row = document.createElement('div');
+  row.className = 'event-row';
   const ec = eventClass(e.eventid);
-  const geoStr = e.geo
-    ? [e.geo.city, e.geo.country].filter(Boolean).join(', ')
-    : '—';
+  const geoStr = e.geo ? [e.geo.city, e.geo.country].filter(Boolean).join(', ') : '—';
 
   row.innerHTML = `
     <div class="cell-time">${fmt(e.ts)}</div>
@@ -861,151 +834,217 @@ function makeRow(e, isNew = false) {
     <div>${attackTag(e.attack)}</div>
   `;
 
-  // Click to expand detail panel
-  row.addEventListener('click', () => {
-    // Close any existing open panel
-    const existing = document.querySelector('.row-detail');
-    const wasThisRow = existing && existing.previousSibling === row;
-    if (existing) existing.remove();
-    row.classList.remove('expanded');
-
-    if (!wasThisRow) {
-      const panel = buildDetailPanel(e);
-      row.after(panel);
+  row.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    const existing = row.nextSibling;
+    const wasOpen = existing && existing.classList.contains('row-detail');
+    // Close any open detail in this session
+    row.closest('.session-events')?.querySelectorAll('.row-detail').forEach(d => d.remove());
+    row.closest('.session-events')?.querySelectorAll('.event-row.expanded').forEach(r => r.classList.remove('expanded'));
+    if (!wasOpen) {
       row.classList.add('expanded');
+      row.after(buildDetailPanel(e));
     }
   });
 
   return row;
 }
 
-// ── Render full feed ──────────────────────────────────────────────────────────
-function renderFeed(events, newIds = new Set()) {
-  const body = document.getElementById('feed-body');
-  const visible = events.filter(passesFilter).slice(-MAX_ROWS).reverse();
+// ── Session group row ─────────────────────────────────────────────────────────
+function makeSessionGroup(group, isNew = false) {
+  const filtered = group.events.filter(passesFilter);
+  if (filtered.length === 0) return null;
 
-  if (visible.length === 0) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'session-group' + (isNew ? ' new' : '');
+
+  // Most recent event in the filtered set
+  const latest = filtered[filtered.length - 1];
+  const geo = group.geo ?? latest?.geo ?? null;
+  const geoStr = geo ? [geo.city, geo.country].filter(Boolean).join(', ') : '—';
+  const ioc = topIoc(filtered);
+  const attack = topAttack(filtered);
+
+  const summaryRow = document.createElement('div');
+  summaryRow.className = 'session-row';
+  summaryRow.innerHTML = `
+    <span class="session-chevron">▶</span>
+    <div class="cell-time">${fmt(latest?.ts)}</div>
+    <div class="cell-proto">${escHtml(group.protocol ?? 'ssh')}</div>
+    <div class="cell-ip">${escHtml(group.src_ip ?? '—')}</div>
+    <div class="cell-sensor">${escHtml(group.sensor ?? '—')}</div>
+    <div class="cell-geo">${escHtml(geoStr)}</div>
+    <div class="cell-event">
+      <div class="event-count">
+        <span class="event-count-n">${filtered.length}</span>
+        <span>${filterLabel(filtered.length).replace(/^\d+ /, '')}</span>
+      </div>
+    </div>
+    <div class="cell-ioc">${ioc ? `<span class="ioc-tag ioc-${escHtml(ioc.severity ?? 'low')}" data-tip="${escHtml(ioc.label)}">${IOC_SHORT[ioc.type] ?? 'IOC'}</span>` : ''}</div>
+    <div>${attackTag(attack)}</div>
+  `;
+
+  const eventsPanel = document.createElement('div');
+  eventsPanel.className = 'session-events';
+  eventsPanel.style.display = 'none';
+
+  // Add event rows in chronological order (oldest first inside session)
+  filtered.forEach(e => eventsPanel.appendChild(makeEventRow(e)));
+
+  summaryRow.addEventListener('click', () => {
+    const isOpen = eventsPanel.style.display !== 'none';
+    eventsPanel.style.display = isOpen ? 'none' : 'block';
+    summaryRow.classList.toggle('expanded', !isOpen);
+  });
+
+  wrapper.appendChild(summaryRow);
+  wrapper.appendChild(eventsPanel);
+  return wrapper;
+}
+
+// ── Stats from visible events ─────────────────────────────────────────────────
+function computeStats(events) {
+  let total = 0, sessions = new Set(), ips = new Set(), logins = 0, cmds = 0, uploads = 0;
+  for (const e of events) {
+    if (!passesFilter(e)) continue;
+    total++;
+    if (e.session) sessions.add(e.session);
+    if (e.src_ip)  ips.add(e.src_ip);
+    if (e.eventid === 'cowrie.login.success' || e.eventid === 'cowrie.login.failed') logins++;
+    if (e.eventid === 'cowrie.command.input') cmds++;
+    if (e.eventid === 'cowrie.session.file_upload') uploads++;
+  }
+  return { total, sessions: sessions.size, ips: ips.size, logins, cmds, uploads };
+}
+
+function updateStats(events) {
+  const s = computeStats(events);
+  document.getElementById('s-total').textContent    = s.total.toLocaleString();
+  document.getElementById('s-sessions').textContent = s.sessions.toLocaleString();
+  document.getElementById('s-ips').textContent      = s.ips.toLocaleString();
+  document.getElementById('s-logins').textContent   = s.logins.toLocaleString();
+  document.getElementById('s-cmds').textContent     = s.cmds.toLocaleString();
+  document.getElementById('s-uploads').textContent  = s.uploads.toLocaleString();
+}
+
+// ── Render feed ───────────────────────────────────────────────────────────────
+function renderFeed(events, newSessionIds = new Set()) {
+  const body = document.getElementById('feed-body');
+
+  // Group all visible events by session
+  const visible = events.slice(-MAX_ROWS);
+  const groups = groupBySessions(visible);
+  const filtered = groups.filter(g => g.events.some(passesFilter));
+
+  if (filtered.length === 0) {
     body.innerHTML = '<div class="empty-state"><p>No events match the current filter.</p></div>';
+    updateStats(events);
     return;
   }
 
-  // On first load, batch render
-  if (newIds.size === 0 || body.querySelector('.empty-state')) {
+  if (newSessionIds.size === 0 || body.querySelector('.empty-state')) {
+    // Full re-render
     const frag = document.createDocumentFragment();
-    visible.forEach(e => frag.appendChild(makeRow(e, false)));
+    filtered.forEach(g => {
+      const el = makeSessionGroup(g, false);
+      if (el) frag.appendChild(el);
+    });
     body.innerHTML = '';
     body.appendChild(frag);
-    return;
+  } else {
+    // Prepend new/updated sessions
+    const frag = document.createDocumentFragment();
+    filtered
+      .filter(g => newSessionIds.has(g.session))
+      .forEach(g => {
+        const el = makeSessionGroup(g, true);
+        if (el) frag.appendChild(el);
+        // Remove old version of this session if it exists
+        body.querySelectorAll('.session-group').forEach(existing => {
+          if (existing.dataset.session === g.session && !frag.contains(existing)) existing.remove();
+        });
+      });
+    if (frag.childNodes.length > 0) body.insertBefore(frag, body.firstChild);
+
+    // Trim excess
+    const groups = body.querySelectorAll('.session-group');
+    if (groups.length > MAX_ROWS) {
+      for (let i = MAX_ROWS; i < groups.length; i++) groups[i].remove();
+    }
   }
 
-  // On poll: prepend new rows, trim old ones
-  const frag = document.createDocumentFragment();
-  visible.filter(e => newIds.has(e.id)).forEach(e => frag.appendChild(makeRow(e, true)));
-  body.insertBefore(frag, body.firstChild);
-
-  // Trim excess rows
-  const rows = body.querySelectorAll('.feed-row');
-  if (rows.length > MAX_ROWS) {
-    for (let i = MAX_ROWS; i < rows.length; i++) rows[i].remove();
-  }
+  updateStats(events);
 }
 
-// ── Update stats bar ──────────────────────────────────────────────────────────
-function updateStats(data) {
-  document.getElementById('s-total').textContent    = data.total_events?.toLocaleString() ?? '—';
-  document.getElementById('s-sessions').textContent = data.sessions?.toLocaleString() ?? '—';
-  document.getElementById('s-ips').textContent      = data.unique_ips?.toLocaleString() ?? '—';
-  document.getElementById('s-logins').textContent   = ((data.logins_ok ?? 0) + (data.logins_fail ?? 0)).toLocaleString();
-  document.getElementById('s-cmds').textContent     = data.commands?.toLocaleString() ?? '—';
-  document.getElementById('s-uploads').textContent  = data.uploads?.toLocaleString() ?? '—';
-}
-
-// ── Update sidebar ────────────────────────────────────────────────────────────
+// ── Sidebar ───────────────────────────────────────────────────────────────────
 function updateSidebar(events) {
-  // Tactic breakdown
   const tactics = {};
   events.forEach(e => {
     if (e.attack?.tactic) tactics[e.attack.tactic] = (tactics[e.attack.tactic] ?? 0) + 1;
   });
   const tacMax = Math.max(...Object.values(tactics), 1);
-  const tacSorted = Object.entries(tactics).sort((a,b) => b[1]-a[1]).slice(0, 8);
-  const tacList = document.getElementById('tactic-list');
-  tacList.innerHTML = tacSorted.map(([t, n]) => `
-    <div class="tactic-row">
+  document.getElementById('tactic-list').innerHTML = Object.entries(tactics)
+    .sort((a,b) => b[1]-a[1]).slice(0,8)
+    .map(([t, n]) => `<div class="tactic-row">
       <div class="tactic-name">${escHtml(t)}</div>
       <div class="tactic-bar-bg"><div class="tactic-bar-fill" style="width:${Math.round(n/tacMax*100)}%"></div></div>
       <div class="tactic-count">${n}</div>
     </div>`).join('');
 
-  // Top ASNs
   const asns = {};
-  events.forEach(e => {
-    if (e.geo?.asn) asns[e.geo.asn] = (asns[e.geo.asn] ?? 0) + 1;
-  });
-  const asnSorted = Object.entries(asns).sort((a,b) => b[1]-a[1]).slice(0, 6);
-  document.getElementById('asn-list').innerHTML = asnSorted.map(([asn, n]) => `
-    <div class="cred-row">
+  events.forEach(e => { if (e.geo?.asn) asns[e.geo.asn] = (asns[e.geo.asn] ?? 0) + 1; });
+  document.getElementById('asn-list').innerHTML = Object.entries(asns)
+    .sort((a,b) => b[1]-a[1]).slice(0,6)
+    .map(([asn, n]) => `<div class="cred-row">
       <span class="cred-user" style="min-width:unset;flex:1;font-size:10px">${escHtml(asn)}</span>
       <span class="cred-n">${n}</span>
     </div>`).join('') || '<div style="font-size:10px;color:var(--text-dim)">No data yet</div>';
 
-  // Top credentials
   const creds = {};
   events.filter(e => e.eventid === 'cowrie.login.failed' || e.eventid === 'cowrie.login.success')
-    .forEach(e => {
-      const key = `${e.username}|||${e.password_hash}`;
-      creds[key] = (creds[key] ?? 0) + 1;
-    });
-  const credSorted = Object.entries(creds).sort((a,b) => b[1]-a[1]).slice(0,7);
-  document.getElementById('cred-list').innerHTML = credSorted.map(([k, n]) => {
-    const [u, p] = k.split('|||');
-    return `<div class="cred-row">
-      <span class="cred-user">${escHtml(u)}</span>
-      <span class="cred-sep">/</span>
-      <span class="cred-pass">${escHtml(p ?? '?')}</span>
-      <span class="cred-n">${n}</span>
-    </div>`;
-  }).join('');
+    .forEach(e => { const k = `${e.username}|||${e.password_hash}`; creds[k] = (creds[k] ?? 0) + 1; });
+  document.getElementById('cred-list').innerHTML = Object.entries(creds)
+    .sort((a,b) => b[1]-a[1]).slice(0,7)
+    .map(([k, n]) => {
+      const [u, p] = k.split('|||');
+      return `<div class="cred-row">
+        <span class="cred-user">${escHtml(u)}</span>
+        <span class="cred-sep">/</span>
+        <span class="cred-pass">${escHtml(p ?? '?')}</span>
+        <span class="cred-n">${n}</span>
+      </div>`;
+    }).join('');
 
-  // Top commands
   const cmds = {};
   events.filter(e => e.eventid === 'cowrie.command.input')
     .forEach(e => { if (e.input) cmds[e.input] = (cmds[e.input] ?? 0) + 1; });
-  const cmdSorted = Object.entries(cmds).sort((a,b) => b[1]-a[1]).slice(0,6);
-  document.getElementById('cmd-list').innerHTML = cmdSorted.map(([cmd, n]) => `
-    <div class="cmd-item"><span>${n}×</span> ${escHtml(cmd.slice(0, 44))}</div>
-  `).join('');
+  document.getElementById('cmd-list').innerHTML = Object.entries(cmds)
+    .sort((a,b) => b[1]-a[1]).slice(0,6)
+    .map(([cmd, n]) => `<div class="cmd-item"><span>${n}×</span> ${escHtml(cmd.slice(0,44))}</div>`)
+    .join('');
 
-  // Sensor count
   const sensorCounts = {};
   events.forEach(e => { if (e.sensor) sensorCounts[e.sensor] = (sensorCounts[e.sensor] ?? 0) + 1; });
-  document.getElementById('sensor-count').textContent =
-    (sensorCounts['honeypot-pi'] ?? 0).toLocaleString();
+  document.getElementById('sensor-count').textContent = (sensorCounts['honeypot-pi'] ?? 0).toLocaleString();
 }
 
-// ── Fetch and update ──────────────────────────────────────────────────────────
+// ── Fetch ─────────────────────────────────────────────────────────────────────
 async function fetchEvents() {
   const url = newestTs
     ? `${READ_URL}/events?limit=500&since=${encodeURIComponent(newestTs)}`
     : `${READ_URL}/events?limit=500`;
-
   const resp = await fetch(url);
-  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-  return resp.json();
-}
-
-async function fetchStats() {
-  const resp = await fetch(`${READ_URL}/stats`);
   if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
   return resp.json();
 }
 
 async function poll(isFirst = false) {
   try {
-    const [evData, stats] = await Promise.all([fetchEvents(), fetchStats()]);
-
+    const evData = await fetchEvents();
     const incoming = evData.events ?? [];
-    const newIds = new Set(incoming.map(e => e.id));
+
+    // Track which sessions are new/updated
+    const newSessions = new Set(incoming.map(e => e.session ?? e.id));
 
     if (isFirst) {
       allEvents = incoming;
@@ -1014,18 +1053,13 @@ async function poll(isFirst = false) {
       if (allEvents.length > MAX_ROWS * 2) allEvents = allEvents.slice(-MAX_ROWS * 2);
     }
 
-    if (incoming.length > 0) {
-      newestTs = incoming[incoming.length - 1].ts;
-    }
+    if (incoming.length > 0) newestTs = incoming[incoming.length - 1].ts;
 
-    renderFeed(allEvents, isFirst ? new Set() : newIds);
-    updateStats(stats);
+    renderFeed(allEvents, isFirst ? new Set() : newSessions);
     updateSidebar(allEvents);
 
-    // Update live indicator
     document.getElementById('live-label').textContent = 'live';
-    document.getElementById('last-update').textContent =
-      'last update ' + new Date().toLocaleTimeString('en-US', { hour12: false });
+    document.getElementById('last-update').textContent = 'last update ' + new Date().toLocaleTimeString('en-US', { hour12: false });
 
   } catch (err) {
     console.error('Poll failed:', err);
@@ -1054,55 +1088,33 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
   });
 });
 
+// ── Floating tooltip ──────────────────────────────────────────────────────────
+const tip    = document.getElementById('floating-tip');
+const MARGIN = 12;
+
+document.addEventListener('mouseover', e => {
+  const el = e.target.closest('[data-tip]');
+  if (!el) { tip.style.opacity = '0'; return; }
+  tip.textContent = el.dataset.tip;
+  tip.style.opacity = '1';
+});
+document.addEventListener('mousemove', e => {
+  if (tip.style.opacity === '0') return;
+  const tw = tip.offsetWidth, th = tip.offsetHeight;
+  let x = e.clientX - tw / 2, y = e.clientY + MARGIN;
+  if (y + th > window.innerHeight - 8) y = e.clientY - th - MARGIN;
+  if (x < 8) x = 8;
+  if (x + tw > window.innerWidth - 8) x = window.innerWidth - tw - 8;
+  tip.style.left = x + 'px'; tip.style.top = y + 'px';
+});
+document.addEventListener('mouseout', e => {
+  if (!e.target.closest('[data-tip]')) tip.style.opacity = '0';
+});
+
 // ── Boot ──────────────────────────────────────────────────────────────────────
 poll(true);
 startCountdown();
-
-setInterval(() => {
-  poll(false);
-  startCountdown();
-}, POLL_MS);
-</script>
-<!-- Floating tooltip -->
-<div id="floating-tip"></div>
-
-<script>
-// ── Floating tooltip ──────────────────────────────────────────────────────────
-const tip = document.getElementById('floating-tip');
-const MARGIN = 12; // px from cursor
-
-document.querySelectorAll('[data-tip]').forEach(el => {
-  el.addEventListener('mouseenter', e => {
-    tip.textContent = el.dataset.tip;
-    tip.style.opacity = '1';
-    position(e);
-  });
-  el.addEventListener('mousemove', position);
-  el.addEventListener('mouseleave', () => {
-    tip.style.opacity = '0';
-  });
-});
-
-function position(e) {
-  const tw = tip.offsetWidth;
-  const th = tip.offsetHeight;
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-
-  // Default: below cursor
-  let x = e.clientX - tw / 2;
-  let y = e.clientY + MARGIN;
-
-  // Flip above if too close to bottom
-  if (y + th > vh - 8) y = e.clientY - th - MARGIN;
-
-  // Keep within horizontal bounds
-  if (x < 8) x = 8;
-  if (x + tw > vw - 8) x = vw - tw - 8;
-
-  tip.style.left = x + 'px';
-  tip.style.top  = y + 'px';
-}
+setInterval(() => { poll(false); startCountdown(); }, POLL_MS);
 </script>
 </body>
 </html>
