@@ -472,6 +472,55 @@ nav {
   .col-head:nth-child(4), .cell-sensor,
   .col-head:nth-child(5), .cell-geo { display: none; }
 }
+
+/* ── Process tree lines (MDE-style) ── */
+.session-group.expanded-group > .session-row {
+  border-left: 2px solid var(--glow);
+}
+.session-group.expanded-group > .session-events {
+  position: relative;
+  border-left: 2px solid var(--glow);
+}
+.session-group.expanded-group > .session-events::before {
+  content: '';
+  position: absolute;
+  left: 16px;
+  top: 0;
+  bottom: 8px;
+  width: 1px;
+  background: linear-gradient(to bottom, rgba(122,180,220,0.5), rgba(122,180,220,0.08));
+  pointer-events: none;
+  z-index: 1;
+}
+.session-group.expanded-group > .session-events > .event-row {
+  position: relative;
+  padding-left: 42px !important;
+}
+.session-group.expanded-group > .session-events > .event-row::before {
+  content: '';
+  position: absolute;
+  left: 17px;
+  top: 50%;
+  width: 16px;
+  height: 1px;
+  background: rgba(122,180,220,0.3);
+  pointer-events: none;
+  z-index: 1;
+}
+.session-group.expanded-group > .session-events > .event-row::after {
+  content: '';
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--glass);
+  border: 1px solid rgba(122,180,220,0.45);
+  pointer-events: none;
+  z-index: 2;
+}
 </style>
 </head>
 <body>
@@ -921,11 +970,12 @@ function makeSessionGroup(group, isNew = false) {
     <div class="cell-ip">${escHtml(group.src_ip ?? '—')}</div>
     <div class="cell-sensor">${escHtml(group.sensor ?? '—')}</div>
     <div class="cell-geo">${escHtml(geoStr)}</div>
-    <div class="cell-event">
+    <div class="cell-event" style="flex-direction:column;align-items:flex-start;gap:3px;justify-content:center">
       <div class="event-count">
         <span class="event-count-n">${filtered.length}</span>
         <span>${filterLabel(filtered.length).replace(/^\d+ /, '')}</span>
       </div>
+      <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%">${sessionDetail(filtered)}</div>
     </div>
     <div class="cell-ioc">${ioc ? `<span class="ioc-tag ioc-${escHtml(ioc.severity ?? 'low')}" data-tip="${escHtml(ioc.label)}">${IOC_SHORT[ioc.type] ?? 'IOC'}</span>` : ''}</div>
     <div>${attackTag(attack)}</div>
@@ -942,6 +992,7 @@ function makeSessionGroup(group, isNew = false) {
     const isOpen = eventsPanel.style.display !== 'none';
     eventsPanel.style.display = isOpen ? 'none' : 'block';
     summaryRow.classList.toggle('expanded', !isOpen);
+    wrapper.classList.toggle('expanded-group', !isOpen);
   });
 
   wrapper.appendChild(summaryRow);
