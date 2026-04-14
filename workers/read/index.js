@@ -207,6 +207,29 @@ async function handleStats(env) {
   return json({ total_events: events.length, unique_ips: ips.size, sessions, logins_ok, logins_fail, commands, uploads, oldest: events[0]?.ts ?? null, newest: events[events.length-1]?.ts ?? null, source: "kv" });
 }
 
+
+async function handleSignal(env) {
+  if (!env.BLOG) return json({ posts: [], total: 0 });
+  try {
+    const result = await env.BLOG.prepare(
+      `SELECT * FROM posts ORDER BY date DESC, created_at DESC LIMIT 50`
+    ).all();
+    const posts = (result.results ?? []).map(row => ({
+      id:       row.id,
+      date:     row.date,
+      sensor:   row.sensor,
+      tags:     JSON.parse(row.tags ?? '[]'),
+      title:    row.title,
+      lede:     row.lede,
+      findings: JSON.parse(row.findings ?? '{}'),
+      body:     JSON.parse(row.body ?? '[]'),
+    }));
+    return json({ posts, total: posts.length });
+  } catch (err) {
+    return json({ error: err.message }, 500);
+  }
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);

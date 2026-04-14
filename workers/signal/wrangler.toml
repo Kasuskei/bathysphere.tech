@@ -1,0 +1,21 @@
+name               = "bathysphere-signal"
+main               = "index.js"
+compatibility_date = "2025-01-01"
+
+# Cron: every Monday at 09:00 UTC
+[triggers]
+crons = ["0 9 * * 1"]
+
+[[d1_databases]]
+binding       = "DB"
+database_name = "bathysphere"
+database_id   = "accaedaa-1f20-422b-b955-cfb6e7c7df86"
+
+[[d1_databases]]
+binding       = "BLOG"
+database_name = "bathysphere-blog"
+database_id   = "be7046ac-60cc-4cc1-97a1-336696234d06"
+
+# Secrets — set with wrangler secret put:
+#   wrangler secret put ANTHROPIC_API_KEY
+#   wrangler secret put BATHYSPHERE_SECRET
