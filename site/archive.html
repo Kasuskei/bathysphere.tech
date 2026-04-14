@@ -136,15 +136,13 @@ nav { position:sticky; top:0; z-index:100; border-bottom:1px solid var(--rim); b
   transition:background 0.1s; position:relative;
 }
 .session-row:hover { background:var(--glass); }
-.session-row.expanded { background:var(--glass); border-left:2px solid var(--glow); }
+.session-row.expanded { background:var(--glass); }
 .session-chevron { position:absolute; left:4px; top:50%; transform:translateY(-50%); color:var(--text-dim); font-size:8px; transition:transform 0.2s; }
-.session-row.expanded + .session-events { border-left:2px solid rgba(122,180,220,0.3); }
 .session-row.expanded .session-chevron { transform:translateY(-50%) rotate(90deg); }
 
-.session-events { background:rgba(6,10,14,0.6); border-top:1px solid var(--rim); border-left:2px solid transparent; }
+.session-events { background:rgba(6,10,14,0.6); border-top:1px solid var(--rim); }
 
 .event-row {
-  border-left:2px solid transparent;
   display:grid; grid-template-columns:148px 52px 110px 110px 200px 1fr 160px 160px;
   gap:0; padding:0.4rem 1.5rem 0.4rem 2.5rem;
   border-bottom:1px solid rgba(15,24,34,0.5); align-items:center; cursor:pointer; transition:background 0.1s;
@@ -225,6 +223,70 @@ nav { position:sticky; top:0; z-index:100; border-bottom:1px solid var(--rim); b
 #toast.show { opacity:1; transform:translateY(0); }
 
 #floating-tip { position:fixed; background:var(--glass); border:1px solid var(--rim-hover); color:var(--text); font-family:var(--mono); font-size:10px; padding:5px 8px; border-radius:3px; pointer-events:none; white-space:nowrap; z-index:200; opacity:0; transition:opacity 0.12s; }
+
+
+/* ── Process tree lines (MDE-style) ── */
+.session-group.expanded-group > .session-row {
+  background: var(--glass);
+  border-left: 2px solid var(--glow);
+}
+.session-group.expanded-group > .session-events {
+  position: relative;
+  padding-left: 0;
+  background: rgba(6,10,14,0.6);
+  border-top: 1px solid var(--rim);
+}
+/* Vertical trunk line running down the left of the events panel */
+.session-group.expanded-group > .session-events::before {
+  content: '';
+  position: absolute;
+  left: 18px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(to bottom, var(--glow), rgba(122,180,220,0.15));
+  pointer-events: none;
+}
+/* Each event row gets a horizontal branch line */
+.session-group.expanded-group > .session-events > .event-row {
+  position: relative;
+  padding-left: 44px;
+}
+.session-group.expanded-group > .session-events > .event-row::before {
+  content: '';
+  position: absolute;
+  left: 19px;
+  top: 50%;
+  width: 18px;
+  height: 1px;
+  background: rgba(122,180,220,0.35);
+  pointer-events: none;
+}
+/* Small node dot at the branch point */
+.session-group.expanded-group > .session-events > .event-row::after {
+  content: '';
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--glass);
+  border: 1px solid rgba(122,180,220,0.4);
+  pointer-events: none;
+}
+/* Last event row — trunk line ends halfway */
+.session-group.expanded-group > .session-events > .event-row:last-child::before {
+  background: rgba(122,180,220,0.35);
+}
+.session-group.expanded-group > .session-events > .event-row:last-child {
+  position: relative;
+}
+/* Clip the trunk line at the last child */
+.session-group.expanded-group > .session-events > .event-row:last-of-type::before {
+  background: rgba(122,180,220,0.35);
+}
 
 ::-webkit-scrollbar { width:4px; }
 ::-webkit-scrollbar-track { background:transparent; }
@@ -553,6 +615,7 @@ function makeSessionGroup(group) {
     const isOpen=eventsPanel.style.display!=='none';
     eventsPanel.style.display=isOpen?'none':'block';
     summaryRow.classList.toggle('expanded',!isOpen);
+    wrapper.classList.toggle('expanded-group',!isOpen);
   });
   summaryRow.querySelector('.cell-ip')?.addEventListener('click',ev=>{
     ev.stopPropagation();
