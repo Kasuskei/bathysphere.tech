@@ -1000,7 +1000,7 @@ function updateSidebar(events) {
   events.forEach(e => {
     if (!e.attack?.tactic) return;
     tactics[e.attack.tactic] = (tactics[e.attack.tactic] ?? 0) + 1;
-    if (e.eventid === 'cowrie.command.input' && e.input && e.attack.id) {
+    if (e.input && e.attack.id) {
       if (!tacticCmds[e.attack.id]) tacticCmds[e.attack.id] = { name: e.attack.name, tactic: e.attack.tactic, cmds: {} };
       tacticCmds[e.attack.id].cmds[e.input] = (tacticCmds[e.attack.id].cmds[e.input] ?? 0) + 1;
     }
