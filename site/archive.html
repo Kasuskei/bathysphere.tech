@@ -24,9 +24,7 @@
   --bio:        #4de8b0;
   --bio-dim:    rgba(77,232,176,0.12);
   --amber:      #f0a94a;
-  --amber-dim:  rgba(240,169,74,0.12);
   --red:        #e05c5c;
-  --red-dim:    rgba(224,92,92,0.10);
   --coral:      #e07060;
   --text:       #a8c4d8;
   --text-dim:   #4a6878;
@@ -34,286 +32,206 @@
   --text-bright:#d4e8f4;
   --serif: 'Instrument Serif', Georgia, serif;
   --mono:  'DM Mono', 'Courier New', monospace;
-
-  --tactic-recon:     #7ab4dc;
-  --tactic-initial:   #4de8b0;
-  --tactic-exec:      #a78bfa;
-  --tactic-persist:   #f0a94a;
-  --tactic-defense:   #e07060;
-  --tactic-cred:      #e05c5c;
-  --tactic-discovery: #60b8e0;
-  --tactic-collect:   #f0c94a;
-  --tactic-c2:        #e05c9c;
-  --tactic-lateral:   #8be07a;
-  --tactic-impact:    #e05c5c;
+  --tactic-recon:#7ab4dc; --tactic-initial:#4de8b0; --tactic-exec:#a78bfa;
+  --tactic-persist:#f0a94a; --tactic-defense:#e07060; --tactic-cred:#e05c5c;
+  --tactic-discovery:#60b8e0; --tactic-collect:#f0c94a; --tactic-c2:#e05c9c;
+  --tactic-lateral:#8be07a; --tactic-impact:#e05c5c;
 }
 
 html { scroll-behavior: smooth; }
-body {
-  background: var(--ink);
-  color: var(--text);
-  font-family: var(--mono);
-  font-size: 13px;
-  line-height: 1.6;
-  min-height: 100vh;
-}
+body { background:var(--ink); color:var(--text); font-family:var(--mono); font-size:13px; line-height:1.6; min-height:100vh; }
+body::before { content:''; position:fixed; inset:0; background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.025) 2px,rgba(0,0,0,0.025) 4px); pointer-events:none; z-index:999; }
 
-body::before {
-  content: '';
-  position: fixed; inset: 0;
-  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.025) 2px, rgba(0,0,0,0.025) 4px);
-  pointer-events: none; z-index: 999;
-}
+nav { position:sticky; top:0; z-index:100; border-bottom:1px solid var(--rim); background:rgba(6,10,14,0.92); backdrop-filter:blur(12px); }
+.nav-inner { max-width:1400px; margin:0 auto; padding:0 2rem; height:52px; display:flex; align-items:center; justify-content:space-between; }
+.nav-logo { font-family:var(--mono); font-size:13px; color:var(--glow); text-decoration:none; display:flex; align-items:center; gap:10px; }
+.ping { width:7px; height:7px; border-radius:50%; background:var(--bio); position:relative; flex-shrink:0; }
+.ping::after { content:''; position:absolute; inset:-3px; border-radius:50%; border:1px solid var(--bio); animation:sonar 3s ease-out infinite; opacity:0; }
+@keyframes sonar { 0%{transform:scale(1);opacity:0.7} 100%{transform:scale(3);opacity:0} }
+.nav-links { display:flex; align-items:center; gap:2rem; list-style:none; }
+.nav-links a { color:var(--text-dim); text-decoration:none; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; transition:color 0.2s; }
+.nav-links a:hover { color:var(--glow); }
+.nav-links a.active { color:var(--bio); }
+.live-badge { display:flex; align-items:center; gap:6px; font-size:10px; letter-spacing:0.15em; text-transform:uppercase; color:var(--bio); }
+.live-dot { width:5px; height:5px; border-radius:50%; background:var(--bio); box-shadow:0 0 6px var(--bio); animation:livepulse 1.5s ease-in-out infinite; }
+@keyframes livepulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
-/* ── Nav ── */
-nav {
-  position: sticky; top: 0; z-index: 100;
-  border-bottom: 1px solid var(--rim);
-  background: rgba(6,10,14,0.92);
-  backdrop-filter: blur(12px);
-}
-.nav-inner {
-  max-width: 1200px; margin: 0 auto; padding: 0 2rem;
-  height: 52px; display: flex; align-items: center; justify-content: space-between;
-}
-.nav-logo {
-  font-family: var(--mono); font-size: 13px; color: var(--glow);
-  text-decoration: none; display: flex; align-items: center; gap: 10px;
-}
-.ping { width: 7px; height: 7px; border-radius: 50%; background: var(--bio); position: relative; flex-shrink: 0; }
-.ping::after {
-  content: ''; position: absolute; inset: -3px; border-radius: 50%;
-  border: 1px solid var(--bio); animation: sonar 3s ease-out infinite; opacity: 0;
-}
-@keyframes sonar { 0% { transform: scale(1); opacity: 0.7; } 100% { transform: scale(3); opacity: 0; } }
-.nav-links { display: flex; align-items: center; gap: 2rem; list-style: none; }
-.nav-links a { color: var(--text-dim); text-decoration: none; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; transition: color 0.2s; }
-.nav-links a:hover { color: var(--glow); }
-.nav-links a.active { color: var(--bio); }
+.page { max-width:1400px; margin:0 auto; padding:2rem; }
 
-.live-badge {
-  display: flex; align-items: center; gap: 6px;
-  font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase;
-  color: var(--bio);
-}
-.live-dot {
-  width: 5px; height: 5px; border-radius: 50%;
-  background: var(--bio); box-shadow: 0 0 6px var(--bio);
-  animation: livepulse 1.5s ease-in-out infinite;
-}
-@keyframes livepulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+.archive-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:2rem; gap:2rem; }
+.archive-label { font-size:10px; text-transform:uppercase; letter-spacing:0.2em; color:var(--text-dim); margin-bottom:0.75rem; display:flex; align-items:center; gap:10px; }
+.archive-label::before { content:''; display:block; width:20px; height:1px; background:var(--text-dim); }
+.archive-title { font-family:var(--serif); font-size:clamp(1.4rem,3vw,2rem); font-weight:400; color:var(--text-bright); line-height:1.2; }
+.archive-title em { font-style:italic; color:var(--glow); }
+.archive-meta { font-size:11px; color:var(--text-dim); margin-top:0.5rem; }
+.archive-meta span { color:var(--text-mid); }
 
-/* ── Page layout ── */
-.page { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+.kbd-hint { font-size:10px; color:var(--text-dim); display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:0.5rem; }
+.kbd { display:inline-block; font-family:var(--mono); font-size:9px; color:var(--text-dim); border:1px solid rgba(120,180,220,0.15); padding:1px 5px; border-radius:2px; background:rgba(15,24,34,0.6); }
 
-/* ── Header ── */
-.archive-header {
-  display: flex; align-items: flex-start; justify-content: space-between;
-  margin-bottom: 2rem; gap: 2rem;
-}
-.archive-label {
-  font-size: 10px; text-transform: uppercase; letter-spacing: 0.2em;
-  color: var(--text-dim); margin-bottom: 0.75rem;
-  display: flex; align-items: center; gap: 10px;
-}
-.archive-label::before { content: ''; display: block; width: 20px; height: 1px; background: var(--text-dim); }
-.archive-title {
-  font-family: var(--serif); font-size: clamp(1.4rem, 3vw, 2rem);
-  font-weight: 400; color: var(--text-bright); line-height: 1.2;
-}
-.archive-title em { font-style: italic; color: var(--glow); }
-.archive-meta { font-size: 11px; color: var(--text-dim); margin-top: 0.5rem; }
-.archive-meta span { color: var(--text-mid); }
-
-/* ── Filters ── */
 .filters {
-  background: var(--surface); border: 1px solid var(--rim);
-  padding: 1.25rem 1.5rem; margin-bottom: 1.5rem;
-  display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;
-}
-.filter-group { display: flex; align-items: center; gap: 8px; }
-.filter-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-dim); }
-.filter-select {
-  font-family: var(--mono); font-size: 11px; color: var(--text);
-  background: var(--glass); border: 1px solid var(--rim);
-  padding: 4px 10px; border-radius: 2px; cursor: pointer;
-  outline: none; transition: border-color 0.2s;
-  appearance: none; -webkit-appearance: none;
-}
-.filter-select:hover, .filter-select:focus { border-color: var(--rim-hover); }
-.filter-select option { background: var(--glass); }
-
-.filter-btn {
-  font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em;
-  text-transform: uppercase; padding: 4px 12px; border-radius: 2px;
-  border: 1px solid var(--rim); background: transparent; color: var(--text-dim);
-  cursor: pointer; transition: all 0.15s;
-}
-.filter-btn:hover { border-color: var(--rim-hover); color: var(--text); }
-.filter-btn.active { border-color: rgba(77,232,176,0.3); background: var(--bio-dim); color: var(--bio); }
-
-.filter-divider { width: 1px; height: 20px; background: var(--rim); }
-
-.filter-apply {
-  font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em;
-  text-transform: uppercase; padding: 5px 16px; border-radius: 2px;
-  border: 1px solid rgba(122,180,220,0.3); background: var(--glow-faint);
-  color: var(--glow); cursor: pointer; transition: all 0.15s; margin-left: auto;
-}
-.filter-apply:hover { background: var(--glow-dim); }
-
-/* ── Table ── */
-.archive-table {
-  border: 1px solid var(--rim);
-  background: var(--surface);
+  background:var(--surface); border:1px solid var(--rim);
+  padding:1.25rem 1.5rem; margin-bottom:0.75rem;
+  display:flex; flex-wrap:wrap; gap:0.75rem; align-items:center;
 }
 
-/* Grid: time | proto | ip | sensor | location | event | ioc | technique */
+.filter-search-wrap { position:relative; display:flex; align-items:center; flex:1; min-width:220px; }
+.filter-search-icon { position:absolute; left:10px; color:var(--text-dim); font-size:13px; pointer-events:none; }
+.filter-search { width:100%; font-family:var(--mono); font-size:12px; color:var(--text); background:var(--glass); border:1px solid var(--rim); padding:6px 28px 6px 30px; border-radius:2px; outline:none; transition:border-color 0.2s; }
+.filter-search::placeholder { color:var(--text-dim); }
+.filter-search:focus { border-color:rgba(122,180,220,0.3); }
+.filter-search-clear { position:absolute; right:6px; background:none; border:none; cursor:pointer; color:var(--text-dim); font-size:16px; line-height:1; padding:2px 4px; display:none; transition:color 0.15s; }
+.filter-search-clear:hover { color:var(--text); }
+.filter-search-clear.visible { display:block; }
+
+.filter-dates { display:flex; align-items:center; gap:6px; }
+.filter-date-label { font-size:10px; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-dim); white-space:nowrap; }
+.filter-date { font-family:var(--mono); font-size:11px; color:var(--text); background:var(--glass); border:1px solid var(--rim); padding:4px 8px; border-radius:2px; outline:none; transition:border-color 0.2s; width:132px; color-scheme:dark; }
+.filter-date:focus { border-color:rgba(122,180,220,0.3); }
+.filter-date-sep { color:var(--text-dim); font-size:10px; }
+
+.filter-group { display:flex; align-items:center; gap:8px; }
+.filter-label { font-size:10px; text-transform:uppercase; letter-spacing:0.12em; color:var(--text-dim); white-space:nowrap; }
+.filter-select { font-family:var(--mono); font-size:11px; color:var(--text); background:var(--glass); border:1px solid var(--rim); padding:4px 10px; border-radius:2px; cursor:pointer; outline:none; transition:border-color 0.2s; appearance:none; -webkit-appearance:none; }
+.filter-select:focus { border-color:rgba(122,180,220,0.3); }
+.filter-select option { background:var(--glass); }
+
+.filter-btn { font-family:var(--mono); font-size:10px; letter-spacing:0.1em; text-transform:uppercase; padding:4px 12px; border-radius:2px; border:1px solid var(--rim); background:transparent; color:var(--text-dim); cursor:pointer; transition:all 0.15s; white-space:nowrap; }
+.filter-btn:hover { border-color:var(--rim-hover); color:var(--text); }
+.filter-btn.active { border-color:rgba(77,232,176,0.3); background:var(--bio-dim); color:var(--bio); }
+
+.filter-divider { width:1px; height:20px; background:var(--rim); }
+
+.filter-apply { font-family:var(--mono); font-size:10px; letter-spacing:0.1em; text-transform:uppercase; padding:5px 16px; border-radius:2px; border:1px solid rgba(122,180,220,0.3); background:var(--glow-faint); color:var(--glow); cursor:pointer; transition:all 0.15s; }
+.filter-apply:hover { background:var(--glow-dim); }
+
+.filter-reset { font-family:var(--mono); font-size:10px; letter-spacing:0.1em; text-transform:uppercase; padding:5px 12px; border-radius:2px; border:1px solid var(--rim); background:transparent; color:var(--text-dim); cursor:pointer; transition:all 0.15s; }
+.filter-reset:hover { color:var(--red); border-color:rgba(224,92,92,0.3); }
+
+.results-bar { display:flex; align-items:center; justify-content:space-between; padding:0.4rem 0; margin-bottom:0.5rem; font-size:11px; color:var(--text-dim); }
+.results-count strong { color:var(--text-mid); font-weight:400; }
+.results-actions { display:flex; align-items:center; gap:8px; }
+.export-btn { font-family:var(--mono); font-size:10px; letter-spacing:0.08em; text-transform:uppercase; padding:3px 10px; border-radius:2px; border:1px solid var(--rim); background:transparent; color:var(--text-dim); cursor:pointer; transition:all 0.15s; }
+.export-btn:hover { border-color:var(--rim-hover); color:var(--text); }
+
+.archive-table { border:1px solid var(--rim); background:var(--surface); }
+
 .table-cols {
-  display: grid;
-  grid-template-columns: 148px 52px 110px 110px 200px 1fr 160px 160px;
-  gap: 0; padding: 0.5rem 1.5rem;
-  border-bottom: 1px solid var(--rim);
-  background: rgba(0,0,0,0.2);
+  display:grid; grid-template-columns:148px 52px 110px 110px 200px 1fr 160px 160px;
+  gap:0; padding:0.5rem 1.5rem; border-bottom:1px solid var(--rim); background:rgba(0,0,0,0.2);
 }
-.col-head { font-size: 9px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-dim); }
+.col-head { font-size:9px; text-transform:uppercase; letter-spacing:0.15em; color:var(--text-dim); }
+.table-body { min-height:200px; }
 
-.table-body { min-height: 200px; }
+.session-group { border-bottom:1px solid rgba(15,24,34,0.7); }
+.session-group:last-child { border-bottom:none; }
+.session-group.focused > .session-row { background:rgba(122,180,220,0.04); outline:1px solid rgba(122,180,220,0.12); outline-offset:-1px; }
 
-.table-row {
-  display: grid;
-  grid-template-columns: 148px 52px 110px 110px 200px 1fr 160px 160px;
-  gap: 0; padding: 0.5rem 1.5rem;
-  border-bottom: 1px solid rgba(15,24,34,0.7);
-  align-items: start; /* start so tall ioc cells don't stretch others */
-  transition: background 0.1s; cursor: pointer;
+.session-row {
+  display:grid; grid-template-columns:148px 52px 110px 110px 200px 1fr 160px 160px;
+  gap:0; padding:0.5rem 1.5rem; align-items:center; cursor:pointer;
+  transition:background 0.1s; position:relative;
 }
-.table-row:hover { background: var(--glass); }
-.table-row:last-child { border-bottom: none; }
-.table-row.expanded { background: var(--glass); border-bottom: none; }
+.session-row:hover { background:var(--glass); }
+.session-row.expanded { background:var(--glass); }
+.session-chevron { position:absolute; left:4px; top:50%; transform:translateY(-50%); color:var(--text-dim); font-size:8px; transition:transform 0.2s; }
+.session-row.expanded .session-chevron { transform:translateY(-50%) rotate(90deg); }
 
-/* ── Cell styles ── */
-.cell-time   { font-size: 11px; color: var(--text-dim); font-variant-numeric: tabular-nums; padding-top: 2px; }
-.cell-proto  { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; padding-top: 2px; }
-.cell-ip     { font-size: 12px; color: var(--glow); font-variant-numeric: tabular-nums; padding-top: 2px; }
-.cell-sensor { font-size: 11px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-top: 2px; }
-.cell-geo    { font-size: 11px; color: var(--text-mid); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-top: 2px; }
-.cell-event  { display: flex; align-items: flex-start; gap: 6px; padding-top: 2px; min-width: 0; }
-.cell-detail { font-size: 11px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.session-events { background:rgba(6,10,14,0.6); border-top:1px solid var(--rim); }
 
-/* IoC cell: wraps tags onto multiple lines, never overflows */
-.cell-ioc {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  overflow: hidden;
+.event-row {
+  display:grid; grid-template-columns:148px 52px 110px 110px 200px 1fr 160px 160px;
+  gap:0; padding:0.4rem 1.5rem 0.4rem 2.5rem;
+  border-bottom:1px solid rgba(15,24,34,0.5); align-items:center; cursor:pointer; transition:background 0.1s;
 }
+.event-row:hover { background:var(--glass); }
+.event-row:last-child { border-bottom:none; }
+.event-row.expanded { background:var(--glass); border-bottom:none; }
 
-/* Technique cell */
-.cell-attack {
-  overflow: hidden;
-}
-
-.event-tag { font-size: 11px; font-weight: 500; letter-spacing: 0.04em; white-space: nowrap; flex-shrink: 0; }
-.event-tag.connect    { color: var(--text-dim); }
-.event-tag.login-ok   { color: var(--bio); }
-.event-tag.login-fail { color: var(--red); }
-.event-tag.command    { color: var(--glow); }
-.event-tag.upload     { color: var(--amber); }
-.event-tag.download   { color: var(--amber); }
-.event-tag.tunnel     { color: var(--coral); }
-.event-tag.other      { color: var(--text-mid); }
-
-.ioc-tag {
-  display: inline-flex; align-items: center; gap: 3px;
-  font-size: 9px; letter-spacing: 0.06em; padding: 2px 5px;
-  border-radius: 2px; white-space: nowrap; border: 1px solid transparent;
-  font-weight: 500; text-transform: uppercase; cursor: default;
-}
-.ioc-critical { color: #ff4444; border-color: rgba(255,68,68,0.3);   background: rgba(255,68,68,0.08); }
-.ioc-high     { color: #f0a94a; border-color: rgba(240,169,74,0.3);  background: rgba(240,169,74,0.08); }
-.ioc-medium   { color: #7ab4dc; border-color: rgba(122,180,220,0.3); background: rgba(122,180,220,0.08); }
-.ioc-low      { color: #4a6878; border-color: rgba(74,104,120,0.3);  background: rgba(74,104,120,0.08); }
-
-.attack-tag {
-  display: inline-flex; align-items: center;
-  font-size: 10px; letter-spacing: 0.06em; padding: 2px 6px;
-  border-radius: 2px; white-space: nowrap;
-  max-width: 155px; overflow: hidden; text-overflow: ellipsis;
-  border: 1px solid transparent;
-}
-.tac-Reconnaissance     { color: var(--tactic-recon);     border-color: rgba(122,180,220,0.2);  background: rgba(122,180,220,0.06); }
-.tac-Initial\ Access    { color: var(--tactic-initial);   border-color: rgba(77,232,176,0.2);   background: rgba(77,232,176,0.06); }
-.tac-Execution          { color: var(--tactic-exec);      border-color: rgba(167,139,250,0.2);  background: rgba(167,139,250,0.06); }
-.tac-Persistence        { color: var(--tactic-persist);   border-color: rgba(240,169,74,0.2);   background: rgba(240,169,74,0.06); }
-.tac-Defense\ Evasion   { color: var(--tactic-defense);   border-color: rgba(224,112,96,0.2);   background: rgba(224,112,96,0.06); }
-.tac-Credential\ Access { color: var(--tactic-cred);      border-color: rgba(224,92,92,0.2);    background: rgba(224,92,92,0.06); }
-.tac-Discovery          { color: var(--tactic-discovery); border-color: rgba(96,184,224,0.2);   background: rgba(96,184,224,0.06); }
-.tac-Collection         { color: var(--tactic-collect);   border-color: rgba(240,201,74,0.2);   background: rgba(240,201,74,0.06); }
-.tac-Command\ and\ Control { color: var(--tactic-c2);     border-color: rgba(224,92,156,0.2);   background: rgba(224,92,156,0.06); }
-.tac-Lateral\ Movement  { color: var(--tactic-lateral);   border-color: rgba(139,224,122,0.2);  background: rgba(139,224,122,0.06); }
-.tac-Impact             { color: var(--tactic-impact);    border-color: rgba(224,92,92,0.25);   background: rgba(224,92,92,0.08); }
-
-/* ── Row detail panel ── */
 .row-detail {
-  background: var(--glass);
-  border-bottom: 1px solid var(--rim);
-  border-top: 1px solid var(--rim-hover);
-  padding: 1rem 1.5rem;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1.25rem;
-  animation: detailIn 0.15s ease forwards;
+  background:var(--glass); border-bottom:1px solid var(--rim); border-top:1px solid var(--rim-hover);
+  padding:1rem 1.5rem 1rem 2.5rem; display:grid; grid-template-columns:repeat(4,1fr); gap:1.25rem;
+  animation:detailIn 0.15s ease forwards;
 }
-@keyframes detailIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
-.detail-group { display: flex; flex-direction: column; gap: 0.5rem; }
-.detail-group-title { font-size: 9px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-dim); margin-bottom: 0.25rem; }
-.detail-field { display: flex; flex-direction: column; gap: 2px; }
-.detail-field-label { font-size: 9px; color: var(--text-dim); letter-spacing: 0.1em; text-transform: uppercase; }
-.detail-field-value { font-size: 11px; color: var(--text); font-family: var(--mono); word-break: break-all; }
-.detail-ioc-list { display: flex; flex-direction: column; gap: 4px; }
-.detail-ioc-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text); }
-.detail-ioc-item .ioc-tag { font-size: 9px; flex-shrink: 0; }
-.detail-no-data { font-size: 11px; color: var(--text-dim); font-style: italic; }
+@keyframes detailIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
+.detail-group { display:flex; flex-direction:column; gap:0.5rem; }
+.detail-group-title { font-size:9px; text-transform:uppercase; letter-spacing:0.15em; color:var(--text-dim); margin-bottom:0.25rem; }
+.detail-field { display:flex; flex-direction:column; gap:2px; }
+.detail-field-label { font-size:9px; color:var(--text-dim); letter-spacing:0.1em; text-transform:uppercase; }
+.detail-field-value { font-size:11px; color:var(--text); font-family:var(--mono); word-break:break-all; }
+.detail-actions { display:flex; gap:8px; margin-top:0.5rem; }
+.detail-action-btn { font-family:var(--mono); font-size:9px; letter-spacing:0.08em; text-transform:uppercase; padding:3px 8px; border-radius:2px; border:1px solid var(--rim); background:transparent; color:var(--text-dim); cursor:pointer; transition:all 0.15s; }
+.detail-action-btn:hover { border-color:var(--rim-hover); color:var(--text); }
+.detail-ioc-list { display:flex; flex-direction:column; gap:4px; }
+.detail-ioc-item { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text); }
+.detail-ioc-item .ioc-tag { font-size:9px; flex-shrink:0; }
+.detail-no-data { font-size:11px; color:var(--text-dim); font-style:italic; }
 
-/* ── Load more ── */
-.load-more-wrap {
-  padding: 1.5rem; text-align: center;
-  border-top: 1px solid var(--rim);
-}
-.load-more-btn {
-  font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em;
-  text-transform: uppercase; padding: 10px 28px; border-radius: 2px;
-  border: 1px solid var(--rim); background: transparent; color: var(--text-dim);
-  cursor: pointer; transition: all 0.2s;
-}
-.load-more-btn:hover { border-color: var(--glow); color: var(--glow); background: var(--glow-faint); }
-.load-more-btn:disabled { opacity: 0.4; cursor: default; }
-.load-more-count { font-size: 11px; color: var(--text-dim); margin-top: 0.75rem; }
+.cell-time   { font-size:11px; color:var(--text-dim); font-variant-numeric:tabular-nums; }
+.cell-proto  { font-size:11px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.05em; }
+.cell-ip     { font-size:12px; color:var(--glow); font-variant-numeric:tabular-nums; cursor:pointer; }
+.cell-ip:hover { text-decoration:underline; text-decoration-color:rgba(122,180,220,0.4); }
+.cell-sensor { font-size:11px; color:var(--text-dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cell-geo    { font-size:11px; color:var(--text-mid); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cell-event  { display:flex; align-items:center; gap:6px; min-width:0; }
+.cell-detail { font-size:11px; color:var(--text-dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+.cell-ioc    { display:flex; flex-direction:column; gap:3px; overflow:hidden; }
+.cell-attack { overflow:hidden; }
 
-/* ── Empty / loading states ── */
-.state-msg { padding: 4rem 2rem; text-align: center; color: var(--text-dim); font-size: 12px; }
+.event-tag { font-size:11px; font-weight:500; letter-spacing:0.04em; white-space:nowrap; flex-shrink:0; }
+.event-tag.connect    { color:var(--text-dim); }
+.event-tag.login-ok   { color:var(--bio); }
+.event-tag.login-fail { color:var(--red); }
+.event-tag.command    { color:var(--glow); }
+.event-tag.upload     { color:var(--amber); }
+.event-tag.download   { color:var(--amber); }
+.event-tag.tunnel     { color:var(--coral); }
+.event-tag.other      { color:var(--text-mid); }
 
-/* ── Floating tooltip ── */
-#floating-tip {
-  position: fixed; background: var(--glass); border: 1px solid var(--rim-hover);
-  color: var(--text); font-family: var(--mono); font-size: 10px;
-  letter-spacing: 0.02em; padding: 5px 8px; border-radius: 3px;
-  pointer-events: none; white-space: nowrap; z-index: 200;
-  opacity: 0; transition: opacity 0.12s;
-}
+.ioc-tag { display:inline-flex; align-items:center; gap:3px; font-size:9px; letter-spacing:0.06em; padding:2px 6px; border-radius:2px; white-space:nowrap; border:1px solid transparent; font-weight:500; text-transform:uppercase; cursor:default; }
+.ioc-critical { color:#ff4444; border-color:rgba(255,68,68,0.3);   background:rgba(255,68,68,0.08); }
+.ioc-high     { color:#f0a94a; border-color:rgba(240,169,74,0.3);  background:rgba(240,169,74,0.08); }
+.ioc-medium   { color:#7ab4dc; border-color:rgba(122,180,220,0.3); background:rgba(122,180,220,0.08); }
+.ioc-low      { color:#4a6878; border-color:rgba(74,104,120,0.3);  background:rgba(74,104,120,0.08); }
 
-/* ── Scrollbar ── */
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--rim); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: var(--rim-hover); }
+.attack-tag { display:inline-flex; align-items:center; font-size:10px; letter-spacing:0.06em; padding:2px 6px; border-radius:2px; white-space:nowrap; max-width:155px; overflow:hidden; text-overflow:ellipsis; border:1px solid transparent; }
+.tac-Reconnaissance     { color:var(--tactic-recon);     border-color:rgba(122,180,220,0.2); background:rgba(122,180,220,0.06); }
+.tac-Initial\ Access    { color:var(--tactic-initial);   border-color:rgba(77,232,176,0.2);  background:rgba(77,232,176,0.06); }
+.tac-Execution          { color:var(--tactic-exec);      border-color:rgba(167,139,250,0.2); background:rgba(167,139,250,0.06); }
+.tac-Persistence        { color:var(--tactic-persist);   border-color:rgba(240,169,74,0.2);  background:rgba(240,169,74,0.06); }
+.tac-Defense\ Evasion   { color:var(--tactic-defense);   border-color:rgba(224,112,96,0.2);  background:rgba(224,112,96,0.06); }
+.tac-Credential\ Access { color:var(--tactic-cred);      border-color:rgba(224,92,92,0.2);   background:rgba(224,92,92,0.06); }
+.tac-Discovery          { color:var(--tactic-discovery); border-color:rgba(96,184,224,0.2);  background:rgba(96,184,224,0.06); }
+.tac-Collection         { color:var(--tactic-collect);   border-color:rgba(240,201,74,0.2);  background:rgba(240,201,74,0.06); }
+.tac-Command\ and\ Control { color:var(--tactic-c2);     border-color:rgba(224,92,156,0.2);  background:rgba(224,92,156,0.06); }
+.tac-Lateral\ Movement  { color:var(--tactic-lateral);   border-color:rgba(139,224,122,0.2); background:rgba(139,224,122,0.06); }
+.tac-Impact             { color:var(--tactic-impact);    border-color:rgba(224,92,92,0.25);  background:rgba(224,92,92,0.08); }
 
-@media (max-width: 900px) {
-  .table-cols, .table-row { grid-template-columns: 130px 100px 1fr 110px; }
-  .cell-proto, .cell-sensor, .cell-geo { display: none; }
-  .filters { gap: 0.75rem; }
-  .row-detail { grid-template-columns: repeat(2, 1fr); }
+.load-more-wrap { padding:1.5rem; text-align:center; border-top:1px solid var(--rim); }
+.load-more-btn { font-family:var(--mono); font-size:11px; letter-spacing:0.1em; text-transform:uppercase; padding:10px 28px; border-radius:2px; border:1px solid var(--rim); background:transparent; color:var(--text-dim); cursor:pointer; transition:all 0.2s; }
+.load-more-btn:hover { border-color:var(--glow); color:var(--glow); background:var(--glow-faint); }
+.load-more-btn:disabled { opacity:0.4; cursor:default; }
+.load-more-count { font-size:11px; color:var(--text-dim); margin-top:0.75rem; }
+
+.state-msg { padding:4rem 2rem; text-align:center; color:var(--text-dim); font-size:12px; }
+.state-msg .search-term { color:var(--glow); }
+
+#toast { position:fixed; bottom:2rem; right:2rem; background:var(--glass); border:1px solid var(--rim-hover); color:var(--text); font-family:var(--mono); font-size:11px; padding:8px 14px; border-radius:3px; z-index:300; opacity:0; transform:translateY(8px); transition:opacity 0.2s,transform 0.2s; pointer-events:none; }
+#toast.show { opacity:1; transform:translateY(0); }
+
+#floating-tip { position:fixed; background:var(--glass); border:1px solid var(--rim-hover); color:var(--text); font-family:var(--mono); font-size:10px; padding:5px 8px; border-radius:3px; pointer-events:none; white-space:nowrap; z-index:200; opacity:0; transition:opacity 0.12s; }
+
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--rim); border-radius:2px; }
+::-webkit-scrollbar-thumb:hover { background:var(--rim-hover); }
+
+@media (max-width:900px) {
+  .table-cols,.session-row,.event-row { grid-template-columns:130px 100px 1fr 110px; }
+  .cell-proto,.cell-sensor,.cell-geo,.col-head:nth-child(2),.col-head:nth-child(4),.col-head:nth-child(5) { display:none; }
+  .row-detail { grid-template-columns:repeat(2,1fr); }
+  .filters { flex-direction:column; align-items:stretch; }
+  .filter-search-wrap { width:100%; }
 }
 </style>
 </head>
@@ -321,38 +239,50 @@ nav {
 
 <nav>
   <div class="nav-inner">
-    <a href="/" class="nav-logo">
-      <div class="ping"></div>
-      bathysphere.tech
-    </a>
+    <a href="/" class="nav-logo"><div class="ping"></div>bathysphere.tech</a>
     <ul class="nav-links">
       <li><a href="/">about</a></li>
       <li><a href="/feed.html">feed</a></li>
       <li><a href="/archive.html" class="active">event archive</a></li>
       <li><a href="https://github.com/Kasuskei/bathysphere.tech" target="_blank">github</a></li>
     </ul>
-    <div class="live-badge">
-      <div class="live-dot"></div>
-      <span>live</span>
-    </div>
+    <div class="live-badge"><div class="live-dot"></div><span>live</span></div>
   </div>
 </nav>
 
 <div class="page">
 
   <div class="archive-header">
-    <div class="archive-title-group">
+    <div>
       <div class="archive-label">full event archive</div>
       <div class="archive-title">What came when we<br>turned on the <em>light.</em></div>
       <div class="archive-meta">
         <span id="meta-total">—</span> events &nbsp;·&nbsp;
         from <span id="meta-oldest">—</span> to <span id="meta-newest">—</span>
       </div>
+      <div class="kbd-hint" style="margin-top:0.75rem">
+        <span><span class="kbd">j</span><span class="kbd">k</span> navigate</span>
+        <span><span class="kbd">enter</span> expand</span>
+        <span><span class="kbd">esc</span> close</span>
+        <span><span class="kbd">/</span> search</span>
+      </div>
     </div>
   </div>
 
-  <!-- Filters -->
   <div class="filters">
+    <div class="filter-search-wrap">
+      <span class="filter-search-icon">⌕</span>
+      <input type="text" class="filter-search" id="f-search" placeholder="Search commands, usernames, client versions…" autocomplete="off" spellcheck="false">
+      <button class="filter-search-clear" id="f-search-clear" title="Clear">×</button>
+    </div>
+
+    <div class="filter-dates">
+      <span class="filter-date-label">from</span>
+      <input type="date" class="filter-date" id="f-date-from">
+      <span class="filter-date-sep">→</span>
+      <input type="date" class="filter-date" id="f-date-to">
+    </div>
+
     <div class="filter-group">
       <div class="filter-label">event</div>
       <select class="filter-select" id="f-eventid">
@@ -367,6 +297,7 @@ nav {
         <option value="cowrie.client.version">client</option>
       </select>
     </div>
+
     <div class="filter-group">
       <div class="filter-label">sensor</div>
       <select class="filter-select" id="f-sensor">
@@ -374,14 +305,23 @@ nav {
         <option value="honeypot-pi">honeypot-pi</option>
       </select>
     </div>
+
     <div class="filter-divider"></div>
     <button class="filter-btn" id="f-ioc" data-active="0">IoC only</button>
     <button class="filter-btn" id="f-attack" data-active="0">ATT&amp;CK only</button>
     <div class="filter-divider"></div>
     <button class="filter-apply" id="apply-filters">apply</button>
+    <button class="filter-reset" id="reset-filters">reset</button>
   </div>
 
-  <!-- Table -->
+  <div class="results-bar">
+    <div class="results-count"><span id="results-text">Loading…</span></div>
+    <div class="results-actions">
+      <button class="export-btn" id="export-csv">export CSV</button>
+      <button class="export-btn" id="export-json">export JSON</button>
+    </div>
+  </div>
+
   <div class="archive-table">
     <div class="table-cols">
       <div class="col-head">time</div>
@@ -404,287 +344,307 @@ nav {
 
 </div>
 
-<!-- Floating tooltip -->
 <div id="floating-tip"></div>
+<div id="toast"></div>
 
 <script>
 const READ_URL  = 'https://bathysphere-read.kasuskei.workers.dev';
 const PAGE_SIZE = 100;
 
-let oldestTs    = null;
+let allLoaded   = [];
 let totalEvents = 0;
 let loadedCount = 0;
 let loading     = false;
-let filters     = { eventid: '', sensor: '', has_ioc: false, has_attack: false };
+let nextBefore  = null;
+let filters     = {};
+let focusedIdx  = -1;
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
 function fmt(ts) {
   if (!ts) return '—';
   const d = new Date(ts);
-  const date = d.toLocaleDateString('en-CA');
-  const time = d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  return `${date} ${time}`;
+  return d.toLocaleDateString('en-CA') + ' ' + d.toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
 }
+function fmtDate(ts) { return ts ? new Date(ts).toLocaleDateString('en-CA') : '—'; }
+function escHtml(s) { return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-function fmtDate(ts) {
-  if (!ts) return '—';
-  return new Date(ts).toLocaleDateString('en-CA');
-}
-
-function escHtml(s) {
-  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-function eventClass(eventid) {
-  if (eventid === 'cowrie.login.success')         return 'login-ok';
-  if (eventid === 'cowrie.login.failed')          return 'login-fail';
-  if (eventid === 'cowrie.command.input' || eventid === 'cowrie.command.failed') return 'command';
-  if (eventid === 'cowrie.session.file_upload')   return 'upload';
-  if (eventid === 'cowrie.session.file_download') return 'download';
-  if (eventid === 'cowrie.direct-tcpip.request')  return 'tunnel';
-  if (eventid === 'cowrie.session.connect')       return 'connect';
+function eventClass(id) {
+  if (id==='cowrie.login.success') return 'login-ok';
+  if (id==='cowrie.login.failed')  return 'login-fail';
+  if (id==='cowrie.command.input'||id==='cowrie.command.failed') return 'command';
+  if (id==='cowrie.session.file_upload')   return 'upload';
+  if (id==='cowrie.session.file_download') return 'download';
+  if (id==='cowrie.direct-tcpip.request')  return 'tunnel';
+  if (id==='cowrie.session.connect')       return 'connect';
   return 'other';
 }
-
-function eventLabel(eventid) {
-  const map = {
-    'cowrie.session.connect':      'CONNECT',
-    'cowrie.session.closed':       'CLOSED',
-    'cowrie.client.version':       'CLIENT',
-    'cowrie.login.success':        'AUTH OK',
-    'cowrie.login.failed':         'AUTH FAIL',
-    'cowrie.command.input':        'COMMAND',
-    'cowrie.command.failed':       'CMD FAIL',
-    'cowrie.session.file_upload':  'UPLOAD',
-    'cowrie.session.file_download':'DOWNLOAD',
-    'cowrie.direct-tcpip.request': 'TUNNEL',
-  };
-  return map[eventid] ?? eventid.split('.').pop().toUpperCase();
+function eventLabel(id) {
+  return {'cowrie.session.connect':'CONNECT','cowrie.session.closed':'CLOSED','cowrie.client.version':'CLIENT','cowrie.login.success':'AUTH OK','cowrie.login.failed':'AUTH FAIL','cowrie.command.input':'COMMAND','cowrie.command.failed':'CMD FAIL','cowrie.session.file_upload':'UPLOAD','cowrie.session.file_download':'DOWNLOAD','cowrie.direct-tcpip.request':'TUNNEL'}[id] ?? id.split('.').pop().toUpperCase();
 }
-
 function eventDetail(e) {
-  if (e.eventid === 'cowrie.login.success' || e.eventid === 'cowrie.login.failed')
-    return `<span style="color:var(--text-mid)">${escHtml(e.username ?? '?')} / ${escHtml(e.password_hash ?? '?')}</span>`;
-  if (e.eventid === 'cowrie.command.input' || e.eventid === 'cowrie.command.failed')
-    return `<span style="color:var(--text)">${escHtml((e.input ?? '').slice(0, 60))}</span>`;
-  if (e.eventid === 'cowrie.session.file_upload')
-    return `<span style="color:var(--amber)">${escHtml(e.filename ?? e.shasum?.slice(0,12) ?? '?')}</span>`;
-  if (e.eventid === 'cowrie.session.file_download')
-    return `<span style="color:var(--amber)">${escHtml((e.url ?? e.shasum ?? '').slice(0, 50))}</span>`;
-  if (e.eventid === 'cowrie.client.version')
-    return `<span>${escHtml(e.version ?? '')}</span>`;
-  if (e.eventid === 'cowrie.direct-tcpip.request')
-    return `<span>TCP tunnel attempt</span>`;
+  if (e.eventid==='cowrie.login.success'||e.eventid==='cowrie.login.failed')
+    return `<span style="color:var(--text-mid)">${escHtml(e.username??'?')} / ${escHtml(e.password_hash??'?')}</span>`;
+  if (e.eventid==='cowrie.command.input'||e.eventid==='cowrie.command.failed')
+    return `<span style="color:var(--text)">${escHtml((e.input??'').slice(0,60))}</span>`;
+  if (e.eventid==='cowrie.session.file_upload')
+    return `<span style="color:var(--amber)">${escHtml(e.filename??e.shasum?.slice(0,12)??'?')}</span>`;
+  if (e.eventid==='cowrie.session.file_download')
+    return `<span style="color:var(--amber)">${escHtml((e.url??e.shasum??'').slice(0,50))}</span>`;
+  if (e.eventid==='cowrie.client.version') return `<span>${escHtml(e.version??'')}</span>`;
+  if (e.eventid==='cowrie.direct-tcpip.request') return `<span>TCP tunnel attempt</span>`;
   return '';
 }
 
-// D1 returns flat iocs as a JSON string — parse it
+const IOC_SHORT = {credential:'CREDENTIAL',malware:'MALWARE',persistence:'PERSISTENCE',exfiltration:'EXFILTRATION',recon:'RECON',c2:'COMMAND & CONTROL',scanner:'SCANNER',reputation:'REPUTATION'};
+const IOC_SEV   = {critical:4,high:3,medium:2,low:1};
+const TAC_RANK  = {Impact:11,'Lateral Movement':10,'Command and Control':9,Collection:8,'Defense Evasion':6,Persistence:5,'Credential Access':3,Discovery:2,Execution:1,'Initial Access':0,Reconnaissance:-1};
+
 function parseIocs(e) {
   if (!e.iocs) return null;
   if (Array.isArray(e.iocs)) return e.iocs;
   try { return JSON.parse(e.iocs); } catch { return null; }
 }
-
-// D1 returns flat attack fields — synthesise the attack object
 function parseAttack(e) {
-  if (e.attack) return e.attack; // live ingest nested format
-  if (e.attack_id) return { id: e.attack_id, name: e.attack_name, tactic: e.attack_tactic };
+  if (e.attack) return e.attack;
+  if (e.attack_id) return {id:e.attack_id,name:e.attack_name,tactic:e.attack_tactic};
   return null;
 }
-
-// D1 returns flat geo fields — synthesise geo object
 function parseGeo(e) {
-  if (e.geo && (e.geo.country || e.geo.city)) return e.geo; // live ingest nested format
-  if (e.geo_country || e.geo_city) return { country: e.geo_country, city: e.geo_city, asn: e.geo_asn, isp: e.geo_isp, rdns: e.geo_rdns, cloud: e.geo_cloud };
+  if (e.geo?.country||e.geo?.city) return e.geo;
+  if (e.geo_country||e.geo_city) return {country:e.geo_country,city:e.geo_city,asn:e.geo_asn,isp:e.geo_isp,rdns:e.geo_rdns,cloud:e.geo_cloud};
   return null;
 }
-
-const IOC_SHORT = {
-  credential:   'CREDENTIAL',
-  malware:      'MALWARE',
-  persistence:  'PERSISTENCE',
-  exfiltration: 'EXFILTRATION',
-  recon:        'RECON',
-  c2:           'COMMAND & CONTROL',
-  scanner:      'SCANNER',
-  reputation:   'REPUTATION',
-};
-
+function geoStr(e) { const g=parseGeo(e); return g?[g.city,g.country].filter(Boolean).join(', '):'—'; }
 function iocTags(iocs) {
-  if (!iocs || !iocs.length) return '';
-  return iocs.slice(0, 3).map(ioc =>
-    `<span class="ioc-tag ioc-${escHtml(ioc.severity ?? 'low')}" data-tip="${escHtml(ioc.label)}">${IOC_SHORT[ioc.type] ?? 'IOC'}</span>`
-  ).join('');
+  if (!iocs?.length) return '';
+  return iocs.slice(0,2).map(i=>`<span class="ioc-tag ioc-${escHtml(i.severity??'low')}" data-tip="${escHtml(i.label)}">${IOC_SHORT[i.type]??'IOC'}</span>`).join('');
 }
-
 function attackTag(attack) {
   if (!attack) return '';
-  // CSS class uses hyphens since spaces break class names
-  const tip = `${escHtml(attack.id)} · ${escHtml(attack.name)} · ${escHtml(attack.tactic)}`;
-  return `<span class="attack-tag tac-${escHtml(attack.tactic ?? '')}" data-tip="${tip}">${escHtml(attack.id)}</span>`;
+  return `<span class="attack-tag tac-${escHtml(attack.tactic??'')}" data-tip="${escHtml(attack.id+' · '+attack.name+' · '+attack.tactic)}">${escHtml(attack.id)}</span>`;
+}
+function topIoc(events) {
+  let best=null,br=0;
+  for (const e of events) for (const i of (parseIocs(e)??[])) { const r=IOC_SEV[i.severity]??0; if(r>br){best=i;br=r;} }
+  return best;
+}
+function topAttack(events) {
+  let best=null,br=-99;
+  for (const e of events) { const a=parseAttack(e); if(a){const r=TAC_RANK[a.tactic]??0;if(r>br){best=a;br=r;}} }
+  return best;
+}
+function groupBySessions(events) {
+  const map=new Map(), order=[];
+  for (const e of events) {
+    const k=e.session??e.id;
+    if (!map.has(k)) { map.set(k,{session:k,events:[],src_ip:e.src_ip,geo:parseGeo(e),sensor:e.sensor,protocol:e.protocol}); order.push(k); }
+    map.get(k).events.push(e);
+  }
+  return order.map(k=>map.get(k));
 }
 
-// ── Detail panel ─────────────────────────────────────────────────────────────
+function df(label,value) {
+  return `<div class="detail-field"><div class="detail-field-label">${label}</div><div class="detail-field-value">${escHtml(String(value??'—'))}</div></div>`;
+}
+
 function buildDetailPanel(e) {
   const panel = document.createElement('div');
   panel.className = 'row-detail';
-
-  const geo    = parseGeo(e);
-  const attack = parseAttack(e);
-  const iocs   = parseIocs(e);
-  const geoStr = geo ? [geo.city, geo.country].filter(Boolean).join(', ') : '—';
-
-  let eventFields = '';
-  if (e.username)         eventFields += df('Username', e.username);
-  if (e.password_hash)    eventFields += df('Password', `${e.password_hash} (${e.password_len ?? '?'} chars)`);
-  if (e.input)            eventFields += df('Command', e.input);
-  if (e.filename)         eventFields += df('Filename', e.filename);
-  if (e.shasum)           eventFields += df('SHA256', e.shasum);
-  if (e.version)          eventFields += df('Client version', e.version);
-  if (e.duration != null) eventFields += df('Duration', `${e.duration}s`);
-  if (!eventFields)       eventFields = `<div class="detail-no-data">No additional event data</div>`;
+  const geo=parseGeo(e), attack=parseAttack(e), iocs=parseIocs(e);
+  let evF='';
+  if (e.username)         evF+=df('Username',e.username);
+  if (e.password_hash)    evF+=df('Password',`${e.password_hash} (${e.password_len??'?'} chars)`);
+  if (e.input)            evF+=df('Command',e.input);
+  if (e.filename)         evF+=df('Filename',e.filename);
+  if (e.shasum)           evF+=df('SHA256',e.shasum);
+  if (e.version)          evF+=df('Client version',e.version);
+  if (e.duration!=null)   evF+=df('Duration',`${e.duration}s`);
+  if (!evF)               evF=`<div class="detail-no-data">No additional event data</div>`;
 
   const iocHtml = iocs?.length
-    ? `<div class="detail-ioc-list">${iocs.map(ioc =>
-        `<div class="detail-ioc-item">
-          <span class="ioc-tag ioc-${escHtml(ioc.severity ?? 'low')}">${IOC_SHORT[ioc.type] ?? 'IOC'}</span>
-          <span>${escHtml(ioc.label)}${ioc.reports ? ` (${ioc.reports} reports)` : ''}</span>
-        </div>`).join('')}</div>`
+    ? `<div class="detail-ioc-list">${iocs.map(i=>`<div class="detail-ioc-item"><span class="ioc-tag ioc-${escHtml(i.severity??'low')}">${IOC_SHORT[i.type]??'IOC'}</span><span>${escHtml(i.label)}${i.reports?` (${i.reports} reports)`:''}</span></div>`).join('')}</div>`
     : `<div class="detail-no-data">No IoCs matched</div>`;
-
-  const attackHtml = attack
-    ? `${df('ATT&CK technique', `${attack.id} · ${attack.name}`)}${df('Tactic', attack.tactic)}`
-    : `<div class="detail-no-data">No ATT&CK technique mapped</div>`;
-
-  const networkHtml = geo
-    ? `${geo.asn  ? df('ASN', geo.asn)   : ''}
-       ${geo.isp  ? df('ISP', geo.isp)   : ''}
-       ${geo.rdns ? df('rDNS', geo.rdns) : ''}
-       ${geo.cloud ? df('Cloud', geo.cloud) : ''}`
-    : `<div class="detail-no-data">No network data</div>`;
+  const atkHtml = attack ? `${df('ATT&CK technique',`${attack.id} · ${attack.name}`)}${df('Tactic',attack.tactic)}` : `<div class="detail-no-data">No ATT&CK technique mapped</div>`;
+  const netHtml = geo ? `${geo.asn?df('ASN',geo.asn):''}${geo.isp?df('ISP',geo.isp):''}${geo.rdns?df('rDNS',geo.rdns):''}${geo.cloud?df('Cloud',geo.cloud):''}` : `<div class="detail-no-data">No network data</div>`;
 
   panel.innerHTML = `
     <div class="detail-group">
       <div class="detail-group-title">Connection</div>
-      ${df('Timestamp', e.ts ?? '—')}
-      ${df('Source IP', e.src_ip ?? '—')}
-      ${df('Location', geoStr)}
-      ${df('Sensor', e.sensor ?? '—')}
-      ${df('Session', e.session ?? '—')}
+      ${df('Timestamp',e.ts??'—')}${df('Source IP',e.src_ip??'—')}${df('Location',geoStr(e))}${df('Sensor',e.sensor??'—')}${df('Session',e.session??'—')}
+      <div class="detail-actions">
+        <button class="detail-action-btn" id="btn-copy-json">copy JSON</button>
+        <button class="detail-action-btn" id="btn-filter-ip">filter IP</button>
+      </div>
     </div>
-    <div class="detail-group">
-      <div class="detail-group-title">Event detail</div>
-      ${eventFields}
-    </div>
-    <div class="detail-group">
-      <div class="detail-group-title">Threat intel</div>
-      ${iocHtml}
-      <div style="margin-top:0.75rem">${attackHtml}</div>
-    </div>
-    <div class="detail-group">
-      <div class="detail-group-title">Network</div>
-      ${networkHtml}
-    </div>
+    <div class="detail-group"><div class="detail-group-title">Event detail</div>${evF}</div>
+    <div class="detail-group"><div class="detail-group-title">Threat intel</div>${iocHtml}<div style="margin-top:0.75rem">${atkHtml}</div></div>
+    <div class="detail-group"><div class="detail-group-title">Network</div>${netHtml}</div>
   `;
+  panel.querySelector('#btn-copy-json')?.addEventListener('click', ev => {
+    ev.stopPropagation();
+    navigator.clipboard.writeText(JSON.stringify(e,null,2)).then(()=>showToast('Copied to clipboard'));
+  });
+  panel.querySelector('#btn-filter-ip')?.addEventListener('click', ev => {
+    ev.stopPropagation();
+    if (e.src_ip) { document.getElementById('f-search').value=e.src_ip; applyAndLoad(); }
+  });
   return panel;
 }
 
-function df(label, value) {
-  return `<div class="detail-field">
-    <div class="detail-field-label">${label}</div>
-    <div class="detail-field-value">${escHtml(String(value ?? '—'))}</div>
-  </div>`;
-}
-
-// ── Row renderer ─────────────────────────────────────────────────────────────
-function makeRow(e) {
-  const row = document.createElement('div');
-  row.className = 'table-row';
-
-  const geo    = parseGeo(e);
-  const attack = parseAttack(e);
-  const iocs   = parseIocs(e);
-  const ec     = eventClass(e.eventid);
-  const geoStr = geo ? [geo.city, geo.country].filter(Boolean).join(', ') : '—';
-
-  row.innerHTML = `
+function makeEventRow(e) {
+  const row=document.createElement('div');
+  row.className='event-row';
+  const iocs=parseIocs(e), attack=parseAttack(e);
+  row.innerHTML=`
     <div class="cell-time">${fmt(e.ts)}</div>
-    <div class="cell-proto">${escHtml(e.protocol ?? 'ssh')}</div>
-    <div class="cell-ip">${escHtml(e.src_ip ?? '—')}</div>
-    <div class="cell-sensor">${escHtml(e.sensor ?? '—')}</div>
-    <div class="cell-geo">${escHtml(geoStr)}</div>
-    <div class="cell-event">
-      <span class="event-tag ${ec}">${eventLabel(e.eventid)}</span>
-      <span class="cell-detail">${eventDetail(e)}</span>
-    </div>
+    <div class="cell-proto">${escHtml(e.protocol??'ssh')}</div>
+    <div class="cell-ip">${escHtml(e.src_ip??'—')}</div>
+    <div class="cell-sensor">${escHtml(e.sensor??'—')}</div>
+    <div class="cell-geo">${escHtml(geoStr(e))}</div>
+    <div class="cell-event"><span class="event-tag ${eventClass(e.eventid)}">${eventLabel(e.eventid)}</span><span class="cell-detail">${eventDetail(e)}</span></div>
     <div class="cell-ioc">${iocTags(iocs)}</div>
     <div class="cell-attack">${attackTag(attack)}</div>
   `;
-
-  row.addEventListener('click', () => {
-    const existing = document.querySelector('.row-detail');
-    const wasThisRow = existing && existing.previousSibling === row;
-    if (existing) existing.remove();
-    row.classList.remove('expanded');
-    if (!wasThisRow) {
-      row.after(buildDetailPanel(e));
-      row.classList.add('expanded');
-    }
+  row.addEventListener('click', ev => {
+    ev.stopPropagation();
+    const wasOpen = row.nextSibling?.classList.contains('row-detail');
+    row.closest('.session-events')?.querySelectorAll('.row-detail').forEach(d=>d.remove());
+    row.closest('.session-events')?.querySelectorAll('.event-row.expanded').forEach(r=>r.classList.remove('expanded'));
+    if (!wasOpen) { row.classList.add('expanded'); row.after(buildDetailPanel(e)); }
   });
-
   return row;
 }
 
-// ── Fetch and render ──────────────────────────────────────────────────────────
-async function buildUrl(before) {
-  const p = new URLSearchParams({ limit: PAGE_SIZE });
-  if (before)             p.set('before', before);
-  if (filters.eventid)    p.set('eventid', filters.eventid);
-  if (filters.sensor)     p.set('sensor', filters.sensor);
-  if (filters.has_ioc)    p.set('has_ioc', '1');
-  if (filters.has_attack) p.set('has_attack', '1');
+function makeSessionGroup(group) {
+  const wrapper=document.createElement('div');
+  wrapper.className='session-group';
+  wrapper.dataset.session=group.session;
+  const latest=group.events[group.events.length-1];
+  const gs=group.geo?[group.geo.city,group.geo.country].filter(Boolean).join(', '):'—';
+  const ioc=topIoc(group.events), attack=topAttack(group.events), n=group.events.length;
+
+  const summaryRow=document.createElement('div');
+  summaryRow.className='session-row';
+  summaryRow.innerHTML=`
+    <span class="session-chevron">▶</span>
+    <div class="cell-time">${fmt(latest?.ts)}</div>
+    <div class="cell-proto">${escHtml(group.protocol??'ssh')}</div>
+    <div class="cell-ip">${escHtml(group.src_ip??'—')}</div>
+    <div class="cell-sensor">${escHtml(group.sensor??'—')}</div>
+    <div class="cell-geo">${escHtml(gs)}</div>
+    <div class="cell-event"><div style="display:flex;align-items:center;gap:5px"><span style="font-size:12px;color:var(--glow);font-variant-numeric:tabular-nums">${n}</span><span style="font-size:11px;color:var(--text-mid)">event${n!==1?'s':''}</span></div></div>
+    <div class="cell-ioc">${ioc?`<span class="ioc-tag ioc-${escHtml(ioc.severity??'low')}" data-tip="${escHtml(ioc.label)}">${IOC_SHORT[ioc.type]??'IOC'}</span>`:''}</div>
+    <div class="cell-attack">${attackTag(attack)}</div>
+  `;
+
+  const eventsPanel=document.createElement('div');
+  eventsPanel.className='session-events';
+  eventsPanel.style.display='none';
+  group.events.forEach(e=>eventsPanel.appendChild(makeEventRow(e)));
+
+  summaryRow.addEventListener('click',()=>{
+    const isOpen=eventsPanel.style.display!=='none';
+    eventsPanel.style.display=isOpen?'none':'block';
+    summaryRow.classList.toggle('expanded',!isOpen);
+  });
+  summaryRow.querySelector('.cell-ip')?.addEventListener('click',ev=>{
+    ev.stopPropagation();
+    if (group.src_ip) { document.getElementById('f-search').value=group.src_ip; applyAndLoad(); }
+  });
+
+  wrapper.appendChild(summaryRow);
+  wrapper.appendChild(eventsPanel);
+  return wrapper;
+}
+
+function renderEvents(events, append=false) {
+  const body=document.getElementById('table-body');
+  const groups=groupBySessions(events);
+  if (!append) body.innerHTML='';
+  if (!groups.length&&!append) {
+    const term=filters.search;
+    body.innerHTML=`<div class="state-msg">No events found${term?` for <span class="search-term">"${escHtml(term)}"</span>`:''}</div>`;
+    return;
+  }
+  const frag=document.createDocumentFragment();
+  groups.forEach(g=>frag.appendChild(makeSessionGroup(g)));
+  body.appendChild(frag);
+}
+
+// URL state
+function filtersToUrl(f) {
+  const p=new URLSearchParams();
+  if (f.search)     p.set('q',f.search);
+  if (f.date_from)  p.set('from',f.date_from);
+  if (f.date_to)    p.set('to',f.date_to);
+  if (f.eventid)    p.set('event',f.eventid);
+  if (f.sensor)     p.set('sensor',f.sensor);
+  if (f.has_ioc)    p.set('ioc','1');
+  if (f.has_attack) p.set('attack','1');
+  const str=p.toString();
+  history.replaceState(null,'',str?`?${str}`:location.pathname);
+}
+function filtersFromUrl() {
+  const p=new URLSearchParams(location.search);
+  return { search:p.get('q')??'', date_from:p.get('from')??'', date_to:p.get('to')??'', eventid:p.get('event')??'', sensor:p.get('sensor')??'', has_ioc:p.get('ioc')==='1', has_attack:p.get('attack')==='1' };
+}
+function applyFiltersToUI(f) {
+  document.getElementById('f-search').value    = f.search??'';
+  document.getElementById('f-date-from').value = f.date_from??'';
+  document.getElementById('f-date-to').value   = f.date_to??'';
+  document.getElementById('f-eventid').value   = f.eventid??'';
+  document.getElementById('f-sensor').value    = f.sensor??'';
+  const ib=document.getElementById('f-ioc'), ab=document.getElementById('f-attack');
+  ib.dataset.active=f.has_ioc?'1':'0'; ib.classList.toggle('active',!!f.has_ioc);
+  ab.dataset.active=f.has_attack?'1':'0'; ab.classList.toggle('active',!!f.has_attack);
+  document.getElementById('f-search-clear').classList.toggle('visible',!!(f.search));
+}
+function readFiltersFromUI() {
+  return { search:document.getElementById('f-search').value.trim(), date_from:document.getElementById('f-date-from').value, date_to:document.getElementById('f-date-to').value, eventid:document.getElementById('f-eventid').value, sensor:document.getElementById('f-sensor').value, has_ioc:document.getElementById('f-ioc').dataset.active==='1', has_attack:document.getElementById('f-attack').dataset.active==='1' };
+}
+
+function buildUrl(before) {
+  const p=new URLSearchParams({limit:PAGE_SIZE});
+  if (before)          p.set('before',before);
+  if (filters.search)  p.set('search',filters.search);
+  if (filters.date_from) p.set('date_from',filters.date_from);
+  if (filters.date_to)   p.set('date_to',filters.date_to);
+  if (filters.eventid)   p.set('eventid',filters.eventid);
+  if (filters.sensor)    p.set('sensor',filters.sensor);
+  if (filters.has_ioc)   p.set('has_ioc','1');
+  if (filters.has_attack) p.set('has_attack','1');
   return `${READ_URL}/archive?${p}`;
 }
 
-async function load(append = false) {
+async function load(append=false) {
   if (loading) return;
-  loading = true;
-
-  const btn  = document.getElementById('load-more-btn');
-  if (btn) btn.disabled = true;
-
-  const before = append ? oldestTs : null;
-  const body   = document.getElementById('table-body');
-
+  loading=true;
+  const btn=document.getElementById('load-more-btn');
+  if (btn) btn.disabled=true;
+  const body=document.getElementById('table-body');
   if (!append) {
-    body.innerHTML = '<div class="state-msg">Loading…</div>';
-    loadedCount = 0;
-    oldestTs = null;
+    body.innerHTML='<div class="state-msg">Loading…</div>';
+    allLoaded=[]; loadedCount=0; nextBefore=null; focusedIdx=-1;
+    document.getElementById('results-text').textContent='Loading…';
   }
-
   try {
-    const resp = await fetch(await buildUrl(before));
+    const resp=await fetch(buildUrl(append?nextBefore:null));
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const data = await resp.json();
+    const data=await resp.json();
+    const events=data.events??[];
+    totalEvents=data.total??0;
+    allLoaded=append?[...allLoaded,...events]:events;
+    loadedCount=allLoaded.length;
 
-    const events = data.events ?? [];
-    totalEvents  = data.total  ?? 0;
-
-    if (!append) body.innerHTML = '';
-
-    if (events.length === 0 && !append) {
-      body.innerHTML = '<div class="state-msg">No events found.</div>';
-      document.getElementById('load-more-wrap').style.display = 'none';
-      loading = false;
-      return;
+    if (!append&&events.length===0) {
+      const term=filters.search;
+      body.innerHTML=`<div class="state-msg">No events found${term?` for <span class="search-term">"${escHtml(term)}"</span>`:''}</div>`;
+      document.getElementById('load-more-wrap').style.display='none';
+      document.getElementById('results-text').textContent='0 events';
+      loading=false; return;
     }
 
-    const frag = document.createDocumentFragment();
-    events.forEach(e => frag.appendChild(makeRow(e)));
-    body.appendChild(frag);
-
-    loadedCount += events.length;
-    if (events.length > 0) oldestTs = events[events.length - 1].ts;
+    renderEvents(events,append);
+    nextBefore=data.next_before??null;
 
     if (!append) {
       document.getElementById('meta-total').textContent  = totalEvents.toLocaleString();
@@ -692,71 +652,111 @@ async function load(append = false) {
       document.getElementById('meta-newest').textContent = fmtDate(data.newest);
     }
 
-    const wrap  = document.getElementById('load-more-wrap');
-    const count = document.getElementById('load-more-count');
-    if (loadedCount < totalEvents && events.length === PAGE_SIZE) {
-      wrap.style.display = 'block';
-      count.textContent  = `${loadedCount.toLocaleString()} of ${totalEvents.toLocaleString()} events loaded`;
-      if (btn) btn.disabled = false;
+    document.getElementById('results-text').innerHTML=`<strong>${loadedCount.toLocaleString()}</strong> of <strong>${totalEvents.toLocaleString()}</strong> matching events`;
+    const wrap=document.getElementById('load-more-wrap');
+    const hasMore=nextBefore&&loadedCount<totalEvents;
+    if (hasMore) {
+      wrap.style.display='block';
+      document.getElementById('load-more-count').textContent=`${loadedCount.toLocaleString()} of ${totalEvents.toLocaleString()} loaded`;
+      if (btn) btn.disabled=false;
     } else {
-      wrap.style.display = 'none';
+      wrap.style.display='none';
     }
-
-  } catch (err) {
-    if (!append) body.innerHTML = `<div class="state-msg">Failed to load archive: ${escHtml(err.message)}</div>`;
+  } catch(err) {
+    if (!append) body.innerHTML=`<div class="state-msg">Failed to load: ${escHtml(err.message)}</div>`;
     console.error(err);
   }
-
-  loading = false;
+  loading=false;
 }
 
-// ── Filter controls ───────────────────────────────────────────────────────────
-document.getElementById('apply-filters').addEventListener('click', () => {
-  filters.eventid    = document.getElementById('f-eventid').value;
-  filters.sensor     = document.getElementById('f-sensor').value;
-  filters.has_ioc    = document.getElementById('f-ioc').dataset.active === '1';
-  filters.has_attack = document.getElementById('f-attack').dataset.active === '1';
-  load(false);
+function applyAndLoad() { filters=readFiltersFromUI(); filtersToUrl(filters); load(false); }
+
+// Export
+function exportCSV() {
+  if (!allLoaded.length) return;
+  const cols=['ts','eventid','src_ip','sensor','geo_country','geo_city','username','password_hash','input','filename','url','attack_id','attack_tactic'];
+  const rows=[cols.join(',')];
+  for (const e of allLoaded) {
+    const geo=parseGeo(e), atk=parseAttack(e);
+    rows.push(cols.map(c=>{
+      let v='';
+      if (c==='geo_country') v=geo?.country??'';
+      else if (c==='geo_city') v=geo?.city??'';
+      else if (c==='attack_id') v=atk?.id??'';
+      else if (c==='attack_tactic') v=atk?.tactic??'';
+      else v=e[c]??'';
+      return `"${String(v).replace(/"/g,'""')}"`;
+    }).join(','));
+  }
+  download('bathysphere-events.csv',rows.join('\n'),'text/csv');
+}
+function exportJSON() {
+  if (!allLoaded.length) return;
+  download('bathysphere-events.json',JSON.stringify(allLoaded,null,2),'application/json');
+}
+function download(filename,content,type) {
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([content],{type}));
+  a.download=filename; a.click();
+  showToast(`Downloading ${filename}`);
+}
+
+let toastTimer;
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),2000);
+}
+
+// Keyboard nav
+document.addEventListener('keydown',e=>{
+  const tag=document.activeElement.tagName;
+  const inInput=tag==='INPUT'||tag==='SELECT'||tag==='TEXTAREA';
+  if (e.key==='/'&&!inInput) { e.preventDefault(); document.getElementById('f-search').focus(); return; }
+  if (inInput) return;
+  const groups=[...document.querySelectorAll('.session-group')];
+  if (!groups.length) return;
+  if (e.key==='j'||e.key==='ArrowDown') { e.preventDefault(); focusedIdx=Math.min(focusedIdx+1,groups.length-1); updateFocus(groups); }
+  else if (e.key==='k'||e.key==='ArrowUp') { e.preventDefault(); focusedIdx=Math.max(focusedIdx-1,0); updateFocus(groups); }
+  else if (e.key==='Enter'&&focusedIdx>=0) { e.preventDefault(); groups[focusedIdx]?.querySelector('.session-row')?.click(); }
+  else if (e.key==='Escape') {
+    document.querySelectorAll('.row-detail').forEach(d=>d.remove());
+    document.querySelectorAll('.event-row.expanded').forEach(r=>r.classList.remove('expanded'));
+    document.querySelectorAll('.session-row.expanded').forEach(r=>{ r.classList.remove('expanded'); r.nextSibling.style.display='none'; });
+  }
 });
+function updateFocus(groups) {
+  groups.forEach((g,i)=>g.classList.toggle('focused',i===focusedIdx));
+  groups[focusedIdx]?.scrollIntoView({block:'nearest',behavior:'smooth'});
+}
 
-['f-ioc', 'f-attack'].forEach(id => {
-  document.getElementById(id).addEventListener('click', function() {
-    const active = this.dataset.active === '1';
-    this.dataset.active = active ? '0' : '1';
-    this.classList.toggle('active', !active);
-  });
+// Controls
+document.getElementById('apply-filters').addEventListener('click',applyAndLoad);
+document.getElementById('reset-filters').addEventListener('click',()=>{
+  ['f-search','f-date-from','f-date-to'].forEach(id=>document.getElementById(id).value='');
+  ['f-eventid','f-sensor'].forEach(id=>document.getElementById(id).value='');
+  ['f-ioc','f-attack'].forEach(id=>{ const b=document.getElementById(id); b.dataset.active='0'; b.classList.remove('active'); });
+  document.getElementById('f-search-clear').classList.remove('visible');
+  applyAndLoad();
 });
+document.getElementById('f-search').addEventListener('input',function(){ document.getElementById('f-search-clear').classList.toggle('visible',this.value.length>0); });
+document.getElementById('f-search').addEventListener('keydown',e=>{ if(e.key==='Enter'){e.preventDefault();applyAndLoad();} if(e.key==='Escape'){e.preventDefault();e.target.blur();} });
+document.getElementById('f-search-clear').addEventListener('click',()=>{ document.getElementById('f-search').value=''; document.getElementById('f-search-clear').classList.remove('visible'); applyAndLoad(); });
+['f-ioc','f-attack'].forEach(id=>{ document.getElementById(id).addEventListener('click',function(){ const a=this.dataset.active==='1'; this.dataset.active=a?'0':'1'; this.classList.toggle('active',!a); }); });
+document.getElementById('load-more-btn').addEventListener('click',()=>load(true));
+document.getElementById('export-csv').addEventListener('click',exportCSV);
+document.getElementById('export-json').addEventListener('click',exportJSON);
 
-document.getElementById('load-more-btn').addEventListener('click', () => load(true));
+// Tooltip
+const tip=document.getElementById('floating-tip');
+document.addEventListener('mouseover',e=>{ const el=e.target.closest('[data-tip]'); if(!el){tip.style.opacity='0';return;} tip.textContent=el.dataset.tip; tip.style.opacity='1'; });
+document.addEventListener('mousemove',e=>{ if(tip.style.opacity==='0')return; const tw=tip.offsetWidth,th=tip.offsetHeight; let x=e.clientX-tw/2,y=e.clientY+12; if(y+th>window.innerHeight-8)y=e.clientY-th-12; if(x<8)x=8; if(x+tw>window.innerWidth-8)x=window.innerWidth-tw-8; tip.style.left=x+'px';tip.style.top=y+'px'; });
+document.addEventListener('mouseout',e=>{ if(!e.target.closest('[data-tip]'))tip.style.opacity='0'; });
 
-// ── Floating tooltip ──────────────────────────────────────────────────────────
-const tip    = document.getElementById('floating-tip');
-const MARGIN = 12;
-
-document.addEventListener('mouseover', e => {
-  const el = e.target.closest('[data-tip]');
-  if (!el) { tip.style.opacity = '0'; return; }
-  tip.textContent = el.dataset.tip;
-  tip.style.opacity = '1';
-});
-
-document.addEventListener('mousemove', e => {
-  if (tip.style.opacity === '0') return;
-  const tw = tip.offsetWidth, th = tip.offsetHeight;
-  let x = e.clientX - tw / 2;
-  let y = e.clientY + MARGIN;
-  if (y + th > window.innerHeight - 8) y = e.clientY - th - MARGIN;
-  if (x < 8) x = 8;
-  if (x + tw > window.innerWidth - 8) x = window.innerWidth - tw - 8;
-  tip.style.left = x + 'px';
-  tip.style.top  = y + 'px';
-});
-
-document.addEventListener('mouseout', e => {
-  if (!e.target.closest('[data-tip]')) tip.style.opacity = '0';
-});
-
-// ── Boot ──────────────────────────────────────────────────────────────────────
+// Boot
+filters=filtersFromUrl();
+applyFiltersToUI(filters);
 load(false);
 </script>
 </body>
