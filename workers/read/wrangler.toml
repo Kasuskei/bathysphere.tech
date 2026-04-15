@@ -18,3 +18,7 @@ database_id = "accaedaa-1f20-422b-b955-cfb6e7c7df86"
 # [[routes]]
 # pattern = "bathysphere.tech/stats"
 # zone_name = "bathysphere.tech"
+[[d1_databases]]
+binding = "BLOG"
+database_name = "bathysphere-blog"
+database_id = "be7046ac-60cc-4cc1-97a1-336696234d06"

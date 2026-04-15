@@ -24,8 +24,12 @@ const path     = require('path');
 const crypto   = require('crypto');
 
 // ── Config ──────────────────────────────────────────────────────────────────
-const LOG_FILE      = path.join(__dirname, 'logs', 'cowrie_full.json');
-const STATE_FILE    = path.join(__dirname, 'd1_backfill_state.json');
+// Override log file with: node d1_backfill.js --file=logs/cowrie_april11.json
+const fileArg       = process.argv.find(a => a.startsWith('--file='))?.split('=')[1];
+const LOG_FILE      = fileArg ? path.resolve(__dirname, fileArg) : path.join(__dirname, 'logs', 'cowrie_full.json');
+// State file is per-log so resuming works correctly for each file
+const stateBase     = fileArg ? path.basename(fileArg, '.json') : 'cowrie_full';
+const STATE_FILE    = path.join(__dirname, `d1_backfill_state_${stateBase}.json`);
 const INGEST_URL    = 'https://bathysphere-ingest.kasuskei.workers.dev/backfill';
 const SHARED_SECRET = process.env.SHARED_SECRET;
 const ABUSEIPDB_KEY = process.env.ABUSEIPDB_KEY;
@@ -183,7 +187,7 @@ function normalize(raw, geo, abuse) {
   if (!anon_ip) return null;
 
   const base = {
-    id:          raw.uuid ?? crypto.randomUUID(),
+    id:          raw.uuid ? `${raw.uuid}-${raw.eventid}-${raw.timestamp}` : crypto.randomUUID(),
     ts:          raw.timestamp,           // Cowrie field is `timestamp`
     eventid:     raw.eventid,
     session:     raw.session    ?? null,
