@@ -230,6 +230,20 @@ async function handleSignal(env) {
   }
 }
 
+async function handleSignalStats(env) {
+  // stub — returns empty structure until signal viz Worker is built out
+  return json({
+    window_days: 7,
+    updated_at: new Date().toISOString(),
+    summary: { sessions: 0, events: 0, bot_sessions: 0, human_sessions: 0 },
+    volume: [],
+    bot_vs_human: { bot: 0, human: 0, bot_signals: {} },
+    top_ips: [],
+    top_commands: [],
+    top_credentials: [],
+  });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -238,7 +252,8 @@ export default {
     if (url.pathname === "/events")   return handleEvents(url, env);
     if (url.pathname === "/archive")  return handleArchive(url, env);
     if (url.pathname === "/stats")    return handleStats(env);
-    if (url.pathname === "/signal")   return handleSignal(env);
+    if (url.pathname === "/pings")   return handleSignal(env);
+    if (url.pathname === "/signal-stats") return handleSignalStats(env);
     return json({ error: "not found" }, 404);
   },
 };
