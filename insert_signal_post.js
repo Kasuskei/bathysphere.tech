@@ -21,7 +21,6 @@ const SHARED_SECRET = process.env.SHARED_SECRET;
 // with the full post payload, and have it write to D1.
 
 const post = {
-  {
   "date": "2026-04-08",
   "sensor": "honeypot-pi",
   "tags": ["campaign"],
@@ -94,7 +93,6 @@ const post = {
     }
   ],
   "session_ids": "220.190.x.x — 13365 sessions"
-}
 };
 
 async function main() {
