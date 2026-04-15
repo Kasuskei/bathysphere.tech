@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>bathysphere.tech // pings from the depths</title>
+<meta name="description" content="Notable findings from the deep. Automated analysis of unusual attacker behavior observed by the bathysphere honeynet.">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --ink:        #080c10;
+  --deep:       #060a0e;
+  --surface:    #0b1118;
+  --glass:      #0f1822;
+  --rim:        rgba(120,180,220,0.08);
+  --rim-hover:  rgba(120,180,220,0.14);
+  --glow:       #7ab4dc;
+  --glow-dim:   rgba(122,180,220,0.18);
+  --glow-faint: rgba(122,180,220,0.06);
+  --bio:        #4de8b0;
+  --bio-dim:    rgba(77,232,176,0.12);
+  --amber:      #f0a94a;
+  --amber-dim:  rgba(240,169,74,0.12);
+  --red:        #e05c5c;
+  --red-dim:    rgba(224,92,92,0.10);
+  --coral:      #e07060;
+  --text:       #a8c4d8;
+  --text-dim:   #4a6878;
+  --text-mid:   #6a8fa8;
+  --text-bright:#d4e8f4;
+  --serif: 'Instrument Serif', Georgia, serif;
+  --mono:  'DM Mono', 'Courier New', monospace;
+
+  --tactic-recon:     #7ab4dc;
+  --tactic-initial:   #4de8b0;
+  --tactic-exec:      #a78bfa;
+  --tactic-persist:   #f0a94a;
+  --tactic-defense:   #e07060;
+  --tactic-cred:      #e05c5c;
+  --tactic-discovery: #60b8e0;
+  --tactic-lateral:   #8be07a;
+  --tactic-c2:        #e05c9c;
+  --tactic-impact:    #e05c5c;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  background: var(--ink);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.025) 2px, rgba(0,0,0,0.025) 4px);
+  pointer-events: none; z-index: 999;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 340px;
+  background: radial-gradient(ellipse 60% 340px at 50% -60px, rgba(122,180,220,0.04) 0%, transparent 100%);
+  pointer-events: none; z-index: 0;
+}
+
+nav {
+  position: sticky; top: 0; z-index: 100;
+  border-bottom: 1px solid var(--rim);
+  background: rgba(6,10,14,0.92);
+  backdrop-filter: blur(12px);
+}
+.nav-inner {
+  max-width: 1200px; margin: 0 auto; padding: 0 2rem;
+  height: 52px; display: flex; align-items: center; justify-content: space-between;
+}
+.nav-logo {
+  font-family: var(--mono); font-size: 13px; color: var(--glow);
+  text-decoration: none; display: flex; align-items: center; gap: 10px;
+}
+.ping { width: 7px; height: 7px; border-radius: 50%; background: var(--bio); position: relative; flex-shrink: 0; }
+.ping::after {
+  content: ''; position: absolute; inset: -3px; border-radius: 50%;
+  border: 1px solid var(--bio); animation: sonar 3s ease-out infinite; opacity: 0;
+}
+@keyframes sonar { 0% { transform: scale(1); opacity: 0.7; } 100% { transform: scale(3); opacity: 0; } }
+.nav-links { display: flex; align-items: center; gap: 2rem; list-style: none; }
+.nav-links a { color: var(--text-dim); text-decoration: none; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; transition: color 0.2s; }
+.nav-links a:hover { color: var(--glow); }
+.nav-links a.active { color: var(--bio); }
+.live-badge {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--bio);
+}
+.live-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--bio); box-shadow: 0 0 6px var(--bio); animation: livepulse 1.5s ease-in-out infinite; }
+@keyframes livepulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+.page { max-width: 1200px; margin: 0 auto; padding: 2rem; position: relative; z-index: 1; }
+
+.signal-header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: flex-end;
+  margin-bottom: 3rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--rim);
+  gap: 2rem;
+}
+.signal-header-left {}
+.signal-label {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.2em;
+  color: var(--text-dim); margin-bottom: 0.75rem;
+  display: flex; align-items: center; gap: 10px;
+}
+.signal-label::before { content: ''; display: block; width: 20px; height: 1px; background: var(--text-dim); }
+.signal-title {
+  font-family: var(--serif); font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+  font-weight: 400; color: var(--text-bright); line-height: 1.15; margin-bottom: 0.75rem;
+}
+.signal-title em { font-style: italic; color: var(--glow); }
+.signal-desc { font-size: 12px; color: var(--text-dim); max-width: 480px; line-height: 1.7; }
+
+.signal-header-right { text-align: right; }
+.signal-stat-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-dim); margin-bottom: 0.25rem; }
+.signal-stat-value { font-size: 28px; color: var(--glow); line-height: 1; }
+.signal-stat-sub { font-size: 10px; color: var(--text-dim); margin-top: 0.25rem; }
+
+.tag-bar {
+  display: flex; align-items: center; gap: 0.75rem;
+  margin-bottom: 2rem; flex-wrap: wrap;
+}
+.tag-bar-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-dim); margin-right: 0.25rem; }
+.tag-pill {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 4px 12px; border-radius: 20px; border: 1px solid var(--rim);
+  background: transparent; color: var(--text-dim); cursor: pointer; transition: all 0.15s;
+}
+.tag-pill:hover { border-color: var(--rim-hover); color: var(--text); }
+.tag-pill.active { border-color: rgba(122,180,220,0.35); background: var(--glow-faint); color: var(--glow); }
+.tag-pill.tag-campaign.active   { border-color: rgba(224,92,92,0.35);   background: rgba(224,92,92,0.06);   color: var(--red); }
+.tag-pill.tag-commands.active   { border-color: rgba(122,180,220,0.35); background: var(--glow-faint);      color: var(--glow); }
+.tag-pill.tag-credentials.active{ border-color: rgba(240,169,74,0.35);  background: var(--amber-dim);       color: var(--amber); }
+.tag-pill.tag-iot.active        { border-color: rgba(77,232,176,0.35);  background: var(--bio-dim);         color: var(--bio); }
+.tag-pill.tag-lateral.active    { border-color: rgba(139,224,122,0.35); background: rgba(139,224,122,0.06); color: #8be07a; }
+
+.post-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.post-card {
+  background: var(--surface);
+  border: 1px solid var(--rim);
+  display: flex; flex-direction: column;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  text-decoration: none;
+  color: inherit;
+  position: relative;
+  overflow: hidden;
+}
+.post-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--glow-dim), transparent);
+  opacity: 0; transition: opacity 0.3s;
+}
+.post-card:hover { border-color: var(--rim-hover); background: var(--glass); }
+.post-card:hover::before { opacity: 1; }
+
+.post-card.featured {
+  grid-column: 1 / -1;
+  flex-direction: row;
+}
+.post-card.featured .card-body { flex: 1; }
+.post-card.featured .card-aside {
+  width: 280px; flex-shrink: 0;
+  border-left: 1px solid var(--rim);
+  padding: 1.5rem;
+  display: flex; flex-direction: column; gap: 1.25rem;
+  background: rgba(0,0,0,0.15);
+}
+
+.card-top {
+  padding: 1.25rem 1.5rem 0;
+  display: flex; align-items: center; gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.card-date { font-size: 10px; color: var(--text-dim); letter-spacing: 0.08em; }
+.card-dot  { width: 3px; height: 3px; border-radius: 50%; background: var(--text-dim); flex-shrink: 0; }
+.card-sensor { font-size: 10px; color: var(--text-mid); }
+
+.card-body { padding: 1rem 1.5rem 1.5rem; flex: 1; display: flex; flex-direction: column; gap: 0.75rem; }
+
+.card-title {
+  font-family: var(--serif); font-size: 1.15rem; font-weight: 400;
+  color: var(--text-bright); line-height: 1.3;
+}
+.post-card.featured .card-title { font-size: 1.5rem; }
+.card-title em { font-style: italic; color: var(--glow); }
+
+.card-lede { font-size: 12px; color: var(--text-dim); line-height: 1.7; flex: 1; }
+
+.card-tags { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: auto; padding-top: 0.75rem; }
+.card-tag {
+  font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 2px 8px; border-radius: 2px; border: 1px solid transparent;
+}
+.card-tag.campaign    { color: var(--red);    border-color: rgba(224,92,92,0.25);   background: rgba(224,92,92,0.06); }
+.card-tag.commands    { color: var(--glow);   border-color: rgba(122,180,220,0.25); background: var(--glow-faint); }
+.card-tag.credentials { color: var(--amber);  border-color: rgba(240,169,74,0.25);  background: rgba(240,169,74,0.06); }
+.card-tag.iot         { color: var(--bio);    border-color: rgba(77,232,176,0.25);  background: var(--bio-dim); }
+.card-tag.lateral     { color: #8be07a;       border-color: rgba(139,224,122,0.25); background: rgba(139,224,122,0.06); }
+
+.aside-block {}
+.aside-block-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-dim); margin-bottom: 0.5rem; }
+.aside-stat { font-size: 22px; color: var(--text-bright); line-height: 1; }
+.aside-stat-sub { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+.aside-attack {
+  display: inline-flex; align-items: center;
+  font-size: 10px; letter-spacing: 0.06em; padding: 2px 7px;
+  border-radius: 2px; border: 1px solid rgba(167,139,250,0.25);
+  background: rgba(167,139,250,0.06); color: #a78bfa;
+  margin-bottom: 3px; white-space: nowrap;
+}
+.aside-attacks { display: flex; flex-direction: column; gap: 3px; align-items: flex-start; }
+.aside-cmd {
+  font-size: 10px; color: var(--text-dim); font-family: var(--mono);
+  padding: 2px 0; border-bottom: 1px solid var(--rim);
+}
+.aside-cmd:last-child { border-bottom: none; }
+.aside-cmds { display: flex; flex-direction: column; gap: 2px; }
+
+.card-footer {
+  padding: 0.75rem 1.5rem;
+  border-top: 1px solid var(--rim);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.card-read-more { font-size: 10px; color: var(--text-dim); letter-spacing: 0.1em; text-transform: uppercase; transition: color 0.2s; }
+.post-card:hover .card-read-more { color: var(--glow); }
+.card-read-arrow { transition: transform 0.2s; }
+.post-card:hover .card-read-arrow { transform: translateX(4px); }
+
+.state-msg { padding: 4rem 2rem; text-align: center; color: var(--text-dim); font-size: 12px; }
+.state-msg em { font-style: italic; color: var(--text-mid); }
+
+.post-overlay {
+  display: none;
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(6,10,14,0.85);
+  backdrop-filter: blur(8px);
+  overflow-y: auto;
+  padding: 2rem;
+}
+.post-overlay.open { display: block; }
+
+.post-modal {
+  max-width: 760px; margin: 0 auto;
+  background: var(--surface);
+  border: 1px solid var(--rim);
+  animation: modalIn 0.2s ease forwards;
+  position: relative;
+}
+@keyframes modalIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+.modal-header {
+  padding: 2rem 2.5rem 1.5rem;
+  border-bottom: 1px solid var(--rim);
+}
+.modal-meta { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.modal-date { font-size: 10px; color: var(--text-dim); letter-spacing: 0.08em; }
+.modal-sensor { font-size: 10px; color: var(--text-mid); }
+.modal-tags { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.modal-title {
+  font-family: var(--serif); font-size: clamp(1.4rem, 3vw, 2rem);
+  font-weight: 400; color: var(--text-bright); line-height: 1.2;
+}
+.modal-title em { font-style: italic; color: var(--glow); }
+
+.modal-close {
+  position: absolute; top: 1.5rem; right: 1.5rem;
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--text-dim); background: none;
+  border: 1px solid var(--rim); padding: 4px 10px; cursor: pointer;
+  transition: all 0.15s; border-radius: 2px;
+}
+.modal-close:hover { color: var(--text); border-color: var(--rim-hover); }
+
+.modal-body { padding: 2rem 2.5rem; }
+
+.post-lede {
+  font-family: var(--serif); font-size: 1.05rem; font-weight: 400;
+  color: var(--text-mid); line-height: 1.75; margin-bottom: 2rem;
+  padding-bottom: 2rem; border-bottom: 1px solid var(--rim);
+  font-style: italic;
+}
+
+.findings-header {
+  font-size: 9px; text-transform: uppercase; letter-spacing: 0.2em;
+  color: var(--text-dim); margin-bottom: 1.25rem;
+  display: flex; align-items: center; gap: 10px;
+}
+.findings-header::after { content: ''; flex: 1; height: 1px; background: var(--rim); }
+
+.findings-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;
+}
+.finding-block {
+  background: var(--glass); border: 1px solid var(--rim);
+  padding: 1rem 1.25rem;
+}
+.finding-block-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-dim); margin-bottom: 0.5rem; }
+.finding-block-value { font-size: 12px; color: var(--text); line-height: 1.6; }
+.finding-block-value code {
+  font-family: var(--mono); font-size: 11px; color: var(--glow);
+  background: rgba(122,180,220,0.06); padding: 1px 5px; border-radius: 2px;
+}
+
+.post-section-title {
+  font-size: 9px; text-transform: uppercase; letter-spacing: 0.2em;
+  color: var(--text-dim); margin: 1.75rem 0 0.75rem;
+}
+.post-body-text { font-size: 12px; color: var(--text); line-height: 1.8; margin-bottom: 1rem; }
+.post-body-text strong { color: var(--text-bright); font-weight: 500; }
+
+.cmd-sequence {
+  background: var(--glass); border: 1px solid var(--rim); border-left: 2px solid var(--glow);
+  padding: 0.75rem 1rem; margin: 0.75rem 0; font-family: var(--mono);
+  font-size: 11px; display: flex; flex-direction: column; gap: 4px;
+}
+.cmd-line { color: var(--text); }
+.cmd-line .cmd-prompt { color: var(--text-dim); margin-right: 6px; }
+.cmd-line .cmd-comment { color: var(--text-dim); font-style: italic; }
+
+.attack-list { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.75rem 0; }
+.attack-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 10px; padding: 3px 8px; border-radius: 2px;
+  border: 1px solid rgba(167,139,250,0.25); background: rgba(167,139,250,0.06); color: #a78bfa;
+}
+.attack-badge-tactic { font-size: 9px; opacity: 0.7; }
+
+.defender-note {
+  background: var(--bio-dim); border: 1px solid rgba(77,232,176,0.2);
+  border-left: 2px solid var(--bio);
+  padding: 1rem 1.25rem; margin: 1.5rem 0;
+  font-size: 12px; color: var(--text); line-height: 1.7;
+}
+.defender-note-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--bio); margin-bottom: 0.5rem; }
+
+.empty-state {
+  grid-column: 1 / -1;
+  padding: 5rem 2rem;
+  text-align: center;
+  border: 1px solid var(--rim);
+  background: var(--surface);
+}
+.empty-depth {
+  font-family: var(--serif); font-size: 1.5rem; color: var(--text-dim);
+  font-style: italic; margin-bottom: 0.75rem; line-height: 1.4;
+}
+.empty-sub { font-size: 11px; color: var(--text-dim); }
+.depth-indicator {
+  font-size: 10px; color: var(--text-dim); letter-spacing: 0.1em;
+  margin-bottom: 1.5rem; display: block;
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--rim); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--rim-hover); }
+
+@media (max-width: 900px) {
+  .post-card.featured { flex-direction: column; }
+  .post-card.featured .card-aside { width: auto; border-left: none; border-top: 1px solid var(--rim); }
+  .findings-grid { grid-template-columns: 1fr; }
+  .signal-header { grid-template-columns: 1fr; }
+  .signal-header-right { text-align: left; }
+  .post-modal { margin: 0; }
+  .modal-body { padding: 1.5rem; }
+  .modal-header { padding: 1.5rem; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">
+      <div class="ping"></div>
+      bathysphere.tech
+    </a>
+    <ul class="nav-links">
+      <li><a href="/">about</a></li>
+      <li><a href="/feed.html">feed</a></li>
+      <li><a href="/archive.html">event archive</a></li>
+      <li><a href="/signal.html">signal</a></li>
+      <li><a href="/pings.html" class="active">pings from the depths</a></li>
+      <li><a href="https://github.com/Kasuskei/bathysphere.tech" target="_blank">github</a></li>
+    </ul>
+    <div class="live-badge">
+      <div class="live-dot"></div>
+      <span>live</span>
+    </div>
+  </div>
+</nav>
+
+<div class="page">
+
+  <div class="signal-header">
+    <div class="signal-header-left">
+      <div class="signal-label">// pings from the depths</div>
+      <div class="signal-title">What rises toward<br>the <em>light.</em></div>
+      <div class="signal-desc">
+        Automated analysis of notable attacker behavior observed by the bathysphere honeynet.
+        Generated when something unusual surfaces &mdash; novel command sequences, coordinated campaigns,
+        or tactics worth documenting.
+      </div>
+    </div>
+    <div class="signal-header-right" id="header-stats">
+      <div class="signal-stat-label">transmissions</div>
+      <div class="signal-stat-value" id="post-count">&mdash;</div>
+      <div class="signal-stat-sub">findings logged</div>
+    </div>
+  </div>
+
+  <div class="tag-bar">
+    <span class="tag-bar-label">filter</span>
+    <button class="tag-pill active" data-tag="">all</button>
+    <button class="tag-pill tag-campaign"    data-tag="campaign">campaign</button>
+    <button class="tag-pill tag-commands"    data-tag="commands">commands</button>
+    <button class="tag-pill tag-credentials" data-tag="credentials">credentials</button>
+    <button class="tag-pill tag-iot"         data-tag="iot">iot</button>
+    <button class="tag-pill tag-lateral"     data-tag="lateral">lateral movement</button>
+  </div>
+
+  <div class="post-grid" id="post-grid">
+    <div class="state-msg">Listening for signals&hellip;</div>
+  </div>
+
+</div>
+
+<div class="post-overlay" id="post-overlay">
+  <div class="post-modal" id="post-modal">
+    <button class="modal-close" id="modal-close">&#x2715; close</button>
+    <div class="modal-header">
+      <div class="modal-meta">
+        <span class="modal-date" id="modal-date"></span>
+        <span class="card-dot"></span>
+        <span class="modal-sensor" id="modal-sensor"></span>
+        <span class="card-dot"></span>
+        <div class="modal-tags" id="modal-tags"></div>
+      </div>
+      <div class="modal-title" id="modal-title"></div>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+const PINGS_URL = 'https://bathysphere-read.kasuskei.workers.dev/pings';
+const USE_MOCK = false;
+
+const MOCK_POSTS = [
+  {
+    id: 'ping-001',
+    date: '2026-04-03',
+    sensor: 'honeypot-pi',
+    tags: ['commands', 'iot'],
+    title: 'MikroTik targeting inside a Linux session',
+    lede: 'Something came in on root/admin and immediately asked the shell a question meant for a router. What followed was a methodical multi-platform recon script \u2014 automated, unhurried, and carrying a specific malware hash to check for.',
+    findings: { source_ip: '91.128.149.x', session_id: 'a3f9c2d1', duration: '38s', events: '14 commands' },
+    body: [
+      { type: 'text', content: 'The session authenticated with <strong>root/admin</strong> at 09:14 UTC and immediately executed <code>/ip cloud print</code> \u2014 a MikroTik RouterOS command with no meaning on a Linux host.' },
+      { type: 'section', title: 'Command sequence' },
+      { type: 'commands', lines: [
+        { cmd: '/ip cloud print', comment: '// MikroTik probe \u2014 no-op on Linux' },
+        { cmd: 'uname -a', comment: '' },
+        { cmd: 'cat /proc/cpuinfo', comment: '// architecture fingerprint' },
+        { cmd: 'ls -la ~/.local/share/TelegramDesktop/tdata', comment: '// Telegram session theft' },
+        { cmd: 'locate D877F783D5D3EF8C', comment: '// known malware hash lookup' },
+      ]},
+      { type: 'attacks', attacks: [
+        { id: 'T1595', name: 'Active Scanning', tactic: 'Reconnaissance' },
+        { id: 'T1078', name: 'Valid Accounts', tactic: 'Initial Access' },
+        { id: 'T1539', name: 'Steal Web Session Cookie', tactic: 'Credential Access' },
+      ]},
+      { type: 'defender', content: 'Presence of <code>/ip cloud print</code> in shell logs on a Linux host is a reliable indicator of this specific script family. Alert on it.' },
+    ]
+  },
+];
+
+let allPosts  = [];
+let activeTag = '';
+let activePost = null;
+
+function escHtml(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function fmtDate(d) {
+  if (!d) return '\u2014';
+  return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+function tagHtml(tag) {
+  return `<span class="card-tag ${escHtml(tag)}">${escHtml(tag)}</span>`;
+}
+function attackBadge(a) {
+  return `<div class="attack-badge"><span>${escHtml(a.id)}</span><span>${escHtml(a.name)}</span><span class="attack-badge-tactic">${escHtml(a.tactic)}</span></div>`;
+}
+
+function renderBody(body) {
+  return body.map(block => {
+    switch (block.type) {
+      case 'text':     return `<p class="post-body-text">${block.content}</p>`;
+      case 'section':  return `<div class="post-section-title">${escHtml(block.title)}</div>`;
+      case 'commands': return `<div class="cmd-sequence">${block.lines.map(l =>
+        `<div class="cmd-line"><span class="cmd-prompt">$</span>${escHtml(l.cmd)}${l.comment ? `<span class="cmd-comment"> ${escHtml(l.comment)}</span>` : ''}</div>`
+      ).join('')}</div>`;
+      case 'attacks':  return `<div class="attack-list">${block.attacks.map(attackBadge).join('')}</div>`;
+      case 'defender': return `<div class="defender-note"><div class="defender-note-label">defender takeaway</div>${block.content}</div>`;
+      default: return '';
+    }
+  }).join('');
+}
+
+function makeCard(post, featured = false) {
+  const card = document.createElement('div');
+  card.className = `post-card${featured ? ' featured' : ''}`;
+  card.dataset.id = post.id;
+  const tagsHtml = (post.tags ?? []).map(t => tagHtml(t)).join('');
+  const bodyHtml = `
+    <div class="card-top">
+      <span class="card-date">${fmtDate(post.date)}</span>
+      <span class="card-dot"></span>
+      <span class="card-sensor">${escHtml(post.sensor)}</span>
+    </div>
+    <div class="card-body">
+      <div class="card-title">${escHtml(post.title)}</div>
+      <div class="card-lede">${escHtml(post.lede)}</div>
+      <div class="card-tags">${tagsHtml}</div>
+    </div>
+    <div class="card-footer">
+      <span class="card-read-more">read findings</span>
+      <span class="card-read-arrow">&rarr;</span>
+    </div>`;
+  if (featured) {
+    const f = post.findings ?? {};
+    const attacks = (post.body ?? []).find(b => b.type === 'attacks');
+    const cmds    = (post.body ?? []).find(b => b.type === 'commands');
+    card.innerHTML = `
+      <div style="flex:1;display:flex;flex-direction:column;">${bodyHtml}</div>
+      <div class="card-aside">
+        <div class="aside-block">
+          <div class="aside-block-label">source</div>
+          <div style="font-size:13px;color:var(--glow);">${escHtml(f.source_ip ?? '\u2014')}</div>
+        </div>
+        <div class="aside-block">
+          <div class="aside-block-label">session</div>
+          <div style="font-size:13px;color:var(--text-mid);">${escHtml(f.duration ?? '\u2014')}</div>
+          <div class="aside-stat-sub">${escHtml(f.events ?? '')}</div>
+        </div>
+        ${attacks ? `<div class="aside-block"><div class="aside-block-label">techniques</div><div class="aside-attacks">${attacks.attacks.slice(0,3).map(a => `<span class="aside-attack">${escHtml(a.id)}</span>`).join('')}</div></div>` : ''}
+        ${cmds ? `<div class="aside-block"><div class="aside-block-label">commands</div><div class="aside-cmds">${cmds.lines.slice(0,4).map(l => `<div class="aside-cmd">${escHtml(l.cmd.slice(0,28))}${l.cmd.length > 28 ? '\u2026' : ''}</div>`).join('')}</div></div>` : ''}
+      </div>`;
+  } else {
+    card.innerHTML = bodyHtml;
+  }
+  card.addEventListener('click', () => openPost(post));
+  return card;
+}
+
+function openPost(post) {
+  activePost = post;
+  document.getElementById('modal-date').textContent   = fmtDate(post.date);
+  document.getElementById('modal-sensor').textContent = post.sensor;
+  document.getElementById('modal-title').innerHTML    = escHtml(post.title);
+  document.getElementById('modal-tags').innerHTML     = (post.tags ?? []).map(t => tagHtml(t)).join('');
+  const f = post.findings ?? {};
+  document.getElementById('modal-body').innerHTML = `
+    <p class="post-lede">${escHtml(post.lede)}</p>
+    <div class="findings-header">findings</div>
+    <div class="findings-grid">
+      <div class="finding-block"><div class="finding-block-label">Source IP</div><div class="finding-block-value" style="color:var(--glow)">${escHtml(f.source_ip ?? '\u2014')}</div></div>
+      <div class="finding-block"><div class="finding-block-label">Session</div><div class="finding-block-value">${escHtml(f.session_id ?? '\u2014')}</div></div>
+      <div class="finding-block"><div class="finding-block-label">Duration</div><div class="finding-block-value">${escHtml(f.duration ?? '\u2014')}</div></div>
+      <div class="finding-block"><div class="finding-block-label">Activity</div><div class="finding-block-value">${escHtml(f.events ?? '\u2014')}</div></div>
+    </div>
+    ${renderBody(post.body ?? [])}`;
+  document.getElementById('post-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closePost() {
+  document.getElementById('post-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  activePost = null;
+}
+
+document.getElementById('modal-close').addEventListener('click', closePost);
+document.getElementById('post-overlay').addEventListener('click', e => { if (e.target === document.getElementById('post-overlay')) closePost(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closePost(); });
+
+function renderGrid() {
+  const grid = document.getElementById('post-grid');
+  grid.innerHTML = '';
+  const filtered = activeTag ? allPosts.filter(p => (p.tags ?? []).includes(activeTag)) : allPosts;
+  document.getElementById('post-count').textContent = allPosts.length || '\u2014';
+  if (filtered.length === 0) {
+    grid.innerHTML = `<div class="empty-state"><span class="depth-indicator">depth 3,800m // listening</span><div class="empty-depth">Nothing has surfaced yet.</div><div class="empty-sub">The sensor is running. Something will come up eventually.</div></div>`;
+    return;
+  }
+  filtered.forEach((post, i) => { grid.appendChild(makeCard(post, i === 0 && !activeTag)); });
+}
+
+document.querySelectorAll('.tag-pill').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tag-pill').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeTag = btn.dataset.tag;
+    renderGrid();
+  });
+});
+
+async function loadPosts() {
+  if (USE_MOCK) { allPosts = MOCK_POSTS; renderGrid(); return; }
+  try {
+    const resp = await fetch(PINGS_URL);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    allPosts = data.posts ?? [];
+    renderGrid();
+  } catch (err) {
+    allPosts = [];
+    renderGrid();
+    console.warn('Pings endpoint not yet available:', err.message);
+  }
+}
+
+loadPosts();
+</script>
+</body>
+</html>

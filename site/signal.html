@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>bathysphere.tech // signal</title>
-<meta name="description" content="Notable findings from the deep. Automated analysis of unusual attacker behavior observed by the bathysphere honeynet.">
+<meta name="description" content="Data visualization of honeypot sensor activity. Attack volume, source distribution, credential patterns, and bot vs human traffic.">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
@@ -27,24 +27,12 @@
   --amber-dim:  rgba(240,169,74,0.12);
   --red:        #e05c5c;
   --red-dim:    rgba(224,92,92,0.10);
-  --coral:      #e07060;
   --text:       #a8c4d8;
   --text-dim:   #4a6878;
   --text-mid:   #6a8fa8;
   --text-bright:#d4e8f4;
   --serif: 'Instrument Serif', Georgia, serif;
   --mono:  'DM Mono', 'Courier New', monospace;
-
-  --tactic-recon:     #7ab4dc;
-  --tactic-initial:   #4de8b0;
-  --tactic-exec:      #a78bfa;
-  --tactic-persist:   #f0a94a;
-  --tactic-defense:   #e07060;
-  --tactic-cred:      #e05c5c;
-  --tactic-discovery: #60b8e0;
-  --tactic-lateral:   #8be07a;
-  --tactic-c2:        #e05c9c;
-  --tactic-impact:    #e05c5c;
 }
 
 html { scroll-behavior: smooth; }
@@ -57,7 +45,6 @@ body {
   min-height: 100vh;
 }
 
-/* scanline overlay — same as archive */
 body::before {
   content: '';
   position: fixed; inset: 0;
@@ -65,17 +52,14 @@ body::before {
   pointer-events: none; z-index: 999;
 }
 
-/* ── Depth gradient — atmospheric layer unique to signal ── */
 body::after {
   content: '';
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  height: 340px;
+  position: fixed; top: 0; left: 0; right: 0; height: 340px;
   background: radial-gradient(ellipse 60% 340px at 50% -60px, rgba(122,180,220,0.04) 0%, transparent 100%);
   pointer-events: none; z-index: 0;
 }
 
-/* ── Nav (identical to archive) ── */
+/* ── Nav ── */
 nav {
   position: sticky; top: 0; z-index: 100;
   border-bottom: 1px solid var(--rim);
@@ -100,297 +84,221 @@ nav {
 .nav-links a { color: var(--text-dim); text-decoration: none; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; transition: color 0.2s; }
 .nav-links a:hover { color: var(--glow); }
 .nav-links a.active { color: var(--bio); }
-.live-badge {
-  display: flex; align-items: center; gap: 6px;
-  font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--bio);
-}
+.live-badge { display: flex; align-items: center; gap: 6px; font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--bio); }
 .live-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--bio); box-shadow: 0 0 6px var(--bio); animation: livepulse 1.5s ease-in-out infinite; }
 @keyframes livepulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
 
-/* ── Page ── */
+/* ── Layout ── */
 .page { max-width: 1200px; margin: 0 auto; padding: 2rem; position: relative; z-index: 1; }
 
 /* ── Page header ── */
-.signal-header {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: flex-end;
-  margin-bottom: 3rem;
-  padding-bottom: 2rem;
-  border-bottom: 1px solid var(--rim);
-  gap: 2rem;
+.page-header {
+  display: grid; grid-template-columns: 1fr auto;
+  align-items: flex-end; margin-bottom: 3rem;
+  padding-bottom: 2rem; border-bottom: 1px solid var(--rim); gap: 2rem;
 }
-.signal-header-left {}
-.signal-label {
+.page-label {
   font-size: 10px; text-transform: uppercase; letter-spacing: 0.2em;
   color: var(--text-dim); margin-bottom: 0.75rem;
   display: flex; align-items: center; gap: 10px;
 }
-.signal-label::before { content: ''; display: block; width: 20px; height: 1px; background: var(--text-dim); }
-.signal-title {
+.page-label::before { content: ''; display: block; width: 20px; height: 1px; background: var(--text-dim); }
+.page-title {
   font-family: var(--serif); font-size: clamp(1.6rem, 3.5vw, 2.4rem);
   font-weight: 400; color: var(--text-bright); line-height: 1.15; margin-bottom: 0.75rem;
 }
-.signal-title em { font-style: italic; color: var(--glow); }
-.signal-desc { font-size: 12px; color: var(--text-dim); max-width: 480px; line-height: 1.7; }
+.page-title em { font-style: italic; color: var(--glow); }
+.page-desc { font-size: 12px; color: var(--text-dim); max-width: 480px; line-height: 1.7; }
+.page-header-right { text-align: right; }
+.header-stat-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-dim); margin-bottom: 0.25rem; }
+.header-stat-value { font-size: 28px; color: var(--glow); line-height: 1; }
+.header-stat-sub { font-size: 10px; color: var(--text-dim); margin-top: 0.25rem; }
 
-.signal-header-right { text-align: right; }
-.signal-stat-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-dim); margin-bottom: 0.25rem; }
-.signal-stat-value { font-size: 28px; color: var(--glow); line-height: 1; }
-.signal-stat-sub { font-size: 10px; color: var(--text-dim); margin-top: 0.25rem; }
-
-/* ── Tag filter bar ── */
-.tag-bar {
-  display: flex; align-items: center; gap: 0.75rem;
-  margin-bottom: 2rem; flex-wrap: wrap;
+/* ── Time range selector ── */
+.time-bar {
+  display: flex; align-items: center; gap: 0.5rem;
+  margin-bottom: 2rem;
 }
-.tag-bar-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-dim); margin-right: 0.25rem; }
-.tag-pill {
+.time-bar-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-dim); margin-right: 0.5rem; }
+.time-pill {
   font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
   padding: 4px 12px; border-radius: 20px; border: 1px solid var(--rim);
   background: transparent; color: var(--text-dim); cursor: pointer; transition: all 0.15s;
 }
-.tag-pill:hover { border-color: var(--rim-hover); color: var(--text); }
-.tag-pill.active { border-color: rgba(122,180,220,0.35); background: var(--glow-faint); color: var(--glow); }
-.tag-pill.tag-campaign.active   { border-color: rgba(224,92,92,0.35);   background: rgba(224,92,92,0.06);   color: var(--red); }
-.tag-pill.tag-commands.active   { border-color: rgba(122,180,220,0.35); background: var(--glow-faint);      color: var(--glow); }
-.tag-pill.tag-credentials.active{ border-color: rgba(240,169,74,0.35);  background: var(--amber-dim);       color: var(--amber); }
-.tag-pill.tag-iot.active        { border-color: rgba(77,232,176,0.35);  background: var(--bio-dim);         color: var(--bio); }
-.tag-pill.tag-lateral.active    { border-color: rgba(139,224,122,0.35); background: rgba(139,224,122,0.06); color: #8be07a; }
+.time-pill:hover { border-color: var(--rim-hover); color: var(--text); }
+.time-pill.active { border-color: rgba(122,180,220,0.35); background: var(--glow-faint); color: var(--glow); }
 
-/* ── Post grid ── */
-.post-grid {
+/* ── Dashboard grid ── */
+.dash-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto;
+  gap: 1.25rem;
   margin-bottom: 3rem;
 }
 
-/* ── Post card ── */
-.post-card {
+/* ── Panel base ── */
+.panel {
   background: var(--surface);
   border: 1px solid var(--rim);
-  display: flex; flex-direction: column;
-  cursor: pointer;
-  transition: border-color 0.2s, background 0.2s;
-  text-decoration: none;
-  color: inherit;
   position: relative;
   overflow: hidden;
 }
-.post-card::before {
+.panel::before {
   content: '';
-  position: absolute; top: 0; left: 0; right: 0;
-  height: 1px;
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
   background: linear-gradient(90deg, transparent, var(--glow-dim), transparent);
   opacity: 0; transition: opacity 0.3s;
 }
-.post-card:hover { border-color: var(--rim-hover); background: var(--glass); }
-.post-card:hover::before { opacity: 1; }
+.panel:hover::before { opacity: 1; }
 
-/* featured card spans full width */
-.post-card.featured {
-  grid-column: 1 / -1;
-  flex-direction: row;
-}
-.post-card.featured .card-body { flex: 1; }
-.post-card.featured .card-aside {
-  width: 280px; flex-shrink: 0;
-  border-left: 1px solid var(--rim);
-  padding: 1.5rem;
-  display: flex; flex-direction: column; gap: 1.25rem;
-  background: rgba(0,0,0,0.15);
-}
-
-.card-top {
-  padding: 1.25rem 1.5rem 0;
-  display: flex; align-items: center; gap: 0.75rem;
-  flex-wrap: wrap;
-}
-.card-date { font-size: 10px; color: var(--text-dim); letter-spacing: 0.08em; }
-.card-dot  { width: 3px; height: 3px; border-radius: 50%; background: var(--text-dim); flex-shrink: 0; }
-.card-sensor { font-size: 10px; color: var(--text-mid); }
-
-.card-body { padding: 1rem 1.5rem 1.5rem; flex: 1; display: flex; flex-direction: column; gap: 0.75rem; }
-
-.card-title {
-  font-family: var(--serif); font-size: 1.15rem; font-weight: 400;
-  color: var(--text-bright); line-height: 1.3;
-}
-.post-card.featured .card-title { font-size: 1.5rem; }
-.card-title em { font-style: italic; color: var(--glow); }
-
-.card-lede { font-size: 12px; color: var(--text-dim); line-height: 1.7; flex: 1; }
-
-.card-tags { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: auto; padding-top: 0.75rem; }
-.card-tag {
-  font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
-  padding: 2px 8px; border-radius: 2px; border: 1px solid transparent;
-}
-.card-tag.campaign    { color: var(--red);    border-color: rgba(224,92,92,0.25);   background: rgba(224,92,92,0.06); }
-.card-tag.commands    { color: var(--glow);   border-color: rgba(122,180,220,0.25); background: var(--glow-faint); }
-.card-tag.credentials { color: var(--amber);  border-color: rgba(240,169,74,0.25);  background: rgba(240,169,74,0.06); }
-.card-tag.iot         { color: var(--bio);    border-color: rgba(77,232,176,0.25);  background: var(--bio-dim); }
-.card-tag.lateral     { color: #8be07a;       border-color: rgba(139,224,122,0.25); background: rgba(139,224,122,0.06); }
-
-/* aside data blocks (featured only) */
-.aside-block {}
-.aside-block-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-dim); margin-bottom: 0.5rem; }
-.aside-stat { font-size: 22px; color: var(--text-bright); line-height: 1; }
-.aside-stat-sub { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
-.aside-attack {
-  display: inline-flex; align-items: center;
-  font-size: 10px; letter-spacing: 0.06em; padding: 2px 7px;
-  border-radius: 2px; border: 1px solid rgba(167,139,250,0.25);
-  background: rgba(167,139,250,0.06); color: #a78bfa;
-  margin-bottom: 3px; white-space: nowrap;
-}
-.aside-attacks { display: flex; flex-direction: column; gap: 3px; align-items: flex-start; }
-.aside-cmd {
-  font-size: 10px; color: var(--text-dim); font-family: var(--mono);
-  padding: 2px 0; border-bottom: 1px solid var(--rim);
-}
-.aside-cmd:last-child { border-bottom: none; }
-.aside-cmds { display: flex; flex-direction: column; gap: 2px; }
-
-/* card footer */
-.card-footer {
-  padding: 0.75rem 1.5rem;
-  border-top: 1px solid var(--rim);
+.panel-header {
+  padding: 1rem 1.25rem 0.75rem;
+  border-bottom: 1px solid var(--rim);
   display: flex; align-items: center; justify-content: space-between;
 }
-.card-read-more { font-size: 10px; color: var(--text-dim); letter-spacing: 0.1em; text-transform: uppercase; transition: color 0.2s; }
-.post-card:hover .card-read-more { color: var(--glow); }
-.card-read-arrow { transition: transform 0.2s; }
-.post-card:hover .card-read-arrow { transform: translateX(4px); }
-
-/* ── Empty / loading states ── */
-.state-msg { padding: 4rem 2rem; text-align: center; color: var(--text-dim); font-size: 12px; }
-.state-msg em { font-style: italic; color: var(--text-mid); }
-
-/* ── Post detail overlay ── */
-.post-overlay {
-  display: none;
-  position: fixed; inset: 0; z-index: 500;
-  background: rgba(6,10,14,0.85);
-  backdrop-filter: blur(8px);
-  overflow-y: auto;
-  padding: 2rem;
+.panel-title {
+  font-size: 9px; text-transform: uppercase; letter-spacing: 0.18em; color: var(--text-dim);
 }
-.post-overlay.open { display: block; }
+.panel-meta { font-size: 10px; color: var(--text-dim); }
+.panel-body { padding: 1.25rem; }
 
-.post-modal {
-  max-width: 760px; margin: 0 auto;
+/* ── Full-width panel ── */
+.panel.full { grid-column: 1 / -1; }
+
+/* ── Stat row (top summary) ── */
+.stat-row {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+}
+.stat-card {
   background: var(--surface);
   border: 1px solid var(--rim);
-  animation: modalIn 0.2s ease forwards;
+  padding: 1.25rem;
+  position: relative; overflow: hidden;
+}
+.stat-card::after {
+  content: '';
+  position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+}
+.stat-card.s-sessions::after { background: linear-gradient(90deg, transparent, var(--glow), transparent); }
+.stat-card.s-events::after   { background: linear-gradient(90deg, transparent, var(--bio), transparent); }
+.stat-card.s-bots::after     { background: linear-gradient(90deg, transparent, var(--amber), transparent); }
+.stat-card.s-humans::after   { background: linear-gradient(90deg, transparent, var(--red), transparent); }
+
+.stat-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-dim); margin-bottom: 0.5rem; }
+.stat-value { font-size: 2rem; color: var(--text-bright); line-height: 1; font-variant-numeric: tabular-nums; }
+.stat-card.s-sessions .stat-value { color: var(--glow); }
+.stat-card.s-events   .stat-value { color: var(--bio); }
+.stat-card.s-bots     .stat-value { color: var(--amber); }
+.stat-card.s-humans   .stat-value { color: var(--red); }
+.stat-sub { font-size: 10px; color: var(--text-dim); margin-top: 0.35rem; }
+
+/* ── Volume chart ── */
+.chart-area {
+  width: 100%; height: 120px;
+  display: flex; align-items: flex-end; gap: 3px;
+  padding: 0 4px;
+}
+.chart-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.chart-bar {
+  width: 100%; border-radius: 1px 1px 0 0;
+  background: var(--glow-faint);
+  border-top: 1px solid rgba(122,180,220,0.3);
+  transition: background 0.2s;
+  cursor: pointer;
   position: relative;
 }
-@keyframes modalIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+.chart-bar:hover { background: var(--glow-dim); }
+.chart-bar-label { font-size: 8px; color: var(--text-dim); white-space: nowrap; }
 
-.modal-header {
-  padding: 2rem 2.5rem 1.5rem;
-  border-bottom: 1px solid var(--rim);
-}
-.modal-meta { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; }
-.modal-date { font-size: 10px; color: var(--text-dim); letter-spacing: 0.08em; }
-.modal-sensor { font-size: 10px; color: var(--text-mid); }
-.modal-tags { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-.modal-title {
-  font-family: var(--serif); font-size: clamp(1.4rem, 3vw, 2rem);
-  font-weight: 400; color: var(--text-bright); line-height: 1.2;
-}
-.modal-title em { font-style: italic; color: var(--glow); }
-
-.modal-close {
-  position: absolute; top: 1.5rem; right: 1.5rem;
-  font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em;
-  text-transform: uppercase; color: var(--text-dim); background: none;
-  border: 1px solid var(--rim); padding: 4px 10px; cursor: pointer;
-  transition: all 0.15s; border-radius: 2px;
-}
-.modal-close:hover { color: var(--text); border-color: var(--rim-hover); }
-
-/* ── Post body content ── */
-.modal-body { padding: 2rem 2.5rem; }
-
-.post-lede {
-  font-family: var(--serif); font-size: 1.05rem; font-weight: 400;
-  color: var(--text-mid); line-height: 1.75; margin-bottom: 2rem;
-  padding-bottom: 2rem; border-bottom: 1px solid var(--rim);
-  font-style: italic;
-}
-
-.findings-header {
-  font-size: 9px; text-transform: uppercase; letter-spacing: 0.2em;
-  color: var(--text-dim); margin-bottom: 1.25rem;
-  display: flex; align-items: center; gap: 10px;
-}
-.findings-header::after { content: ''; flex: 1; height: 1px; background: var(--rim); }
-
-.findings-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;
-}
-.finding-block {
+/* tooltip */
+.chart-tooltip {
+  display: none;
+  position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
   background: var(--glass); border: 1px solid var(--rim);
-  padding: 1rem 1.25rem;
+  font-size: 10px; color: var(--text); padding: 4px 8px; white-space: nowrap; z-index: 10;
+  pointer-events: none;
 }
-.finding-block-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-dim); margin-bottom: 0.5rem; }
-.finding-block-value { font-size: 12px; color: var(--text); line-height: 1.6; }
-.finding-block-value code {
-  font-family: var(--mono); font-size: 11px; color: var(--glow);
-  background: rgba(122,180,220,0.06); padding: 1px 5px; border-radius: 2px;
-}
+.chart-bar:hover .chart-tooltip { display: block; }
 
-.post-section-title {
-  font-size: 9px; text-transform: uppercase; letter-spacing: 0.2em;
-  color: var(--text-dim); margin: 1.75rem 0 0.75rem;
+/* ── Bot vs Human donut ── */
+.donut-wrap {
+  display: flex; align-items: center; gap: 2rem; padding: 0.5rem 0;
 }
-.post-body-text { font-size: 12px; color: var(--text); line-height: 1.8; margin-bottom: 1rem; }
-.post-body-text strong { color: var(--text-bright); font-weight: 500; }
+.donut-svg { flex-shrink: 0; }
+.donut-legend { display: flex; flex-direction: column; gap: 0.75rem; }
+.legend-item { display: flex; align-items: center; gap: 0.6rem; }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.legend-label { font-size: 11px; color: var(--text-mid); }
+.legend-value { font-size: 13px; color: var(--text-bright); margin-left: auto; padding-left: 1rem; font-variant-numeric: tabular-nums; }
+.legend-pct { font-size: 10px; color: var(--text-dim); }
 
-.cmd-sequence {
-  background: var(--glass); border: 1px solid var(--rim); border-left: 2px solid var(--glow);
-  padding: 0.75rem 1rem; margin: 0.75rem 0; font-family: var(--mono);
-  font-size: 11px; display: flex; flex-direction: column; gap: 4px;
+/* ── Top IPs table ── */
+.ip-table { width: 100%; border-collapse: collapse; }
+.ip-table tr { border-bottom: 1px solid var(--rim); }
+.ip-table tr:last-child { border-bottom: none; }
+.ip-table td { padding: 0.5rem 0; font-size: 11px; vertical-align: middle; }
+.ip-rank { color: var(--text-dim); width: 24px; }
+.ip-addr { color: var(--glow); font-variant-numeric: tabular-nums; }
+.ip-country { color: var(--text-dim); font-size: 10px; padding-left: 0.5rem; }
+.ip-bar-cell { width: 40%; padding-left: 1rem; }
+.ip-bar-bg { height: 3px; background: var(--rim); border-radius: 2px; }
+.ip-bar-fill { height: 3px; background: var(--glow); border-radius: 2px; transition: width 0.6s ease; }
+.ip-count { color: var(--text-mid); text-align: right; width: 48px; }
+
+/* ── Credential heatmap ── */
+.cred-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.5rem;
 }
-.cmd-line { color: var(--text); }
-.cmd-line .cmd-prompt { color: var(--text-dim); margin-right: 6px; }
-.cmd-line .cmd-comment { color: var(--text-dim); font-style: italic; }
-
-.attack-list { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.75rem 0; }
-.attack-badge {
-  display: inline-flex; align-items: center; gap: 5px;
-  font-size: 10px; padding: 3px 8px; border-radius: 2px;
-  border: 1px solid rgba(167,139,250,0.25); background: rgba(167,139,250,0.06); color: #a78bfa;
-}
-.attack-badge-tactic { font-size: 9px; opacity: 0.7; }
-
-.defender-note {
-  background: var(--bio-dim); border: 1px solid rgba(77,232,176,0.2);
-  border-left: 2px solid var(--bio);
-  padding: 1rem 1.25rem; margin: 1.5rem 0;
-  font-size: 12px; color: var(--text); line-height: 1.7;
-}
-.defender-note-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--bio); margin-bottom: 0.5rem; }
-
-/* ── Empty state ── */
-.empty-state {
-  grid-column: 1 / -1;
-  padding: 5rem 2rem;
-  text-align: center;
+.cred-cell {
   border: 1px solid var(--rim);
-  background: var(--surface);
+  padding: 0.5rem 0.75rem;
+  position: relative; overflow: hidden;
 }
-.empty-depth {
-  font-family: var(--serif); font-size: 1.5rem; color: var(--text-dim);
-  font-style: italic; margin-bottom: 0.75rem; line-height: 1.4;
+.cred-cell::before {
+  content: '';
+  position: absolute; inset: 0;
+  opacity: var(--heat, 0);
+  background: var(--amber);
+  pointer-events: none;
 }
-.empty-sub { font-size: 11px; color: var(--text-dim); }
-.depth-indicator {
-  font-size: 10px; color: var(--text-dim); letter-spacing: 0.1em;
-  margin-bottom: 1.5rem; display: block;
+.cred-user { font-size: 10px; color: var(--text-bright); position: relative; }
+.cred-pass { font-size: 9px; color: var(--text-dim); position: relative; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cred-count { font-size: 9px; color: var(--amber); position: relative; margin-top: 2px; }
+
+/* ── Command frequency ── */
+.cmd-freq-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.cmd-freq-item { display: flex; align-items: center; gap: 0.75rem; }
+.cmd-freq-cmd { font-size: 11px; color: var(--glow); width: 220px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cmd-freq-bar-bg { flex: 1; height: 4px; background: var(--rim); border-radius: 2px; }
+.cmd-freq-bar { height: 4px; background: linear-gradient(90deg, var(--bio), rgba(77,232,176,0.4)); border-radius: 2px; transition: width 0.6s ease; }
+.cmd-freq-n { font-size: 10px; color: var(--text-dim); width: 32px; text-align: right; }
+
+/* ── Bot classifier key ── */
+.classifier-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
 }
+.classifier-signal {
+  background: var(--glass); border: 1px solid var(--rim); padding: 0.875rem 1rem;
+}
+.cs-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-dim); margin-bottom: 0.35rem; }
+.cs-value { font-size: 12px; color: var(--text); line-height: 1.5; }
+.cs-value code { font-family: var(--mono); font-size: 10px; color: var(--glow); background: var(--glow-faint); padding: 1px 4px; }
+.cs-weight {
+  display: inline-block; margin-top: 4px;
+  font-size: 9px; padding: 1px 6px; border-radius: 2px;
+}
+.cs-weight.high   { background: rgba(224,92,92,0.1);   color: var(--red);   border: 1px solid rgba(224,92,92,0.2); }
+.cs-weight.medium { background: var(--amber-dim);       color: var(--amber); border: 1px solid rgba(240,169,74,0.2); }
+.cs-weight.low    { background: var(--glow-faint);      color: var(--glow);  border: 1px solid rgba(122,180,220,0.2); }
+
+/* ── Loading / empty ── */
+.panel-loading { padding: 3rem; text-align: center; color: var(--text-dim); font-size: 11px; }
 
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 4px; }
@@ -399,14 +307,13 @@ nav {
 ::-webkit-scrollbar-thumb:hover { background: var(--rim-hover); }
 
 @media (max-width: 900px) {
-  .post-card.featured { flex-direction: column; }
-  .post-card.featured .card-aside { width: auto; border-left: none; border-top: 1px solid var(--rim); }
-  .findings-grid { grid-template-columns: 1fr; }
-  .signal-header { grid-template-columns: 1fr; }
-  .signal-header-right { text-align: left; }
-  .post-modal { margin: 0; }
-  .modal-body { padding: 1.5rem; }
-  .modal-header { padding: 1.5rem; }
+  .dash-grid { grid-template-columns: 1fr; }
+  .stat-row  { grid-template-columns: 1fr 1fr; }
+  .page-header { grid-template-columns: 1fr; }
+  .page-header-right { text-align: left; }
+  .donut-wrap { flex-direction: column; align-items: flex-start; }
+  .classifier-grid { grid-template-columns: 1fr; }
+  .cmd-freq-cmd { width: 140px; }
 }
 </style>
 </head>
@@ -423,6 +330,7 @@ nav {
       <li><a href="/feed.html">feed</a></li>
       <li><a href="/archive.html">event archive</a></li>
       <li><a href="/signal.html" class="active">signal</a></li>
+      <li><a href="/pings.html">pings from the depths</a></li>
       <li><a href="https://github.com/Kasuskei/bathysphere.tech" target="_blank">github</a></li>
     </ul>
     <div class="live-badge">
@@ -435,56 +343,165 @@ nav {
 <div class="page">
 
   <!-- Page header -->
-  <div class="signal-header">
-    <div class="signal-header-left">
-      <div class="signal-label">// signal</div>
-      <div class="signal-title">What rises toward<br>the <em>light.</em></div>
-      <div class="signal-desc">
-        Automated analysis of notable attacker behavior observed by the bathysphere honeynet.
-        Generated when something unusual surfaces — novel command sequences, coordinated campaigns,
-        or tactics worth documenting.
+  <div class="page-header">
+    <div>
+      <div class="page-label">// signal</div>
+      <div class="page-title">What the sensor<br><em>sees.</em></div>
+      <div class="page-desc">
+        Live telemetry from the bathysphere honeynet. Attack volume, source distribution,
+        credential patterns, command frequency, and bot vs. human traffic classification.
       </div>
     </div>
-    <div class="signal-header-right" id="header-stats">
-      <div class="signal-stat-label">transmissions</div>
-      <div class="signal-stat-value" id="post-count">—</div>
-      <div class="signal-stat-sub">findings logged</div>
+    <div class="page-header-right">
+      <div class="header-stat-label">data window</div>
+      <div class="header-stat-value" id="hdr-window">7d</div>
+      <div class="header-stat-sub" id="hdr-updated">loading&hellip;</div>
     </div>
   </div>
 
-  <!-- Tag filter -->
-  <div class="tag-bar">
-    <span class="tag-bar-label">filter</span>
-    <button class="tag-pill active" data-tag="">all</button>
-    <button class="tag-pill tag-campaign"    data-tag="campaign">campaign</button>
-    <button class="tag-pill tag-commands"    data-tag="commands">commands</button>
-    <button class="tag-pill tag-credentials" data-tag="credentials">credentials</button>
-    <button class="tag-pill tag-iot"         data-tag="iot">iot</button>
-    <button class="tag-pill tag-lateral"     data-tag="lateral">lateral movement</button>
+  <!-- Time range -->
+  <div class="time-bar">
+    <span class="time-bar-label">window</span>
+    <button class="time-pill" data-range="1">24h</button>
+    <button class="time-pill active" data-range="7">7d</button>
+    <button class="time-pill" data-range="30">30d</button>
+    <button class="time-pill" data-range="0">all</button>
   </div>
 
-  <!-- Post grid -->
-  <div class="post-grid" id="post-grid">
-    <div class="state-msg">Listening for signals…</div>
-  </div>
+  <!-- Dashboard -->
+  <div class="dash-grid">
 
-</div>
-
-<!-- Post detail overlay -->
-<div class="post-overlay" id="post-overlay">
-  <div class="post-modal" id="post-modal">
-    <button class="modal-close" id="modal-close">✕ close</button>
-    <div class="modal-header">
-      <div class="modal-meta">
-        <span class="modal-date" id="modal-date"></span>
-        <span class="card-dot"></span>
-        <span class="modal-sensor" id="modal-sensor"></span>
-        <span class="card-dot"></span>
-        <div class="modal-tags" id="modal-tags"></div>
+    <!-- Summary stats -->
+    <div class="stat-row">
+      <div class="stat-card s-sessions">
+        <div class="stat-label">total sessions</div>
+        <div class="stat-value" id="stat-sessions">&mdash;</div>
+        <div class="stat-sub" id="stat-sessions-sub">loading</div>
       </div>
-      <div class="modal-title" id="modal-title"></div>
+      <div class="stat-card s-events">
+        <div class="stat-label">total events</div>
+        <div class="stat-value" id="stat-events">&mdash;</div>
+        <div class="stat-sub" id="stat-events-sub">loading</div>
+      </div>
+      <div class="stat-card s-bots">
+        <div class="stat-label">bot sessions</div>
+        <div class="stat-value" id="stat-bots">&mdash;</div>
+        <div class="stat-sub" id="stat-bots-sub">loading</div>
+      </div>
+      <div class="stat-card s-humans">
+        <div class="stat-label">human sessions</div>
+        <div class="stat-value" id="stat-humans">&mdash;</div>
+        <div class="stat-sub" id="stat-humans-sub">loading</div>
+      </div>
     </div>
-    <div class="modal-body" id="modal-body"></div>
+
+    <!-- Attack volume over time -->
+    <div class="panel full">
+      <div class="panel-header">
+        <span class="panel-title">attack volume over time</span>
+        <span class="panel-meta" id="vol-meta">&mdash;</span>
+      </div>
+      <div class="panel-body">
+        <div class="chart-area" id="vol-chart">
+          <div class="panel-loading">loading&hellip;</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bot vs Human -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">bot vs human traffic</span>
+        <span class="panel-meta" id="bvh-meta">&mdash;</span>
+      </div>
+      <div class="panel-body">
+        <div class="donut-wrap" id="bvh-wrap">
+          <div class="panel-loading">loading&hellip;</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top source IPs -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">top source IPs</span>
+        <span class="panel-meta">by session count</span>
+      </div>
+      <div class="panel-body">
+        <table class="ip-table" id="ip-table">
+          <tr><td colspan="5"><div class="panel-loading">loading&hellip;</div></td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Command frequency -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">command frequency</span>
+        <span class="panel-meta">top observed commands</span>
+      </div>
+      <div class="panel-body">
+        <div class="cmd-freq-list" id="cmd-freq">
+          <div class="panel-loading">loading&hellip;</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Credential heatmap -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">credential heatmap</span>
+        <span class="panel-meta">most attempted pairs</span>
+      </div>
+      <div class="panel-body">
+        <div class="cred-grid" id="cred-grid">
+          <div class="panel-loading">loading&hellip;</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bot classifier key -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">bot classification signals</span>
+        <span class="panel-meta">heuristics in use</span>
+      </div>
+      <div class="panel-body">
+        <div class="classifier-grid">
+          <div class="classifier-signal">
+            <div class="cs-label">SSH client string</div>
+            <div class="cs-value">Non-OpenSSH clients (<code>libssh</code>, <code>paramiko</code>, <code>Go</code>) flagged as bot</div>
+            <span class="cs-weight high">high weight</span>
+          </div>
+          <div class="classifier-signal">
+            <div class="cs-label">Inter-command timing</div>
+            <div class="cs-value">Sub-100ms cadence between commands indicates scripted execution</div>
+            <span class="cs-weight high">high weight</span>
+          </div>
+          <div class="classifier-signal">
+            <div class="cs-label">Command sequence</div>
+            <div class="cs-value">Exact match to known playbooks (hardware survey, mdrfckr key, etc.)</div>
+            <span class="cs-weight medium">medium weight</span>
+          </div>
+          <div class="classifier-signal">
+            <div class="cs-label">Session duration</div>
+            <div class="cs-value">Very short (&lt;5s) or very uniform durations suggest automation</div>
+            <span class="cs-weight low">low weight</span>
+          </div>
+          <div class="classifier-signal">
+            <div class="cs-label">HASSH fingerprint</div>
+            <div class="cs-value">Known bot HASSH hashes matched against community database</div>
+            <span class="cs-weight medium">medium weight</span>
+          </div>
+          <div class="classifier-signal">
+            <div class="cs-label">Recon pattern</div>
+            <div class="cs-value">Structured hardware profiling immediately post-auth</div>
+            <span class="cs-weight medium">medium weight</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -492,122 +509,80 @@ nav {
 // ─────────────────────────────────────────────────────────────────────────────
 // Config
 // ─────────────────────────────────────────────────────────────────────────────
-const SIGNAL_URL = 'https://bathysphere-read.kasuskei.workers.dev/signal';
-// Falls back to mock data when worker endpoint isn't live yet
-const USE_MOCK = false; // flip to false once the worker endpoint is deployed
+const SIGNAL_API = 'https://bathysphere-read.kasuskei.workers.dev/signal-stats';
+const USE_MOCK   = true; // flip to false once /signal-stats endpoint is live
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Mock posts — replace with real API data once worker is live
-// Generated in the structure that the automation pipeline will produce
+// Mock data — replace with real API response once endpoint is built
+// Structure matches what the Worker should return
 // ─────────────────────────────────────────────────────────────────────────────
-const MOCK_POSTS = [
-  {
-    id: 'sig-001',
-    date: '2026-04-03',
-    sensor: 'honeypot-pi',
-    tags: ['commands', 'iot'],
-    title: 'MikroTik targeting inside a Linux session',
-    lede: 'Something came in on root/admin and immediately asked the shell a question meant for a router. What followed was a methodical multi-platform recon script — automated, unhurried, and carrying a specific malware hash to check for.',
-    findings: {
-      source_ip: '91.128.149.x',
-      session_id: 'a3f9c2d1',
-      duration: '38s',
-      events: '14 commands',
-    },
-    body: [
-      { type: 'text', content: 'The session authenticated with <strong>root/admin</strong> at 09:14 UTC and immediately executed <code>/ip cloud print</code> — a MikroTik RouterOS command with no meaning on a Linux host. This is the first indicator of a multi-platform script that doesn\'t check its environment before running.' },
-      { type: 'section', title: 'Command sequence' },
-      { type: 'commands', lines: [
-        { cmd: '/ip cloud print', comment: '// MikroTik probe — no-op on Linux' },
-        { cmd: 'ifconfig', comment: '' },
-        { cmd: 'uname -a', comment: '' },
-        { cmd: 'cat /proc/cpuinfo', comment: '// architecture fingerprint' },
-        { cmd: 'ps | grep \'[Mm]iner\'', comment: '// check for existing miners' },
-        { cmd: 'ls -la ~/.local/share/TelegramDesktop/tdata', comment: '// Telegram session theft' },
-        { cmd: 'locate D877F783D5D3EF8C', comment: '// known malware hash lookup' },
-        { cmd: 'echo Hi | cat -n', comment: '// connectivity check' },
-      ]},
-      { type: 'text', content: 'The hash lookup is the most distinctive behavior. The actor is checking whether a specific malware artifact is already present — consistent with an infection-exclusivity pattern where the script avoids re-infecting hosts already running a competing payload.' },
-      { type: 'attacks', attacks: [
-        { id: 'T1595', name: 'Active Scanning', tactic: 'Reconnaissance' },
-        { id: 'T1078', name: 'Valid Accounts', tactic: 'Initial Access' },
-        { id: 'T1057', name: 'Process Discovery', tactic: 'Discovery' },
-        { id: 'T1083', name: 'File and Directory Discovery', tactic: 'Discovery' },
-        { id: 'T1539', name: 'Steal Web Session Cookie', tactic: 'Credential Access' },
-      ]},
-      { type: 'defender', content: 'Presence of <code>/ip cloud print</code> in shell logs on a Linux host is a reliable indicator of this specific script family. Alert on it.' },
-    ]
+const MOCK_DATA = {
+  window_days: 7,
+  updated_at: new Date().toISOString(),
+  summary: {
+    sessions: 1847,
+    events: 12340,
+    bot_sessions: 1791,
+    human_sessions: 56,
   },
-  {
-    id: 'sig-002',
-    date: '2026-04-03',
-    sensor: 'honeypot-pi',
-    tags: ['credentials', 'iot'],
-    title: 'Solana validator credential sequence',
-    lede: 'One actor ran the same username sequence across three sessions in 40 minutes. The pattern is too specific to be coincidence — someone built a scanner tuned for crypto infrastructure.',
-    findings: {
-      source_ip: '92.118.39.x',
-      session_id: 'b7e1a4f2',
-      duration: '3 sessions',
-      events: 'credential sweep',
-    },
-    body: [
-      { type: 'text', content: 'Across three separate sessions, this actor attempted a fixed credential sequence targeting cryptocurrency-specific usernames. The sequence is consistent across sessions, indicating a purpose-built scanner rather than a generic wordlist.' },
-      { type: 'section', title: 'Credential sequence (repeated across sessions)' },
-      { type: 'commands', lines: [
-        { cmd: 'solana / solana', comment: '' },
-        { cmd: 'sol / sol', comment: '' },
-        { cmd: 'sol / 123', comment: '' },
-        { cmd: 'sol / 1234', comment: '' },
-        { cmd: 'ubuntu / ubuntu', comment: '// fallback to generic' },
-        { cmd: 'solv / solv', comment: '// Solv Protocol variant' },
-      ]},
-      { type: 'text', content: 'The inclusion of <strong>solv/solv</strong> is notable — Solv Protocol is a Bitcoin yield platform. This scanner is tracking crypto project naming conventions, not just generic infrastructure defaults.' },
-      { type: 'attacks', attacks: [
-        { id: 'T1110', name: 'Brute Force', tactic: 'Credential Access' },
-        { id: 'T1078', name: 'Valid Accounts', tactic: 'Initial Access' },
-      ]},
-      { type: 'defender', content: 'If you operate Solana validator infrastructure, the username <code>solana</code> on any internet-facing SSH service is a high-value target. Move to key-only auth and audit for these usernames.' },
-    ]
+  volume: [
+    // { date: 'YYYY-MM-DD', sessions: N, events: N }
+    { date: '2026-04-08', sessions: 203, events: 1420 },
+    { date: '2026-04-09', sessions: 187, events: 1310 },
+    { date: '2026-04-10', sessions: 312, events: 2180 },
+    { date: '2026-04-11', sessions: 278, events: 1950 },
+    { date: '2026-04-12', sessions: 341, events: 2390 },
+    { date: '2026-04-13', sessions: 256, events: 1790 },
+    { date: '2026-04-14', sessions: 270, events: 1300 },
+  ],
+  bot_vs_human: {
+    bot: 1791,
+    human: 56,
+    bot_signals: { libssh: 820, paramiko: 490, golang: 310, other_bot: 171 },
   },
-  {
-    id: 'sig-003',
-    date: '2026-04-03',
-    sensor: 'honeypot-pi',
-    tags: ['lateral', 'campaign'],
-    title: 'SSH worm using compromised host as launchpad',
-    lede: 'Day one. Forty-five minutes after the port forward went live, something authenticated and immediately tried to spread. The payload carried a hardcoded list of 50+ target IPs.',
-    findings: {
-      source_ip: '45.183.70.x',
-      session_id: 'c2d8b5e3',
-      duration: '12s',
-      events: '3 commands',
-    },
-    body: [
-      { type: 'text', content: 'The session authenticated with <strong>root/ubuntu</strong> and within three commands had launched a lateral movement payload. The binary was named <code>sshd</code> — a common masquerading technique to blend with legitimate process names in a <code>ps</code> listing.' },
-      { type: 'section', title: 'Execution sequence' },
-      { type: 'commands', lines: [
-        { cmd: 'chmod +x /tmp/.x/sshd', comment: '// make payload executable' },
-        { cmd: 'nohup /tmp/.x/sshd <ip_list>', comment: '// launch with 50+ hardcoded targets' },
-        { cmd: 'exit', comment: '// disconnect immediately' },
-      ]},
-      { type: 'text', content: 'The use of <code>nohup</code> ensures the payload survives session termination. The IP list embedded in the binary suggests a pre-compiled target set rather than live-generated scanning — this host was specifically selected as a launchpad, not just an opportunistic compromise.' },
-      { type: 'attacks', attacks: [
-        { id: 'T1021.004', name: 'Remote Services: SSH', tactic: 'Lateral Movement' },
-        { id: 'T1036.004', name: 'Masquerading: Match Legitimate Name', tactic: 'Defense Evasion' },
-        { id: 'T1059.004', name: 'Command and Scripting Interpreter', tactic: 'Execution' },
-      ]},
-      { type: 'defender', content: 'Any process named <code>sshd</code> running from <code>/tmp</code> or a non-standard path is a strong indicator of compromise. Alert on process-path anomalies, not just process names.' },
-    ]
-  },
-];
+  top_ips: [
+    { ip: '14.103.118.x',  country: 'MY', sessions: 47 },
+    { ip: '91.128.149.x',  country: 'RO', sessions: 38 },
+    { ip: '185.220.101.x', country: 'DE', sessions: 31 },
+    { ip: '45.183.70.x',   country: 'BR', sessions: 28 },
+    { ip: '194.165.16.x',  country: 'LT', sessions: 24 },
+    { ip: '92.118.39.x',   country: 'NL', sessions: 19 },
+    { ip: '62.204.41.x',   country: 'RU', sessions: 17 },
+    { ip: '138.197.x.x',   country: 'US', sessions: 14 },
+  ],
+  top_commands: [
+    { cmd: 'uname -a',                             count: 892 },
+    { cmd: 'cat /proc/cpuinfo | grep name | wc -l',count: 743 },
+    { cmd: 'whoami',                               count: 698 },
+    { cmd: 'free -m | grep Mem | awk ...',         count: 621 },
+    { cmd: 'echo "root:..." | chpasswd',           count: 580 },
+    { cmd: 'cd ~ && rm -rf .ssh && mkdir .ssh',    count: 541 },
+    { cmd: 'crontab -l',                           count: 498 },
+    { cmd: 'w',                                    count: 412 },
+    { cmd: 'uname -m',                             count: 387 },
+    { cmd: 'df -h | head -n 2 | awk ...',          count: 341 },
+  ],
+  top_credentials: [
+    { user: 'root',   pass: '123456',     count: 312 },
+    { user: 'root',   pass: 'admin',      count: 287 },
+    { user: 'admin',  pass: 'admin',      count: 241 },
+    { user: 'root',   pass: 'password',   count: 198 },
+    { user: 'root',   pass: 'test123!@#', count: 156 },
+    { user: 'ubuntu', pass: 'ubuntu',     count: 143 },
+    { user: 'root',   pass: '',           count: 121 },
+    { user: 'pi',     pass: 'raspberry',  count: 98 },
+    { user: 'root',   pass: '1234',       count: 87 },
+    { user: 'user',   pass: 'user',       count: 76 },
+    { user: 'root',   pass: 'toor',       count: 71 },
+    { user: 'guest',  pass: 'guest',      count: 64 },
+  ],
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // State
 // ─────────────────────────────────────────────────────────────────────────────
-let allPosts    = [];
-let activeTag   = '';
-let activePost  = null;
+let currentRange = 7;
+let data = null;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -615,229 +590,218 @@ let activePost  = null;
 function escHtml(s) {
   return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
-
+function fmt(n) {
+  return Number(n).toLocaleString();
+}
 function fmtDate(d) {
-  if (!d) return '—';
-  return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  const dt = new Date(d + 'T00:00:00');
+  return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
-
-function tagHtml(tag, size = 'card') {
-  return `<span class="${size === 'card' ? 'card-tag' : 'card-tag'} ${escHtml(tag)}">${escHtml(tag)}</span>`;
-}
-
-function attackBadge(a) {
-  return `<div class="attack-badge"><span>${escHtml(a.id)}</span><span>${escHtml(a.name)}</span><span class="attack-badge-tactic">${escHtml(a.tactic)}</span></div>`;
+function pct(a, b) {
+  return b === 0 ? 0 : Math.round((a / b) * 100);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Render post body
+// Render summary stats
 // ─────────────────────────────────────────────────────────────────────────────
-function renderBody(body) {
-  return body.map(block => {
-    switch (block.type) {
-      case 'text':
-        return `<p class="post-body-text">${block.content}</p>`;
-      case 'section':
-        return `<div class="post-section-title">${escHtml(block.title)}</div>`;
-      case 'commands':
-        return `<div class="cmd-sequence">${block.lines.map(l =>
-          `<div class="cmd-line"><span class="cmd-prompt">$</span>${escHtml(l.cmd)}${l.comment ? `<span class="cmd-comment"> ${escHtml(l.comment)}</span>` : ''}</div>`
-        ).join('')}</div>`;
-      case 'attacks':
-        return `<div class="attack-list">${block.attacks.map(attackBadge).join('')}</div>`;
-      case 'defender':
-        return `<div class="defender-note"><div class="defender-note-label">defender takeaway</div>${block.content}</div>`;
-      default:
-        return '';
-    }
+function renderStats(d) {
+  const s = d.summary;
+  document.getElementById('stat-sessions').textContent    = fmt(s.sessions);
+  document.getElementById('stat-sessions-sub').textContent = `in ${d.window_days}d window`;
+  document.getElementById('stat-events').textContent      = fmt(s.events);
+  document.getElementById('stat-events-sub').textContent  = `across all sessions`;
+  document.getElementById('stat-bots').textContent        = fmt(s.bot_sessions);
+  document.getElementById('stat-bots-sub').textContent    = `${pct(s.bot_sessions, s.sessions)}% of traffic`;
+  document.getElementById('stat-humans').textContent      = fmt(s.human_sessions);
+  document.getElementById('stat-humans-sub').textContent  = `${pct(s.human_sessions, s.sessions)}% of traffic`;
+  document.getElementById('hdr-window').textContent       = `${d.window_days}d`;
+  const upd = new Date(d.updated_at);
+  document.getElementById('hdr-updated').textContent      = `updated ${upd.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Render volume chart
+// ─────────────────────────────────────────────────────────────────────────────
+function renderVolume(d) {
+  const chart = document.getElementById('vol-chart');
+  const vol   = d.volume;
+  if (!vol || vol.length === 0) { chart.innerHTML = '<div class="panel-loading">no data</div>'; return; }
+
+  const maxSessions = Math.max(...vol.map(v => v.sessions));
+  document.getElementById('vol-meta').textContent = `${fmt(vol.reduce((a,v) => a + v.sessions, 0))} sessions`;
+
+  chart.innerHTML = vol.map(v => {
+    const h = Math.max(4, Math.round((v.sessions / maxSessions) * 108));
+    return `
+      <div class="chart-bar-wrap">
+        <div class="chart-bar" style="height:${h}px">
+          <div class="chart-tooltip">${fmtDate(v.date)}<br>${fmt(v.sessions)} sessions<br>${fmt(v.events)} events</div>
+        </div>
+        <div class="chart-bar-label">${fmtDate(v.date).replace(/\s/g,'&nbsp;')}</div>
+      </div>`;
   }).join('');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Render card
+// Render bot vs human donut
 // ─────────────────────────────────────────────────────────────────────────────
-function makeCard(post, featured = false) {
-  const card = document.createElement('div');
-  card.className = `post-card${featured ? ' featured' : ''}`;
-  card.dataset.id = post.id;
+function renderBvH(d) {
+  const wrap  = document.getElementById('bvh-wrap');
+  const bvh   = d.bot_vs_human;
+  const total = bvh.bot + bvh.human;
+  const botPct   = pct(bvh.bot,   total);
+  const humanPct = pct(bvh.human, total);
 
-  const tagsHtml = (post.tags ?? []).map(t => tagHtml(t)).join('');
+  // SVG donut
+  const R = 44, r = 28, cx = 52, cy = 52;
+  const circumference = 2 * Math.PI * R;
+  const botArc   = (bvh.bot   / total) * circumference;
+  const humanArc = (bvh.human / total) * circumference;
 
-  const bodyHtml = `
-    <div class="card-top">
-      <span class="card-date">${fmtDate(post.date)}</span>
-      <span class="card-dot"></span>
-      <span class="card-sensor">${escHtml(post.sensor)}</span>
-    </div>
-    <div class="card-body">
-      <div class="card-title">${escHtml(post.title)}</div>
-      <div class="card-lede">${escHtml(post.lede)}</div>
-      <div class="card-tags">${tagsHtml}</div>
-    </div>
-    <div class="card-footer">
-      <span class="card-read-more">read findings</span>
-      <span class="card-read-arrow">→</span>
-    </div>
-  `;
+  document.getElementById('bvh-meta').textContent = `${fmt(total)} sessions classified`;
 
-  if (featured) {
-    // build the aside from first finding block
-    const f = post.findings ?? {};
-    const attacks = (post.body ?? []).find(b => b.type === 'attacks');
-    const cmds    = (post.body ?? []).find(b => b.type === 'commands');
-
-    card.innerHTML = `
-      <div class="card-body-wrap" style="flex:1;display:flex;flex-direction:column;">${bodyHtml}</div>
-      <div class="card-aside">
-        <div class="aside-block">
-          <div class="aside-block-label">source</div>
-          <div style="font-size:13px;color:var(--glow);font-variant-numeric:tabular-nums;">${escHtml(f.source_ip ?? '—')}</div>
-        </div>
-        <div class="aside-block">
-          <div class="aside-block-label">session</div>
-          <div style="font-size:13px;color:var(--text-mid);">${escHtml(f.duration ?? '—')}</div>
-          <div class="aside-stat-sub">${escHtml(f.events ?? '')}</div>
-        </div>
-        ${attacks ? `<div class="aside-block">
-          <div class="aside-block-label">techniques</div>
-          <div class="aside-attacks">${attacks.attacks.slice(0,3).map(a => `<span class="aside-attack">${escHtml(a.id)}</span>`).join('')}</div>
-        </div>` : ''}
-        ${cmds ? `<div class="aside-block">
-          <div class="aside-block-label">commands</div>
-          <div class="aside-cmds">${cmds.lines.slice(0,4).map(l => `<div class="aside-cmd">${escHtml(l.cmd.slice(0,28))}${l.cmd.length > 28 ? '…' : ''}</div>`).join('')}</div>
-        </div>` : ''}
+  wrap.innerHTML = `
+    <svg class="donut-svg" width="104" height="104" viewBox="0 0 104 104">
+      <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="var(--rim)" stroke-width="${R - r}" />
+      <circle cx="${cx}" cy="${cy}" r="${R}" fill="none"
+        stroke="var(--amber)" stroke-width="${R - r}"
+        stroke-dasharray="${botArc} ${circumference - botArc}"
+        stroke-dashoffset="${circumference * 0.25}"
+        transform="rotate(-90 ${cx} ${cy})" />
+      <circle cx="${cx}" cy="${cy}" r="${R}" fill="none"
+        stroke="var(--red)" stroke-width="${R - r}"
+        stroke-dasharray="${humanArc} ${circumference - humanArc}"
+        stroke-dashoffset="${circumference * 0.25 - botArc}"
+        transform="rotate(-90 ${cx} ${cy})" />
+      <text x="${cx}" y="${cy - 4}" text-anchor="middle" font-family="var(--mono)" font-size="14" fill="var(--text-bright)">${botPct}%</text>
+      <text x="${cx}" y="${cy + 12}" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--text-dim)">bots</text>
+    </svg>
+    <div class="donut-legend">
+      <div class="legend-item">
+        <div class="legend-dot" style="background:var(--amber)"></div>
+        <span class="legend-label">automated / bot</span>
+        <span class="legend-value">${fmt(bvh.bot)} <span class="legend-pct">${botPct}%</span></span>
       </div>
-    `;
-  } else {
-    card.innerHTML = bodyHtml;
-  }
-
-  card.addEventListener('click', () => openPost(post));
-  return card;
+      <div class="legend-item">
+        <div class="legend-dot" style="background:var(--red)"></div>
+        <span class="legend-label">human / interactive</span>
+        <span class="legend-value">${fmt(bvh.human)} <span class="legend-pct">${humanPct}%</span></span>
+      </div>
+      ${bvh.bot_signals ? `
+      <div style="margin-top:0.5rem;padding-top:0.75rem;border-top:1px solid var(--rim)">
+        <div style="font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-dim);margin-bottom:0.5rem">bot client strings</div>
+        ${Object.entries(bvh.bot_signals).map(([k,v]) =>
+          `<div style="display:flex;justify-content:space-between;font-size:10px;padding:2px 0;color:var(--text-mid)">
+            <span>${escHtml(k)}</span><span style="color:var(--amber)">${fmt(v)}</span>
+          </div>`
+        ).join('')}
+      </div>` : ''}
+    </div>`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Open / close post overlay
+// Render top IPs
 // ─────────────────────────────────────────────────────────────────────────────
-function openPost(post) {
-  activePost = post;
-
-  document.getElementById('modal-date').textContent   = fmtDate(post.date);
-  document.getElementById('modal-sensor').textContent = post.sensor;
-  document.getElementById('modal-title').innerHTML    = escHtml(post.title);
-  document.getElementById('modal-tags').innerHTML     = (post.tags ?? []).map(t => tagHtml(t)).join('');
-
-  const f = post.findings ?? {};
-  document.getElementById('modal-body').innerHTML = `
-    <p class="post-lede">${escHtml(post.lede)}</p>
-
-    <div class="findings-header">findings</div>
-    <div class="findings-grid">
-      <div class="finding-block">
-        <div class="finding-block-label">Source IP</div>
-        <div class="finding-block-value" style="color:var(--glow)">${escHtml(f.source_ip ?? '—')}</div>
-      </div>
-      <div class="finding-block">
-        <div class="finding-block-label">Session</div>
-        <div class="finding-block-value">${escHtml(f.session_id ?? '—')}</div>
-      </div>
-      <div class="finding-block">
-        <div class="finding-block-label">Duration</div>
-        <div class="finding-block-value">${escHtml(f.duration ?? '—')}</div>
-      </div>
-      <div class="finding-block">
-        <div class="finding-block-label">Activity</div>
-        <div class="finding-block-value">${escHtml(f.events ?? '—')}</div>
-      </div>
-    </div>
-
-    ${renderBody(post.body ?? [])}
-  `;
-
-  document.getElementById('post-overlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
+function renderIPs(d) {
+  const table = document.getElementById('ip-table');
+  const ips   = d.top_ips;
+  if (!ips || ips.length === 0) { table.innerHTML = '<tr><td><div class="panel-loading">no data</div></td></tr>'; return; }
+  const max = ips[0].sessions;
+  table.innerHTML = ips.map((ip, i) => `
+    <tr>
+      <td class="ip-rank">${i + 1}</td>
+      <td class="ip-addr">${escHtml(ip.ip)}</td>
+      <td class="ip-country">${escHtml(ip.country)}</td>
+      <td class="ip-bar-cell">
+        <div class="ip-bar-bg"><div class="ip-bar-fill" style="width:${pct(ip.sessions, max)}%"></div></div>
+      </td>
+      <td class="ip-count">${fmt(ip.sessions)}</td>
+    </tr>`).join('');
 }
 
-function closePost() {
-  document.getElementById('post-overlay').classList.remove('open');
-  document.body.style.overflow = '';
-  activePost = null;
+// ─────────────────────────────────────────────────────────────────────────────
+// Render command frequency
+// ─────────────────────────────────────────────────────────────────────────────
+function renderCmds(d) {
+  const el   = document.getElementById('cmd-freq');
+  const cmds = d.top_commands;
+  if (!cmds || cmds.length === 0) { el.innerHTML = '<div class="panel-loading">no data</div>'; return; }
+  const max = cmds[0].count;
+  el.innerHTML = cmds.map(c => `
+    <div class="cmd-freq-item">
+      <div class="cmd-freq-cmd" title="${escHtml(c.cmd)}">${escHtml(c.cmd)}</div>
+      <div class="cmd-freq-bar-bg"><div class="cmd-freq-bar" style="width:${pct(c.count, max)}%"></div></div>
+      <div class="cmd-freq-n">${fmt(c.count)}</div>
+    </div>`).join('');
 }
 
-document.getElementById('modal-close').addEventListener('click', closePost);
-document.getElementById('post-overlay').addEventListener('click', e => {
-  if (e.target === document.getElementById('post-overlay')) closePost();
-});
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closePost(); });
-
 // ─────────────────────────────────────────────────────────────────────────────
-// Render grid
+// Render credential heatmap
 // ─────────────────────────────────────────────────────────────────────────────
-function renderGrid() {
-  const grid = document.getElementById('post-grid');
-  grid.innerHTML = '';
-
-  const filtered = activeTag
-    ? allPosts.filter(p => (p.tags ?? []).includes(activeTag))
-    : allPosts;
-
-  document.getElementById('post-count').textContent = allPosts.length;
-
-  if (filtered.length === 0) {
-    grid.innerHTML = `
-      <div class="empty-state">
-        <span class="depth-indicator">depth 3,800m // listening</span>
-        <div class="empty-depth">Nothing has surfaced yet.</div>
-        <div class="empty-sub">The sensor is running. Something will come up eventually.</div>
+function renderCreds(d) {
+  const el    = document.getElementById('cred-grid');
+  const creds = d.top_credentials;
+  if (!creds || creds.length === 0) { el.innerHTML = '<div class="panel-loading">no data</div>'; return; }
+  const max = creds[0].count;
+  el.innerHTML = creds.map(c => {
+    const heat = (c.count / max) * 0.18;
+    return `
+      <div class="cred-cell" style="--heat:${heat}">
+        <div class="cred-user">${escHtml(c.user)}</div>
+        <div class="cred-pass">${escHtml(c.pass || '(empty)')}</div>
+        <div class="cred-count">${fmt(c.count)}x</div>
       </div>`;
-    return;
-  }
-
-  filtered.forEach((post, i) => {
-    grid.appendChild(makeCard(post, i === 0 && !activeTag));
-  });
+  }).join('');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Tag filter
+// Render all panels
 // ─────────────────────────────────────────────────────────────────────────────
-document.querySelectorAll('.tag-pill').forEach(btn => {
+function renderAll(d) {
+  renderStats(d);
+  renderVolume(d);
+  renderBvH(d);
+  renderIPs(d);
+  renderCmds(d);
+  renderCreds(d);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Time range picker
+// ─────────────────────────────────────────────────────────────────────────────
+document.querySelectorAll('.time-pill').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.tag-pill').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.time-pill').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    activeTag = btn.dataset.tag;
-    renderGrid();
+    currentRange = parseInt(btn.dataset.range);
+    loadData(currentRange);
   });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Data fetch
+// Data load
 // ─────────────────────────────────────────────────────────────────────────────
-async function loadPosts() {
+async function loadData(days) {
   if (USE_MOCK) {
-    allPosts = MOCK_POSTS;
-    renderGrid();
+    data = { ...MOCK_DATA, window_days: days === 0 ? 'all' : days };
+    renderAll(data);
     return;
   }
-
   try {
-    const resp = await fetch(SIGNAL_URL);
+    const url = days === 0 ? SIGNAL_API : `${SIGNAL_API}?days=${days}`;
+    const resp = await fetch(url);
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const data = await resp.json();
-    allPosts = data.posts ?? [];
-    renderGrid();
+    data = await resp.json();
+    renderAll(data);
   } catch (err) {
-    // Graceful fallback to empty state, not an error wall
-    allPosts = [];
-    renderGrid();
-    console.warn('Signal endpoint not yet available:', err.message);
+    console.warn('Signal stats endpoint not yet available:', err.message);
+    // Fall back to mock so the page isn't broken during development
+    data = { ...MOCK_DATA, window_days: days === 0 ? 'all' : days };
+    renderAll(data);
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Boot
-// ─────────────────────────────────────────────────────────────────────────────
-loadPosts();
+loadData(currentRange);
 </script>
 </body>
 </html>
