@@ -213,3 +213,9 @@ __marimo__/
 # OS
 .DS_Store
 Thumbs.db
+
+d1_backfill_geo_cache.json
+d1_backfill_abuse_cache.json
+
+d1_backfill_state*.json
+logs/
