@@ -21,55 +21,80 @@ const SHARED_SECRET = process.env.SHARED_SECRET;
 // with the full post payload, and have it write to D1.
 
 const post = {
-  date: '2026-04-13',
-  sensor: 'honeypot-pi',
-  tags: ['campaign', 'lateral'],
-  title: 'Container-aware Monero miner with privilege escalation deployed as sshd',
-  lede: 'A session from 115.190.x.x authenticated as root/ubuntu, sat idle for five minutes, then uploaded a binary named sshd via SFTP. VirusTotal classifies the payload as an XMRig-based Monero miner with container escape capability — it manipulates Linux user namespaces via /proc/self/ to escape restricted environments before mining with full host privileges. First submitted in December 2022 and undetected by major EDRs, the binary continues to circulate unchanged.',
-  findings: {
-    source_ip: '115.190.x.x',
-    session_id: '499a9c54',
-    duration: '5m 3s',
-    events: 'Auth as root/ubuntu + 5min staging + SFTP upload of sshd'
+  {
+  "date": "2026-04-08",
+  "sensor": "honeypot-pi",
+  "tags": ["campaign"],
+  "title": "13,365 sessions in 8 hours from a single IP",
+  "lede": "Something from 220.190.x.x connected to the honeypot 13,365 times over 8 hours and 18 minutes, authenticated as root on nearly every attempt, ran a single command, and disconnected. Then it stopped and never came back. It wasn't attacking. It was checking.",
+  "findings": {
+    "source_ip": "220.190.x.x",
+    "session_id": "13,365 sessions",
+    "duration": "8h 18m",
+    "events": "106,912 events · 2026-04-08 18:09 UTC to 2026-04-09 02:27 UTC"
   },
-  body: [
+  "body": [
     {
-      type: 'text',
-      content: 'The session authenticated as <strong>root</strong> using credential <code>ubuntu/ubuntu</code> at 22:40 UTC. No commands were executed after login. The session remained open for five minutes and two seconds before the actor transferred a single file named <code>sshd</code> via SFTP — a deliberate masquerade of the legitimate SSH daemon process name. The actor disconnected immediately after the upload completed. The absence of any shell commands suggests a fully automated deployment script with a fixed staging delay, or manual operation with payload preparation occurring outside the session.'
+      "type": "text",
+      "content": "At <code>18:09 UTC</code> on <code>2026-04-08</code>, a host at <code>220.190.x.x</code> — a Chinese cloud/hosting block — began connecting to the honeypot at a rate of approximately 27 sessions per minute. It ran at that rate, essentially flat, for over 8 hours. By the time it stopped at <code>02:27 UTC</code> on <code>2026-04-09</code>, it had opened <strong>13,365 sessions</strong> and generated <strong>106,912 events</strong>. It has not been seen since."
     },
     {
-      type: 'section',
-      title: 'Attack sequence'
+      "type": "section",
+      "title": "Session volume by hour"
     },
     {
-      type: 'commands',
-      lines: [
-        { cmd: '[login: root / ubuntu]', comment: 'Authentication at 22:40 UTC' },
-        { cmd: '[idle: 5 minutes 2 seconds]', comment: 'No commands executed — staging delay or manual preparation' },
-        { cmd: '[SFTP upload: sshd]', comment: 'SHA256: 9ecbeee2c88e701fe3d39e868c0a102cc77c033775f8fa9625ae83e9150a2a50' }
+      "type": "commands",
+      "lines": [
+        { "cmd": "2026-04-08 18:00  1,553 sessions", "comment": "" },
+        { "cmd": "2026-04-08 19:00  1,759 sessions", "comment": "// peak hour" },
+        { "cmd": "2026-04-08 20:00  1,744 sessions", "comment": "" },
+        { "cmd": "2026-04-08 21:00  1,550 sessions", "comment": "" },
+        { "cmd": "2026-04-08 22:00  1,435 sessions", "comment": "" },
+        { "cmd": "2026-04-08 23:00  1,468 sessions", "comment": "" },
+        { "cmd": "2026-04-09 00:00  1,453 sessions", "comment": "" },
+        { "cmd": "2026-04-09 01:00  1,612 sessions", "comment": "" },
+        { "cmd": "2026-04-09 02:00    798 sessions", "comment": "// partial hour — stopped at 02:27" }
       ]
     },
     {
-      type: 'text',
-      content: 'VirusTotal classifies the binary under the <strong>MALXMR family</strong> — TrendMicro designation for XMRig-based Monero miners that use evasion and privilege escalation to maximize mining yield. The binary uses <code>rdtsc</code> and <code>rdtscp</code> CPU timing instructions to detect sandbox analysis environments. Its most significant capability is Linux user namespace manipulation: reads and writes to <code>/proc/self/uid_map</code>, <code>/proc/self/gid_map</code>, and <code>/proc/self/setgroups</code> in function <code>sub_4944c0</code> allow it to remap its own UID/GID — escaping containerized environments and acquiring elevated host privileges before launching mining operations. This dual capability explains the masquerade name: a miner running as <code>sshd</code> with root-equivalent privileges, escaped from any container boundary, is both harder to kill and harder to attribute. First submitted to VirusTotal in December 2022 and last seen April 2026, the binary has not changed in over three years. Despite this, CrowdStrike Falcon, ESET, and Malwarebytes currently return no detection.'
+      "type": "section",
+      "title": "What it did"
     },
     {
-      type: 'attacks',
-      attacks: [
-        { id: 'T1078', name: 'Valid Accounts', tactic: 'Initial Access' },
-        { id: 'T1570', name: 'Lateral Tool Transfer', tactic: 'Lateral Movement' },
-        { id: 'T1611', name: 'Escape to Host', tactic: 'Privilege Escalation' },
-        { id: 'T1036.005', name: 'Match Legitimate Name or Location', tactic: 'Defense Evasion' },
-        { id: 'T1497.003', name: 'Time Based Evasion', tactic: 'Defense Evasion' },
-        { id: 'T1496', name: 'Resource Hijacking', tactic: 'Impact' }
+      "type": "text",
+      "content": "Every session followed the same pattern without exception. Connect, authenticate as <code>root</code>, run one command, disconnect. The command was identical across all 13,363 successful sessions: <code>echo -e \"\\x6F\\x6B\"</code> — a hex-encoded print of the string <code>ok</code>. Not <code>echo ok</code>. The hex encoding indicates the command was generated programmatically, not hardcoded as a string. Something built this command rather than wrote it."
+    },
+    {
+      "type": "text",
+      "content": "Authentication succeeded on 13,363 of 13,365 attempts — a 99.99% success rate explained entirely by Cowrie accepting all credentials. The actor cycled through 10 passwords in rotation, all under the <code>root</code> username, with hashes in the <code>19***0</code> through <code>19***9</code> pattern — consistent with a sequential numeric password list. No credential variation, no username variation, no deviation of any kind across the entire 8-hour window."
+    },
+    {
+      "type": "section",
+      "title": "What it wasn't"
+    },
+    {
+      "type": "text",
+      "content": "This is not a credential spray — an actor spraying passwords tries many credentials hoping some work, then executes a payload on success. This actor already had a working credential set and wasn't interested in what happened after login. It is not a scanner — scanners move across IP ranges looking for open ports. This IP hit only this host, repeatedly, for hours. It is not a typical bot — the 63-event Diicot sessions elsewhere in the dataset follow a structured playbook with persistence and hardware survey. This actor ran one command and left, every time."
+    },
+    {
+      "type": "text",
+      "content": "The most consistent explanation is infrastructure verification: something deployed on <code>220.190.x.x</code> believed this SSH endpoint was part of its own infrastructure and was confirming it was alive and responding. The flat session rate — a fixed ~27 connections per minute sustained without acceleration or decay — points to a thread pool or rate-limited worker running at a configured concurrency ceiling, not organic traffic. The complete stop at <code>02:27 UTC</code> with no return suggests a job that ran to completion or a configuration that was changed, not a network failure or block."
+    },
+    {
+      "type": "attacks",
+      "attacks": [
+        { "id": "T1110", "name": "Brute Force", "tactic": "Credential Access" },
+        { "id": "T1046", "name": "Network Service Discovery", "tactic": "Discovery" },
+        { "id": "T1497", "name": "Virtualization/Sandbox Evasion", "tactic": "Defense Evasion" }
       ]
     },
     {
-      type: 'defender',
-      content: 'Alert on any process named <code>sshd</code> running from a non-standard path such as <code>/tmp</code> — the legitimate sshd binary runs from <code>/usr/sbin/sshd</code>. Add an auditd rule to detect writes to <code>/proc/self/uid_map</code>: <code>-w /proc/self/uid_map -p wa -k ns_escape</code>. Rotate or disable default credentials — <code>ubuntu/ubuntu</code> authenticated successfully here. The SHA256 hash <code>9ecbeee2...</code> is a stable indicator given the binary has not changed since 2022.'
+      "type": "defender",
+      "content": "A single IP generating thousands of short sessions in a flat rate pattern is a strong indicator of automated infrastructure tooling rather than a human actor. Rate-limit or block after 10 failed sessions from a single IP within a 60-second window — this actor would have been cut off in the first minute. The hex-encoded command <code>\\x6F\\x6B</code> is a fingerprint worth alerting on in shell logs; legitimate administrators don't encode <code>echo ok</code> in hex."
     }
   ],
-  session_ids: '499a9c54ef72'
+  "session_ids": "220.190.x.x — 13365 sessions"
+}
 };
 
 async function main() {
