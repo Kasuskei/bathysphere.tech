@@ -373,6 +373,37 @@ export default {
     const secret = request.headers.get('X-Bathysphere-Secret');
     if (!secret || secret !== env.BATHYSPHERE_SECRET) return new Response('Unauthorized', { status: 401 });
 
+    const url = new URL(request.url);
+
+    // /insert — write a manually composed post directly to the blog DB
+    if (url.pathname === '/insert') {
+      try {
+        const body = await request.json();
+        const post = body.post;
+        if (!post) return new Response(JSON.stringify({ error: 'missing post' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+        const id = `sig-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;
+        await env.BLOG.prepare(`
+          INSERT INTO posts (id, created_at, date, sensor, tags, title, lede, findings, body, session_ids)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).bind(
+          id,
+          new Date().toISOString(),
+          post.date,
+          post.sensor,
+          JSON.stringify(post.tags),
+          post.title,
+          post.lede,
+          JSON.stringify(post.findings),
+          JSON.stringify(post.body),
+          post.session_ids ?? null,
+        ).run();
+        return new Response(JSON.stringify({ ok: true, id }), { headers: { 'Content-Type': 'application/json' } });
+      } catch (err) {
+        return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+      }
+    }
+
+    // Default — trigger the automated generator
     try {
       await this.scheduled(null, env, null);
       return new Response(JSON.stringify({ ok: true }), { headers: { 'Content-Type': 'application/json' } });

@@ -510,7 +510,7 @@ nav {
 // Config
 // ─────────────────────────────────────────────────────────────────────────────
 const SIGNAL_API = 'https://bathysphere-read.kasuskei.workers.dev/signal-stats';
-const USE_MOCK   = true; // flip to false once /signal-stats endpoint is live
+const USE_MOCK   = false; // flip to false once /signal-stats endpoint is live
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Mock data — replace with real API response once endpoint is built
@@ -738,6 +738,12 @@ function renderCmds(d) {
 // ─────────────────────────────────────────────────────────────────────────────
 // Render credential heatmap
 // ─────────────────────────────────────────────────────────────────────────────
+function maskPassword(pass) {
+  if (!pass) return '(empty)';
+  if (pass.length <= 3) return '*'.repeat(pass.length);
+  return pass.slice(0, 2) + '***' + pass[pass.length - 1];
+}
+
 function renderCreds(d) {
   const el    = document.getElementById('cred-grid');
   const creds = d.top_credentials;
@@ -748,7 +754,7 @@ function renderCreds(d) {
     return `
       <div class="cred-cell" style="--heat:${heat}">
         <div class="cred-user">${escHtml(c.user)}</div>
-        <div class="cred-pass">${escHtml(c.pass || '(empty)')}</div>
+        <div class="cred-pass">${escHtml(maskPassword(c.pass))}</div>
         <div class="cred-count">${fmt(c.count)}x</div>
       </div>`;
   }).join('');
