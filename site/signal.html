@@ -296,6 +296,7 @@ nav {
 .cs-weight.high   { background: rgba(224,92,92,0.1);   color: var(--red);   border: 1px solid rgba(224,92,92,0.2); }
 .cs-weight.medium { background: var(--amber-dim);       color: var(--amber); border: 1px solid rgba(240,169,74,0.2); }
 .cs-weight.low    { background: var(--glow-faint);      color: var(--glow);  border: 1px solid rgba(122,180,220,0.2); }
+.cs-weight.planned { background: rgba(107,114,128,0.1); color: var(--text-dim); border: 1px solid rgba(107,114,128,0.25); }
 
 /* ── Loading / empty ── */
 .panel-loading { padding: 3rem; text-align: center; color: var(--text-dim); font-size: 11px; }
@@ -476,7 +477,7 @@ nav {
           <div class="classifier-signal">
             <div class="cs-label">Inter-command timing</div>
             <div class="cs-value">Sub-100ms cadence between commands indicates scripted execution</div>
-            <span class="cs-weight high">high weight</span>
+            <span class="cs-weight planned">planned</span>
           </div>
           <div class="classifier-signal">
             <div class="cs-label">Command sequence</div>
