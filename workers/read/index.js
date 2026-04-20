@@ -230,18 +230,166 @@ async function handleSignal(env) {
   }
 }
 
-async function handleSignalStats(env) {
-  // stub — returns empty structure until signal viz Worker is built out
-  return json({
-    window_days: 7,
-    updated_at: new Date().toISOString(),
-    summary: { sessions: 0, events: 0, bot_sessions: 0, human_sessions: 0 },
-    volume: [],
-    bot_vs_human: { bot: 0, human: 0, bot_signals: {} },
-    top_ips: [],
-    top_commands: [],
-    top_credentials: [],
-  });
+async function handleSignalStats(url, env) {
+  if (!env.DB) return json({ error: 'D1 not configured' }, 503);
+
+  const days = parseInt(url.searchParams.get('days') ?? '7');
+  const since = days === 0
+    ? null
+    : new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+
+  const where  = since ? `WHERE ts >= '${since}'` : '';
+  const where2 = since ? `AND ts >= '${since}'`   : '';
+
+  try {
+    const [summary, volume, topIps, topCmds, topCreds, versions] = await env.DB.batch([
+
+      // Summary counts
+      env.DB.prepare(`
+        SELECT
+          COUNT(DISTINCT session) as sessions,
+          COUNT(*) as events
+        FROM events ${where}
+      `),
+
+      // Volume by day
+      env.DB.prepare(`
+        SELECT
+          DATE(ts) as date,
+          COUNT(DISTINCT session) as sessions,
+          COUNT(*) as events
+        FROM events ${where}
+        GROUP BY DATE(ts)
+        ORDER BY date ASC
+        LIMIT 90
+      `),
+
+      // Top source IPs by session count
+      env.DB.prepare(`
+        SELECT
+          src_ip,
+          geo_country as country,
+          COUNT(DISTINCT session) as sessions
+        FROM events
+        WHERE eventid = 'cowrie.session.connect' ${where2}
+        GROUP BY src_ip
+        ORDER BY sessions DESC
+        LIMIT 10
+      `),
+
+      // Top commands
+      env.DB.prepare(`
+        SELECT
+          input as cmd,
+          COUNT(*) as count
+        FROM events
+        WHERE eventid = 'cowrie.command.input'
+          AND input IS NOT NULL ${where2}
+        GROUP BY input
+        ORDER BY count DESC
+        LIMIT 10
+      `),
+
+      // Top credentials
+      env.DB.prepare(`
+        SELECT
+          username as user,
+          password_hash as pass,
+          COUNT(*) as count
+        FROM events
+        WHERE eventid = 'cowrie.login.success'
+          AND username IS NOT NULL ${where2}
+        GROUP BY username, password_hash
+        ORDER BY count DESC
+        LIMIT 12
+      `),
+
+      // Client version strings for bot classification
+      env.DB.prepare(`
+        SELECT
+          version,
+          COUNT(DISTINCT session) as sessions
+        FROM events
+        WHERE eventid = 'cowrie.client.version'
+          AND version IS NOT NULL ${where2}
+        GROUP BY version
+        ORDER BY sessions DESC
+        LIMIT 50
+      `),
+
+    ]);
+
+    const s = summary.results?.[0] ?? {};
+    const totalSessions = s.sessions ?? 0;
+
+    // Bot/human classification from client version strings
+let botSessions = 0, humanSessions = 0;
+const botSignals = { libssh: 0, paramiko: 0, golang: 0, other_bot: 0 };
+
+// Known legitimate human SSH clients - allowlist approach
+const humanClientPatterns = [
+  /^ssh-2\.0-openssh_[89]\.\d+/,
+  /^ssh-2\.0-openssh_10\.\d+/,
+  /^ssh-2\.0-openssh_for_windows_[89]\.\d+/,
+  /^ssh-2\.0-openssh_for_windows_10\.\d+/,
+  /^ssh-2\.0-putty_release_/,
+];
+
+for (const row of (versions.results ?? [])) {
+  const v = (row.version ?? '').toLowerCase();
+  const n = row.sessions ?? 0;
+
+  if (v.includes('libssh')) {
+    botSessions += n; botSignals.libssh += n;
+  } else if (v.includes('paramiko')) {
+    botSessions += n; botSignals.paramiko += n;
+  } else if (v === 'ssh-2.0-go' || v.startsWith('ssh-2.0-go/')) {
+    botSessions += n; botSignals.golang += n;
+  } else if (humanClientPatterns.some(p => p.test(v))) {
+    humanSessions += n;
+  } else {
+    // Everything else — unrecognized libraries, old OpenSSH, scanners, garbage strings
+    botSessions += n; botSignals.other_bot += n;
+  }
+}
+
+    // Remove zero-count bot signal keys
+    Object.keys(botSignals).forEach(k => { if (botSignals[k] === 0) delete botSignals[k]; });
+
+    return json({
+      window_days: days === 0 ? 'all' : days,
+      updated_at: new Date().toISOString(),
+      summary: {
+        sessions:       totalSessions,
+        events:         s.events ?? 0,
+        bot_sessions:   botSessions,
+        human_sessions: humanSessions,
+      },
+      volume: volume.results ?? [],
+      bot_vs_human: {
+        bot:         botSessions,
+        human:       humanSessions,
+        bot_signals: botSignals,
+      },
+      top_ips:         (topIps.results  ?? []).map(r => ({
+        ip:       r.src_ip,
+        country:  r.country ?? '??',
+        sessions: r.sessions,
+      })),
+      top_commands:    (topCmds.results  ?? []).map(r => ({
+        cmd:   r.cmd,
+        count: r.count,
+      })),
+      top_credentials: (topCreds.results ?? []).map(r => ({
+        user:  r.user,
+        pass:  r.pass ?? '',
+        count: r.count,
+      })),
+    });
+
+  } catch (err) {
+    return json({ error: err.message }, 500);
+  }
 }
 
 export default {
@@ -253,7 +401,7 @@ export default {
     if (url.pathname === "/archive")  return handleArchive(url, env);
     if (url.pathname === "/stats")    return handleStats(env);
     if (url.pathname === "/pings")   return handleSignal(env);
-    if (url.pathname === "/signal-stats") return handleSignalStats(env);
+    if (url.pathname === "/signal-stats") return handleSignalStats(url, env);
     return json({ error: "not found" }, 404);
   },
 };
