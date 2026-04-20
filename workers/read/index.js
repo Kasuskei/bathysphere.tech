@@ -212,7 +212,7 @@ async function handleSignal(env) {
   if (!env.BLOG) return json({ posts: [], total: 0 });
   try {
     const result = await env.BLOG.prepare(
-      `SELECT * FROM posts ORDER BY date DESC, created_at DESC LIMIT 50`
+      `SELECT * FROM posts ORDER BY created_at DESC LIMIT 50`
     ).all();
     const posts = (result.results ?? []).map(row => ({
       id:       row.id,
