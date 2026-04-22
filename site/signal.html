@@ -31,7 +31,7 @@
   --text-dim:   #4a6878;
   --text-mid:   #6a8fa8;
   --text-bright:#d4e8f4;
-  --serif: 'Oswald', Impact, sans-serif;
+  --serif: 'Cormorant', Georgia, serif;
   --mono:  'DM Mono', 'Courier New', monospace;
 }
 
@@ -71,7 +71,7 @@ nav {
   height: 52px; display: flex; align-items: center; justify-content: space-between;
 }
 .nav-logo {
-  font-family: var(--mono); font-size: 13px; color: var(--glow);
+  font-family: var(--mono); font-size: 13px; font-style: italic; color: var(--glow);
   text-decoration: none; display: flex; align-items: center; gap: 10px;
 }
 .ping { width: 7px; height: 7px; border-radius: 50%; background: var(--bio); position: relative; flex-shrink: 0; }
@@ -82,7 +82,7 @@ nav {
 @keyframes sonar { 0% { transform: scale(1); opacity: 0.7; } 100% { transform: scale(3); opacity: 0; } }
 .nav-links { display: flex; align-items: center; gap: 2rem; list-style: none; }
 .nav-links a { color: var(--text-dim); text-decoration: none; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; transition: color 0.2s; }
-.nav-links a:hover { color: var(--glow); }
+.nav-links a:hover { font-style: italic; color: var(--glow); }
 .nav-links a.active { color: var(--bio); }
 .live-badge { display: flex; align-items: center; gap: 6px; font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--bio); }
 .live-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--bio); box-shadow: 0 0 6px var(--bio); animation: livepulse 1.5s ease-in-out infinite; }
@@ -107,11 +107,11 @@ nav {
   font-family: var(--serif); font-size: clamp(1.6rem, 3.5vw, 2.4rem);
   font-weight: 400; color: var(--text-bright); line-height: 1.15; margin-bottom: 0.75rem;
 }
-.page-title em { color: var(--glow); }
+.page-title em { font-style: italic; color: var(--glow); }
 .page-desc { font-size: 12px; color: var(--text-dim); max-width: 480px; line-height: 1.7; }
 .page-header-right { text-align: right; }
 .header-stat-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-dim); margin-bottom: 0.25rem; }
-.header-stat-value { font-size: 28px; color: var(--glow); line-height: 1; }
+.header-stat-value { font-size: 28px; font-style: italic; color: var(--glow); line-height: 1; }
 .header-stat-sub { font-size: 10px; color: var(--text-dim); margin-top: 0.25rem; }
 
 /* ── Time range selector ── */
@@ -126,7 +126,7 @@ nav {
   background: transparent; color: var(--text-dim); cursor: pointer; transition: all 0.15s;
 }
 .time-pill:hover { border-color: var(--rim-hover); color: var(--text); }
-.time-pill.active { border-color: rgba(122,180,220,0.35); background: var(--glow-faint); color: var(--glow); }
+.time-pill.active { border-color: rgba(122,180,220,0.35); background: var(--glow-faint); font-style: italic; color: var(--glow); }
 
 /* ── Dashboard grid ── */
 .dash-grid {
@@ -190,7 +190,7 @@ nav {
 
 .stat-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-dim); margin-bottom: 0.5rem; }
 .stat-value { font-size: 2rem; color: var(--text-bright); line-height: 1; font-variant-numeric: tabular-nums; }
-.stat-card.s-sessions .stat-value { color: var(--glow); }
+.stat-card.s-sessions .stat-value { font-style: italic; color: var(--glow); }
 .stat-card.s-events   .stat-value { color: var(--bio); }
 .stat-card.s-bots     .stat-value { color: var(--amber); }
 .stat-card.s-humans   .stat-value { color: var(--red); }
@@ -242,7 +242,7 @@ nav {
 .ip-table tr:last-child { border-bottom: none; }
 .ip-table td { padding: 0.5rem 0; font-size: 11px; vertical-align: middle; }
 .ip-rank { color: var(--text-dim); width: 24px; }
-.ip-addr { color: var(--glow); font-variant-numeric: tabular-nums; }
+.ip-addr { font-style: italic; color: var(--glow); font-variant-numeric: tabular-nums; }
 .ip-country { color: var(--text-dim); font-size: 10px; padding-left: 0.5rem; }
 .ip-bar-cell { width: 40%; padding-left: 1rem; }
 .ip-bar-bg { height: 3px; background: var(--rim); border-radius: 2px; }
@@ -274,7 +274,7 @@ nav {
 /* ── Command frequency ── */
 .cmd-freq-list { display: flex; flex-direction: column; gap: 0.5rem; }
 .cmd-freq-item { display: flex; align-items: center; gap: 0.75rem; }
-.cmd-freq-cmd { font-size: 11px; color: var(--glow); width: 220px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cmd-freq-cmd { font-size: 11px; font-style: italic; color: var(--glow); width: 220px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cmd-freq-bar-bg { flex: 1; height: 4px; background: var(--rim); border-radius: 2px; }
 .cmd-freq-bar { height: 4px; background: linear-gradient(90deg, var(--bio), rgba(77,232,176,0.4)); border-radius: 2px; transition: width 0.6s ease; }
 .cmd-freq-n { font-size: 10px; color: var(--text-dim); width: 32px; text-align: right; }
@@ -288,14 +288,14 @@ nav {
 }
 .cs-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-dim); margin-bottom: 0.35rem; }
 .cs-value { font-size: 12px; color: var(--text); line-height: 1.5; }
-.cs-value code { font-family: var(--mono); font-size: 10px; color: var(--glow); background: var(--glow-faint); padding: 1px 4px; }
+.cs-value code { font-family: var(--mono); font-size: 10px; font-style: italic; color: var(--glow); background: var(--glow-faint); padding: 1px 4px; }
 .cs-weight {
   display: inline-block; margin-top: 4px;
   font-size: 9px; padding: 1px 6px; border-radius: 2px;
 }
 .cs-weight.high   { background: rgba(224,92,92,0.1);   color: var(--red);   border: 1px solid rgba(224,92,92,0.2); }
 .cs-weight.medium { background: var(--amber-dim);       color: var(--amber); border: 1px solid rgba(240,169,74,0.2); }
-.cs-weight.low    { background: var(--glow-faint);      color: var(--glow);  border: 1px solid rgba(122,180,220,0.2); }
+.cs-weight.low    { background: var(--glow-faint);      font-style: italic; color: var(--glow);  border: 1px solid rgba(122,180,220,0.2); }
 .cs-weight.planned { background: rgba(107,114,128,0.1); color: var(--text-dim); border: 1px solid rgba(107,114,128,0.25); }
 
 /* ── Loading / empty ── */

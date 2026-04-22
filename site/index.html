@@ -7,7 +7,7 @@
 <meta name="description" content="A honeypot threat intelligence feed. Watching what comes out of the dark.">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,600;1,400;1,600&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -28,7 +28,7 @@
   --text-dim:  #4a6878;
   --text-mid:  #6a8fa8;
   --text-bright: #d4e8f4;
-  --serif: 'Oswald', Impact, sans-serif;
+  --serif: 'Cormorant', Georgia, serif;
   --mono:  'DM Mono', 'Courier New', monospace;
 }
 
@@ -99,7 +99,7 @@ nav {
   font-family: var(--mono);
   font-size: 13px;
   font-weight: 400;
-  color: var(--glow);
+  font-style: italic; color: var(--glow);
   letter-spacing: 0.04em;
   text-decoration: none;
   display: flex;
@@ -146,7 +146,7 @@ nav {
   transition: color 0.2s;
 }
 
-.nav-links a:hover { color: var(--glow); }
+.nav-links a:hover { font-style: italic; color: var(--glow); }
 .nav-links a.active { color: var(--bio); }
 
 .nav-cta {
@@ -210,7 +210,7 @@ h1 {
   animation: rise 0.8s ease forwards 0.35s;
 }
 
-h1 em { color: var(--glow); }
+h1 em { font-style: italic; color: var(--glow); }
 
 .hero-body {
   max-width: 500px;
@@ -298,7 +298,7 @@ h1 em { color: var(--glow); }
   font-family: var(--mono);
   font-size: 1.9rem;
   font-weight: 300;
-  color: var(--glow);
+  font-style: italic; color: var(--glow);
   letter-spacing: -0.03em;
   line-height: 1;
   margin-bottom: 0.5rem;
@@ -349,7 +349,7 @@ h2 {
   margin-bottom: 1.25rem;
 }
 
-h2 em { color: var(--glow); }
+h2 em { font-style: italic; color: var(--glow); }
 
 .section-body {
   color: var(--text-mid);
@@ -441,11 +441,11 @@ h2 em { color: var(--glow); }
 .feed-row:hover { background: var(--glass); }
 .feed-row:last-child { border-bottom: none; }
 .feed-time { color: var(--text-dim); font-size: 10px; }
-.feed-ip   { color: var(--glow); }
+.feed-ip   { font-style: italic; color: var(--glow); }
 .feed-event { color: var(--text-mid); }
 .feed-event.fail    { color: #e06060; }
 .feed-event.success { color: var(--bio); }
-.feed-event.cmd     { color: var(--glow); }
+.feed-event.cmd     { font-style: italic; color: var(--glow); }
 .feed-detail { color: var(--text-dim); font-size: 10px; text-align: right; }
 
 .feed-blur {
@@ -491,7 +491,7 @@ h2 em { color: var(--glow); }
 .step-num { font-family: var(--mono); font-size: 10px; color: var(--text-dim); letter-spacing: 0.1em; padding-top: 2px; }
 .step-title { font-family: var(--mono); font-size: 12px; font-weight: 500; color: var(--text-bright); margin-bottom: 0.4rem; letter-spacing: 0.03em; }
 .step-body { font-size: 12px; color: var(--text-dim); line-height: 1.8; }
-.step-body code { background: rgba(122,180,220,0.08); border: 1px solid rgba(122,180,220,0.12); border-radius: 2px; padding: 1px 5px; font-size: 11px; color: var(--glow); font-family: var(--mono); }
+.step-body code { background: rgba(122,180,220,0.08); border: 1px solid rgba(122,180,220,0.12); border-radius: 2px; padding: 1px 5px; font-size: 11px; font-style: italic; color: var(--glow); font-family: var(--mono); }
 
 .cta-section { padding: 5rem 0 8rem; text-align: center; }
 .cta-section h2 { margin: 0 auto 1rem; max-width: 480px; }
@@ -503,7 +503,7 @@ footer { border-top: 1px solid var(--rim); padding: 2.5rem 0; }
 .footer-logo { font-family: var(--mono); font-size: 12px; color: var(--text-dim); letter-spacing: 0.04em; }
 .footer-links { display: flex; gap: 1.5rem; list-style: none; }
 .footer-links a { font-size: 11px; color: var(--text-dim); text-decoration: none; letter-spacing: 0.08em; text-transform: uppercase; transition: color 0.2s; }
-.footer-links a:hover { color: var(--glow); }
+.footer-links a:hover { font-style: italic; color: var(--glow); }
 
 .reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.7s ease, transform 0.7s ease; }
 .reveal.visible { opacity: 1; transform: none; }
