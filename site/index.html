@@ -7,7 +7,7 @@
 <meta name="description" content="A honeypot threat intelligence feed. Watching what comes out of the dark.">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -28,7 +28,7 @@
   --text-dim:  #4a6878;
   --text-mid:  #6a8fa8;
   --text-bright: #d4e8f4;
-  --serif: 'Orbitron', sans-serif;
+  --serif: 'Oswald', Impact, sans-serif;
   --mono:  'DM Mono', 'Courier New', monospace;
 }
 
@@ -518,9 +518,59 @@ footer { border-top: 1px solid var(--rim); padding: 2.5rem 0; }
   h1 { font-size: 2.2rem; }
   .footer-inner { flex-direction: column; gap: 1rem; text-align: center; }
 }
+  /* -- CRT FILTER -- */
+  .crt {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9999;
+  }
+  .crt::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 2px,
+      rgba(0,0,0,0.12) 2px,
+      rgba(0,0,0,0.12) 3px
+    );
+    animation: crt-roll 8s linear infinite;
+    pointer-events: none;
+  }
+  .crt::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 50%,
+      transparent 60%,
+      rgba(0,0,0,0.25) 80%,
+      rgba(0,0,0,0.70) 100%
+    );
+    pointer-events: none;
+  }
+  @keyframes crt-roll {
+    from { background-position: 0 0; }
+    to   { background-position: 0 3px; }
+  }
+  @keyframes crt-flicker {
+    0%,100% { opacity: 1; }
+    92%     { opacity: 0.97; }
+    96%     { opacity: 0.95; }
+  }
+  .crt-phosphor {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 18, 6, 0.06);
+    mix-blend-mode: screen;
+    pointer-events: none;
+    animation: crt-flicker 0.12s step-end infinite;
+  }
 </style>
 </head>
 <body>
+<div class="crt"><div class="crt-phosphor"></div></div>
 
 <div class="depth-bg">
   <canvas id="particles"></canvas>

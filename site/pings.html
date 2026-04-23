@@ -32,7 +32,7 @@
   --text-dim:   #4a6878;
   --text-mid:   #6a8fa8;
   --text-bright:#d4e8f4;
-  --serif: 'Orbitron', sans-serif;
+  --serif: 'Oswald', Impact, sans-serif;
   --mono:  'DM Mono', 'Courier New', monospace;
 
   --tactic-recon:     #7ab4dc;
@@ -392,9 +392,59 @@ nav {
   .modal-body { padding: 1.5rem; }
   .modal-header { padding: 1.5rem; }
 }
+  /* -- CRT FILTER -- */
+  .crt {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9999;
+  }
+  .crt::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 2px,
+      rgba(0,0,0,0.12) 2px,
+      rgba(0,0,0,0.12) 3px
+    );
+    animation: crt-roll 8s linear infinite;
+    pointer-events: none;
+  }
+  .crt::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 50%,
+      transparent 60%,
+      rgba(0,0,0,0.25) 80%,
+      rgba(0,0,0,0.70) 100%
+    );
+    pointer-events: none;
+  }
+  @keyframes crt-roll {
+    from { background-position: 0 0; }
+    to   { background-position: 0 3px; }
+  }
+  @keyframes crt-flicker {
+    0%,100% { opacity: 1; }
+    92%     { opacity: 0.97; }
+    96%     { opacity: 0.95; }
+  }
+  .crt-phosphor {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 18, 6, 0.06);
+    mix-blend-mode: screen;
+    pointer-events: none;
+    animation: crt-flicker 0.12s step-end infinite;
+  }
 </style>
 </head>
 <body>
+<div class="crt"><div class="crt-phosphor"></div></div>
 
 <nav>
   <div class="nav-inner">
