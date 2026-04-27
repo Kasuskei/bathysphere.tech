@@ -1,5 +1,5 @@
 /**
- * bathysphere â€" ingest Worker
+ * bathysphere ingest Worker
  * Receives event batches from the Pi pusher and writes them to KV.
  *
  * Bindings required (wrangler.toml):
@@ -8,10 +8,10 @@
  *   id = "<your KV namespace ID>"
  *
  * Secrets required (wrangler secret put):
- *   BATHYSPHERE_SECRET   â€" must match SHARED_SECRET on the Pi
+ *   BATHYSPHERE_SECRET must match SHARED_SECRET on the Pi
  */
 
-// â"€â"€ MITRE ATT&CK mapping â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+// MITRE ATT&CK mapping 
 //
 // Each rule is evaluated in order. The first match wins.
 // Rules can match on eventid, and optionally inspect the event payload
@@ -20,7 +20,7 @@
 // technique: { id, name, tactic } maps to ATT&CK Enterprise.
 
 const ATTACK_RULES = [
-  // â"€â"€ Reconnaissance / Initial Access â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+  // Reconnaissance / Initial Access 
   {
     match: e => e.eventid === "cowrie.session.connect",
     technique: { id: "T1595.002", name: "Vulnerability Scanning", tactic: "Reconnaissance" },
@@ -30,7 +30,7 @@ const ATTACK_RULES = [
     technique: { id: "T1595.001", name: "Scanning IP Blocks", tactic: "Reconnaissance" },
   },
 
-  // â"€â"€ Credential Access â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+  // Credential Access 
   {
     match: e => e.eventid === "cowrie.login.failed",
     technique: { id: "T1110.001", name: "Password Guessing", tactic: "Credential Access" },
@@ -45,7 +45,7 @@ const ATTACK_RULES = [
     technique: { id: "T1078", name: "Valid Accounts", tactic: "Initial Access" },
   },
 
-  // â"€â"€ Discovery â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+  // Discovery 
   {
     match: e => e.eventid === "cowrie.command.input" &&
       /uname|\/proc\/version|\/etc\/os-release/.test(e.input),
@@ -87,7 +87,7 @@ const ATTACK_RULES = [
     technique: { id: "T1082", name: "System Information Discovery", tactic: "Discovery" },
   },
 
-  // â"€â"€ Persistence â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+  // Persistence 
   {
     match: e => e.eventid === "cowrie.command.input" &&
       /authorized_keys/.test(e.input),
@@ -104,7 +104,7 @@ const ATTACK_RULES = [
     technique: { id: "T1543", name: "Create or Modify System Process", tactic: "Persistence" },
   },
 
-  // â"€â"€ Defense Evasion â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+  // Defense Evasion 
   {
     match: e => e.eventid === "cowrie.command.input" &&
       /rm -rf|shred|unlink/.test(e.input),
@@ -122,7 +122,7 @@ const ATTACK_RULES = [
     technique: { id: "T1564.001", name: "Hidden Files and Directories", tactic: "Defense Evasion" },
   },
 
-  // â"€â"€ Collection / Exfiltration â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+  // Collection / Exfiltration 
   {
     match: e => e.eventid === "cowrie.command.input" &&
       /TelegramDesktop|tdata|ttyGSM|ttyUSB|smsd|qmuxd|modem/.test(e.input),
@@ -134,13 +134,13 @@ const ATTACK_RULES = [
     technique: { id: "T1005", name: "Data from Local System", tactic: "Collection" },
   },
 
-  // â"€â"€ Command and Control â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+  // Command and Control 
   {
     match: e => e.eventid === "cowrie.direct-tcpip.request",
     technique: { id: "T1572", name: "Protocol Tunneling", tactic: "Command and Control" },
   },
 
-  // â"€â"€ Impact â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+  // Impact 
   {
     match: e => e.eventid === "cowrie.command.input" &&
       /[Mm]iner|xmrig|xmr|monero|stratum\+/.test(e.input),
@@ -153,15 +153,15 @@ const ATTACK_RULES = [
     technique: { id: "T1496", name: "Resource Hijacking", tactic: "Impact" },
   },
 
-  // â"€â"€ Execution â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+  // Execution 
   {
-    // Generic shell command execution â€" catch-all for command events not
+    // Generic shell command execution catch-all for command events not
     // matched by a more specific rule above
     match: e => e.eventid === "cowrie.command.input",
     technique: { id: "T1059.004", name: "Unix Shell", tactic: "Execution" },
   },
 
-  // â"€â"€ Lateral Movement â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+  // Lateral Movement 
   {
     match: e => (e.eventid === "cowrie.session.file_upload" ||
                  e.eventid === "cowrie.session.file_download"),
@@ -600,7 +600,7 @@ export default {
       return handleIngest(request, env);
     }
 
-    // â"€â"€ D1-only ingest â€" bypasses KV entirely, used by backfill script
+    // D1-only ingest bypasses KV entirely, used by backfill script
     if (url.pathname === "/ingest-d1" && request.method === "POST") {
       const secret = request.headers.get("X-Bathysphere-Secret");
       if (!secret || secret !== env.BATHYSPHERE_SECRET) {
@@ -639,7 +639,7 @@ export default {
       );
     }
 
-    // â"€â"€ Backfill endpoint â€" accepts pre-normalized events, writes directly to D1
+    // Backfill endpoint accepts pre-normalized events, writes directly to D1
     if (url.pathname === "/backfill" && request.method === "POST") {
       const secret = request.headers.get("X-Bathysphere-Secret");
       if (!secret || secret !== env.BATHYSPHERE_SECRET) {
