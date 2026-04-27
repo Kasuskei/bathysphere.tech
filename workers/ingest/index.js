@@ -352,6 +352,25 @@ async function geoLookup(ip, env) {
     const cached = await env.EVENTS.get(cacheKey);
     if (cached) return JSON.parse(cached);
 
+    // Primary: ip-api.com
+    let geo = await fetchIpApi(ip);
+
+    // Fallback: ipinfo.io if primary returned nothing or is missing key fields
+    if (!geo || (!geo.country && !geo.asn && !geo.isp)) {
+      geo = await fetchIpInfo(ip, env);
+    }
+
+    if (!geo) return null;
+
+    env.EVENTS.put(cacheKey, JSON.stringify(geo), { expirationTtl: GEO_TTL });
+    return geo;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchIpApi(ip) {
+  try {
     const resp = await fetch(
       `http://ip-api.com/json/${ip}?fields=status,country,city,as,isp,reverse`,
       { signal: AbortSignal.timeout(2000) }
@@ -365,7 +384,7 @@ async function geoLookup(ip, env) {
     const asnNum = asnMatch ? parseInt(asnMatch[1]) : null;
     const ispName = data.isp ?? null;
 
-    const geo = {
+    return {
       country: data.country ?? null,
       city:    data.city    ?? null,
       asn:     data.as      ?? null,
@@ -373,9 +392,35 @@ async function geoLookup(ip, env) {
       rdns:    data.reverse && data.reverse !== '' ? data.reverse : null,
       cloud:   detectCloud(asnNum, ispName),
     };
+  } catch {
+    return null;
+  }
+}
 
-    env.EVENTS.put(cacheKey, JSON.stringify(geo), { expirationTtl: GEO_TTL });
-    return geo;
+async function fetchIpInfo(ip, env) {
+  try {
+    const token = env.IPINFO_TOKEN ? `?token=${env.IPINFO_TOKEN}` : '';
+    const resp = await fetch(
+      `https://ipinfo.io/${ip}/json${token}`,
+      { signal: AbortSignal.timeout(2000) }
+    );
+    if (!resp.ok) return null;
+
+    const data = await resp.json();
+    if (data.bogon || !data.ip) return null;
+
+    const asnMatch = (data.org ?? '').match(/^AS(\d+)/);
+    const asnNum = asnMatch ? parseInt(asnMatch[1]) : null;
+    const ispName = data.org ?? null;
+
+    return {
+      country: data.country ?? null,
+      city:    data.city    ?? null,
+      asn:     data.org     ?? null,
+      isp:     ispName,
+      rdns:    data.hostname && data.hostname !== '' ? data.hostname : null,
+      cloud:   detectCloud(asnNum, ispName),
+    };
   } catch {
     return null;
   }
