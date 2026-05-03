@@ -336,7 +336,6 @@ async function main() {
   let currentLine = 0;
   let batch = [];
   let totalInserted = 0;
-  let totalProcessed = 0;
 
   const rl2 = readline.createInterface({ input: fs.createReadStream(LOG_FILE), crlfDelay: Infinity });
 
@@ -353,16 +352,13 @@ async function main() {
       if (event) batch.push(event);
     } catch {}
 
-    totalProcessed++;
-
     if (batch.length >= BATCH_SIZE) {
       try {
         const result = await postBatch(batch);
         const stored = result.stored ?? batch.length;
         totalInserted += stored;
-        state.offset    = currentLine;
-        state.processed = (state.processed ?? 0) + totalProcessed;
-        state.inserted  = (state.inserted  ?? 0) + stored;
+        state.offset   = currentLine;
+        state.inserted = (state.inserted ?? 0) + stored;
         saveState(state);
         console.log(`  Line ${currentLine}/${lineCount} — batch stored: ${stored}/${batch.length} | total inserted: ${totalInserted}`);
         batch = [];

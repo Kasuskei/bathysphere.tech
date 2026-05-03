@@ -10,89 +10,84 @@
 const INGEST_URL = 'https://bathysphere-signal.kasuskei.workers.dev/post';
 const SHARED_SECRET = process.env.SHARED_SECRET;
 
-// We'll insert directly via the blog D1 using a fetch to a new /post endpoint
-// on the signal Worker. But the simpler approach is to just use the Cloudflare
-// REST API directly.
-
-// Actually simplest: write to blog D1 via a small HTTP endpoint we add to the
-// read Worker, OR just run wrangler d1 execute with a JS file.
-
-// Instead, let's POST the post data to the signal Worker's manual endpoint
-// with the full post payload, and have it write to D1.
-
 const post = {
-  date: '2026-04-14',
+  date: '2026-04-27',
   sensor: 'honeypot-pi',
-  tags: ['campaign'],
-  title: '13,365 sessions in 8 hours from a single IP',
-  lede: 'Something from 220.190.x.x connected to the honeypot 13,365 times over 8 hours and 18 minutes, authenticated as root on nearly every attempt, ran a single command, and disconnected. Then it stopped and never came back. It wasn\'t attacking. It was checking.',
+  tags: ['mirai', 'post-quantum', 'campaign'],
+  title: 'Post-quantum cryptography in commodity malware: Mirai variant observed running ML-KEM',
+  lede: 'A HASSH clustering pass against honeypot telemetry surfaced a Mirai variant running post-quantum key exchange algorithms across 312 coordinated nodes. ML-KEM was standardized by NIST in August 2024. It is already in the wild.',
   findings: {
-    source_ip: '220.190.x.x',
-    session_id: '13,365 sessions',
-    duration: '8h 18m',
-    events: '106,912 events · 2026-04-08 18:09 UTC to 2026-04-09 02:27 UTC'
+    source_ip: 'distributed — 312 unique IPs',
+    session_id: '7,423 sessions',
+    duration: 'ongoing',
+    events: '39,129 events · first seen 2026-04-21 · active as of 2026-04-27'
   },
   body: [
     {
       type: 'text',
-      content: 'At <code>18:09 UTC</code> on <code>2026-04-08</code>, a host at <code>220.190.x.x</code> \u2014 a Chinese cloud/hosting block \u2014 began connecting to the honeypot at a rate of approximately 27 sessions per minute. It ran at that rate, essentially flat, for over 8 hours. By the time it stopped at <code>02:27 UTC</code> on <code>2026-04-09</code>, it had opened <strong>13,365 sessions</strong> and generated <strong>106,912 events</strong>. It has not been seen since.'
+      content: 'The find came out of HASSH clustering against a dedicated PostgreSQL research database built on top of Cowrie SSH honeypot telemetry. Querying for post-quantum key exchange algorithms in the kexalgs field returned 392 IPs. Grouping those by HASSH fingerprint revealed that 312 shared an identical fingerprint — <code>af8223ac9914f509afdadfaf5f7ee94e</code> — pointing to a single tool and a single coordinated campaign. First observed <code>2026-04-21 02:35 UTC</code>. Still active.'
     },
     {
       type: 'section',
-      title: 'Session volume by hour'
+      title: 'The tooling'
+    },
+    {
+      type: 'text',
+      content: 'The client string <code>SSH-2.0-libssh_0.12.0</code> identifies a custom scanner built on the libssh library rather than standard OpenSSH. libssh 0.12.0 introduced ML-KEM support, and whoever built this tool compiled against it. The key exchange suite advertised is current:'
     },
     {
       type: 'commands',
       lines: [
-        { cmd: '2026-04-08 18:00  1,553 sessions', comment: '' },
-        { cmd: '2026-04-08 19:00  1,759 sessions', comment: '// peak hour' },
-        { cmd: '2026-04-08 20:00  1,744 sessions', comment: '' },
-        { cmd: '2026-04-08 21:00  1,550 sessions', comment: '' },
-        { cmd: '2026-04-08 22:00  1,435 sessions', comment: '' },
-        { cmd: '2026-04-08 23:00  1,468 sessions', comment: '' },
-        { cmd: '2026-04-09 00:00  1,453 sessions', comment: '' },
-        { cmd: '2026-04-09 01:00  1,612 sessions', comment: '' },
-        { cmd: '2026-04-09 02:00    798 sessions', comment: '// partial hour \u2014 stopped at 02:27' }
+        { cmd: 'mlkem768x25519-sha256', comment: '// ML-KEM · NIST standard · August 2024' },
+        { cmd: 'mlkem768nistp256-sha256', comment: '' },
+        { cmd: 'sntrup761x25519-sha512', comment: '// Streamlined NTRU Prime hybrid' },
+        { cmd: 'sntrup761x25519-sha512@openssh.com', comment: '' },
+        { cmd: 'curve25519-sha256', comment: '' },
+        { cmd: 'kex-strict-c-v00@openssh.com', comment: '// Terrapin mitigation · OpenSSH 9.6' },
       ]
     },
     {
-      type: 'section',
-      title: 'What it did'
-    },
-    {
       type: 'text',
-      content: 'Every session followed the same pattern without exception. Connect, authenticate as <code>root</code>, run one command, disconnect. The command was identical across all 13,363 successful sessions: <code>echo -e "\\x6F\\x6B"</code> \u2014 a hex-encoded print of the string <code>ok</code>. Not <code>echo ok</code>. The hex encoding indicates the command was generated programmatically, not hardcoded as a string. Something built this command rather than wrote it.'
-    },
-    {
-      type: 'text',
-      content: 'Authentication succeeded on 13,363 of 13,365 attempts \u2014 a 99.99% success rate explained entirely by Cowrie accepting all credentials. The actor cycled through 10 passwords in rotation, all under the <code>root</code> username, with hashes in the <code>19***0</code> through <code>19***9</code> pattern \u2014 consistent with a sequential numeric password list. No credential variation, no username variation, no deviation of any kind across the entire 8-hour window.'
+      content: 'The presence of <code>kex-strict-c-v00@openssh.com</code> across all sessions confirms the tooling is patched against the Terrapin attack disclosed in December 2023. This is not abandoned or stale infrastructure. The operator is maintaining it.'
     },
     {
       type: 'section',
-      title: 'What it wasn\'t'
+      title: 'The credentials'
     },
     {
       type: 'text',
-      content: 'This is not a credential spray \u2014 an actor spraying passwords tries many credentials hoping some work, then executes a payload on success. This actor already had a working credential set and wasn\'t interested in what happened after login. It is not a scanner \u2014 scanners move across IP ranges looking for open ports. This IP hit only this host, repeatedly, for hours. It is not a typical bot \u2014 the 63-event Diicot sessions elsewhere in the dataset follow a structured playbook with persistence and hardware survey. This actor ran one command and left, every time.'
+      content: 'Despite the modern cryptography stack, the credential list is pure Mirai. <code>345gs5662d34</code> — a default credential hardcoded into Mirai\'s original source code — leads the auth attempts at 1,626 hits, followed by <code>3245gs5662d34</code> at 1,616. The full list mixes Mirai defaults with credentials associated with known Mirai variants including Moobot. Average session duration is 3.47 seconds. Post-auth activity confirms this is a deployment campaign, not reconnaissance.'
+    },
+    {
+      type: 'section',
+      title: 'Infrastructure'
     },
     {
       type: 'text',
-      content: 'The most consistent explanation is infrastructure verification: something deployed on <code>220.190.x.x</code> believed this SSH endpoint was part of its own infrastructure and was confirming it was alive and responding. The flat session rate \u2014 a fixed ~27 connections per minute sustained without acceleration or decay \u2014 points to a thread pool or rate-limited worker running at a configured concurrency ceiling, not organic traffic. The complete stop at <code>02:27 UTC</code> with no return suggests a job that ran to completion or a configuration that was changed, not a network failure or block.'
+      content: '312 nodes across 20+ countries. Indonesia is the heaviest source at 856 sessions across both consumer and cloud ISPs — PT Telekomunikasi Indonesia, PT Cloud Hosting Indonesia, Cloud Host Pte Ltd, and Byteplus. The remaining distribution spans Hong Kong, the United States, South Korea, Vietnam, Brazil, India, France, Germany, and Mexico. Cloud providers represented include UCLOUD, Tencent, OVH, Contabo, and Microsoft Azure. The geographic and provider spread is consistent with a takedown-resistant architecture.'
+    },
+    {
+      type: 'section',
+      title: 'Why this matters'
+    },
+    {
+      type: 'text',
+      content: 'ML-KEM was standardized by NIST in August 2024. It shipped in libssh 0.12.0 shortly after. The timeline from standardization to deployment in mass-scanning commodity malware is measured in months. Post-quantum cryptography appearing not in targeted nation-state tooling but in a Mirai variant — one of the most widely distributed botnet families on the internet — suggests the adoption curve is steeper than most would have anticipated. The credential list hasn\'t changed. The infrastructure is being maintained. The crypto stack is being updated.'
     },
     {
       type: 'attacks',
       attacks: [
-        { id: 'T1110', name: 'Brute Force', tactic: 'Credential Access' },
-        { id: 'T1046', name: 'Network Service Discovery', tactic: 'Discovery' },
-        { id: 'T1497', name: 'Virtualization/Sandbox Evasion', tactic: 'Defense Evasion' }
+        { id: 'T1110.001', name: 'Brute Force: Password Guessing', tactic: 'Credential Access' },
+        { id: 'T1071.002', name: 'Application Layer Protocol: SSH', tactic: 'Command and Control' },
+        { id: 'T1584', name: 'Compromise Infrastructure', tactic: 'Resource Development' },
       ]
     },
     {
       type: 'defender',
-      content: 'A single IP generating thousands of short sessions in a flat rate pattern is a strong indicator of automated infrastructure tooling rather than a human actor. Rate-limit or block after 10 failed sessions from a single IP within a 60-second window \u2014 this actor would have been cut off in the first minute. The hex-encoded command <code>\\x6F\\x6B</code> is a fingerprint worth alerting on in shell logs; legitimate administrators don\'t encode <code>echo ok</code> in hex.'
+      content: 'HASSH <code>af8223ac9914f509afdadfaf5f7ee94e</code> is a reliable fingerprint for this campaign. The credential pair <code>345gs5662d34:345gs5662d34</code> is a stable Mirai IOC and should be present in existing detection rules. The presence of <code>mlkem</code> in SSH kexalgs is not inherently malicious — modern OpenSSH clients advertise it by default — but combined with <code>libssh_0.12.0</code> and the Mirai credential list it is a high-confidence cluster signal.'
     }
   ],
-  session_ids: '220.190.x.x \u2014 13365 sessions'
+  session_ids: 'distributed — 312 unique IPs · HASSH af8223ac9914f509afdadfaf5f7ee94e'
 };
 
 async function main() {
