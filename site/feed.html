@@ -207,11 +207,11 @@ nav {
 .filter-btn:hover { border-color: var(--rim-hover); color: var(--text); }
 .filter-btn.active { border-color: rgba(77,232,176,0.3); background: var(--bio-dim); color: var(--bio); }
 
-/* ── Column headers ── */
+/* ── IP-level column headers ── */
 .feed-cols {
   display: grid;
-  grid-template-columns: 148px 52px 110px 110px 200px 1fr 160px 160px;
-  gap: 0; padding: 0.5rem 1.5rem;
+  grid-template-columns: 190px 130px 100px 100px 170px 1fr;
+  padding: 0.5rem 1.5rem 0.5rem 1.75rem;
   border-bottom: 1px solid var(--rim);
   background: rgba(0,0,0,0.2); flex-shrink: 0;
 }
@@ -222,12 +222,12 @@ nav {
 /* ── Feed body ── */
 .feed-body { flex: 1; overflow-y: auto; overflow-x: hidden; min-height: 0; }
 
-/* ── Session group row ── */
-.session-group {
-  border-bottom: 1px solid rgba(15,24,34,0.7);
+/* ── IP group (top-level) ── */
+.ip-group {
+  border-bottom: 1px solid rgba(15,24,34,0.8);
   animation: rowIn 0.25s ease forwards; opacity: 0;
 }
-.session-group.new { animation: rowNew 0.4s ease forwards; }
+.ip-group.new { animation: rowNew 0.4s ease forwards; }
 @keyframes rowIn {
   from { opacity: 0; background: rgba(77,232,176,0.04); }
   to   { opacity: 1; background: transparent; }
@@ -238,33 +238,87 @@ nav {
   100% { opacity: 1; background: transparent; }
 }
 
-/* Session summary row — the clickable header */
-.session-row {
+/* IP summary row */
+.ip-row {
   display: grid;
-  grid-template-columns: 148px 52px 110px 110px 200px 1fr 160px 160px;
-  gap: 0; padding: 0.5rem 1.5rem;
-  align-items: center; cursor: pointer;
+  grid-template-columns: 190px 130px 100px 100px 170px 1fr;
+  padding: 0.75rem 1.5rem 0.75rem 1.75rem;
+  align-items: center; cursor: pointer; position: relative;
   transition: background 0.1s;
-  position: relative;
 }
-.session-row:hover { background: var(--glass); }
-.session-row.expanded { background: var(--glass); }
+.ip-row:hover { background: var(--glass); }
+.ip-row.expanded { background: var(--glass); }
 
-/* Expand chevron */
-.session-chevron {
-  position: absolute; left: 4px; top: 50%; transform: translateY(-50%);
+.ip-chevron {
+  position: absolute; left: 5px; top: 50%; transform: translateY(-50%);
   width: 10px; height: 10px; display: flex; align-items: center; justify-content: center;
   color: var(--text-dim); font-size: 8px; transition: transform 0.2s;
 }
+.ip-row.expanded .ip-chevron { transform: translateY(-50%) rotate(90deg); }
+
+.ip-col-ip { display: flex; flex-direction: column; gap: 2px; }
+.ip-location { font-size: 10px; color: var(--text-dim); }
+.ip-asn { font-size: 10px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Badge for session/event counts */
+.ip-badge {
+  display: inline-flex; align-items: center;
+  font-size: 9px; letter-spacing: 0.06em; padding: 2px 7px;
+  border-radius: 2px; white-space: nowrap; text-transform: uppercase; font-weight: 500;
+}
+.ip-badge-sessions {
+  color: var(--glow); border: 1px solid rgba(122,180,220,0.25);
+  background: rgba(122,180,220,0.06);
+}
+.ip-badge-events {
+  color: var(--text-mid); border: 1px solid rgba(106,143,168,0.2);
+  background: rgba(106,143,168,0.04);
+}
+
+/* Sessions container (under IP row) */
+.ip-sessions {
+  background: rgba(6,10,14,0.4);
+  border-top: 1px solid var(--rim);
+}
+
+/* Tree lines when IP group is expanded */
+.ip-group.expanded-ip > .ip-row {
+  border-left: 2px solid rgba(122,180,220,0.4);
+}
+.ip-group.expanded-ip > .ip-sessions {
+  border-left: 2px solid rgba(122,180,220,0.15);
+}
+
+/* ── Session group (second level) ── */
+.session-group {
+  border-bottom: 1px solid rgba(15,24,34,0.5);
+}
+.session-group:last-child { border-bottom: none; }
+
+.session-row {
+  display: grid;
+  grid-template-columns: 1fr 90px 280px;
+  padding: 0.45rem 1.5rem 0.45rem 2.75rem;
+  align-items: center; cursor: pointer; position: relative;
+  transition: background 0.1s;
+}
+.session-row:hover { background: rgba(15,24,34,0.6); }
+.session-row.expanded { background: rgba(15,24,34,0.6); }
+
+.session-chevron {
+  position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+  width: 10px; height: 10px; display: flex; align-items: center; justify-content: center;
+  color: var(--text-dim); font-size: 7px; transition: transform 0.2s;
+}
 .session-row.expanded .session-chevron { transform: translateY(-50%) rotate(90deg); }
 
-/* Event count badge */
-.event-count {
-  font-size: 11px; color: var(--text-mid);
-  display: flex; align-items: center; gap: 5px;
+.session-id-text {
+  font-size: 11px; color: var(--text-mid); font-variant-numeric: tabular-nums;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.event-count-n {
-  font-size: 12px; color: var(--glow); font-variant-numeric: tabular-nums;
+.session-timerange {
+  display: flex; align-items: center;
+  font-size: 11px; color: var(--text-dim); font-variant-numeric: tabular-nums;
 }
 
 /* ── Session events panel ── */
@@ -274,12 +328,48 @@ nav {
   overflow: hidden;
 }
 
-/* Individual event row inside a session */
+/* Tree lines when session is expanded */
+.session-group.expanded-group > .session-row {
+  border-left: 2px solid rgba(122,180,220,0.3);
+}
+.session-group.expanded-group > .session-events {
+  border-left: 2px solid rgba(122,180,220,0.2);
+}
+.session-group.expanded-group > .session-events > .event-row {
+  position: relative;
+  padding-left: 52px !important;
+}
+.session-group.expanded-group > .session-events > .event-row::before {
+  content: '';
+  position: absolute; left: 26px; top: 0; bottom: 0;
+  width: 1px; background: rgba(122,180,220,0.25);
+  pointer-events: none; z-index: 1;
+}
+.session-group.expanded-group > .session-events > .event-row:last-child::before {
+  bottom: 50%;
+}
+.session-group.expanded-group > .session-events > .event-row::after {
+  content: '';
+  position: absolute; left: 27px; top: 50%;
+  transform: translateY(-50%);
+  width: 18px; height: 1px;
+  background: rgba(122,180,220,0.2);
+  pointer-events: none; z-index: 2;
+}
+.tree-node {
+  position: absolute; left: 41px; top: 50%;
+  transform: translateY(-50%);
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--ink); border: 1px solid rgba(122,180,220,0.4);
+  z-index: 3; pointer-events: none; display: block;
+}
+
+/* ── Individual event row (inside session) ── */
 .event-row {
   display: grid;
   grid-template-columns: 148px 52px 110px 110px 200px 1fr 160px 160px;
-  gap: 0; padding: 0.4rem 1.5rem 0.4rem 2.5rem;
-  border-bottom: 1px solid rgba(15,24,34,0.5);
+  padding: 0.4rem 1.5rem 0.4rem 2.5rem;
+  border-bottom: 1px solid rgba(15,24,34,0.4);
   align-items: center; cursor: pointer;
   transition: background 0.1s;
 }
@@ -287,7 +377,7 @@ nav {
 .event-row:last-child { border-bottom: none; }
 .event-row.expanded { background: var(--glass); border-bottom: none; }
 
-/* ── Event detail panel (inside session) ── */
+/* ── Event detail panel ── */
 .row-detail {
   background: var(--glass);
   border-bottom: 1px solid var(--rim);
@@ -467,118 +557,58 @@ nav {
   .main-grid { grid-template-columns: 1fr; }
   .sidebar { display: none; }
   .stats-bar { grid-template-columns: repeat(3, 1fr); }
-  .feed-cols, .session-row, .event-row { grid-template-columns: 65px 90px 1fr 120px; }
-  .col-head:nth-child(2), .cell-proto,
-  .col-head:nth-child(4), .cell-sensor,
-  .col-head:nth-child(5), .cell-geo { display: none; }
+  .feed-cols { grid-template-columns: 120px 1fr 80px 80px; }
+  .feed-cols .col-head:nth-child(2),
+  .feed-cols .col-head:nth-child(3) { display: none; }
+  .ip-row { grid-template-columns: 120px 1fr 80px 80px; }
+  .ip-row > :nth-child(3),
+  .ip-row > :nth-child(4) { display: none; }
+  .event-row { grid-template-columns: 65px 90px 1fr 120px; }
+  .event-row > :nth-child(2),
+  .event-row > :nth-child(4),
+  .event-row > :nth-child(5) { display: none; }
 }
 
-
-
-/* ── Process tree lines (MDE-style) ── */
-.session-group.expanded-group > .session-row {
-  border-left: 2px solid var(--glow);
+/* ── CRT filter ── */
+.crt {
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 9999;
 }
-.session-group.expanded-group > .session-events {
-  border-left: 2px solid var(--glow);
-}
-.session-group.expanded-group > .session-events > .event-row {
-  position: relative;
-  padding-left: 42px !important;
-}
-/* Trunk segment — each row draws its own vertical piece */
-.session-group.expanded-group > .session-events > .event-row::before {
+.crt::before {
   content: '';
-  position: absolute;
-  left: 16px;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  background: rgba(122,180,220,0.35);
+  position: fixed; inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px, transparent 2px,
+    rgba(0,0,0,0.22) 2px, rgba(0,0,0,0.22) 3px
+  );
+  animation: crt-roll 8s linear infinite;
   pointer-events: none;
-  z-index: 1;
 }
-/* Last child only draws top half of trunk — terminates at midpoint */
-.session-group.expanded-group > .session-events > .event-row:last-child::before {
-  bottom: 50%;
-}
-/* Horizontal branch — sits on top of trunk */
-.session-group.expanded-group > .session-events > .event-row::after {
+.crt::after {
   content: '';
-  position: absolute;
-  left: 17px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 20px;
-  height: 1px;
-  background: rgba(122,180,220,0.3);
+  position: fixed; inset: 0;
+  background: radial-gradient(ellipse at 50% 50%,
+    transparent 60%, rgba(0,0,0,0.25) 80%, rgba(0,0,0,0.70) 100%
+  );
   pointer-events: none;
-  z-index: 2;
 }
-/* Node dot — drawn via JS-injected span to avoid pseudo conflict */
-.tree-node {
-  position: absolute;
-  left: 33px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--ink);
-  border: 1px solid rgba(122,180,220,0.5);
-  z-index: 3;
+@keyframes crt-roll {
+  from { background-position: 0 0; }
+  to   { background-position: 0 3px; }
+}
+@keyframes crt-flicker {
+  0%,100% { opacity: 1; }
+  92%     { opacity: 0.97; }
+  96%     { opacity: 0.95; }
+}
+.crt-phosphor {
+  position: fixed; inset: 0;
+  background: rgba(0, 18, 6, 0.06);
+  mix-blend-mode: screen;
   pointer-events: none;
-  display: block;
+  animation: crt-flicker 0.12s step-end infinite;
 }
-  /* -- CRT FILTER -- */
-  .crt {
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 9999;
-  }
-  .crt::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background: repeating-linear-gradient(
-      to bottom,
-      transparent 0px,
-      transparent 2px,
-      rgba(0,0,0,0.22) 2px,
-      rgba(0,0,0,0.22) 3px
-    );
-    animation: crt-roll 8s linear infinite;
-    pointer-events: none;
-  }
-  .crt::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background: radial-gradient(ellipse at 50% 50%,
-      transparent 60%,
-      rgba(0,0,0,0.25) 80%,
-      rgba(0,0,0,0.70) 100%
-    );
-    pointer-events: none;
-  }
-  @keyframes crt-roll {
-    from { background-position: 0 0; }
-    to   { background-position: 0 3px; }
-  }
-  @keyframes crt-flicker {
-    0%,100% { opacity: 1; }
-    92%     { opacity: 0.97; }
-    96%     { opacity: 0.95; }
-  }
-  .crt-phosphor {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 18, 6, 0.06);
-    mix-blend-mode: screen;
-    pointer-events: none;
-    animation: crt-flicker 0.12s step-end infinite;
-  }
 </style>
 </head>
 <body>
@@ -662,14 +692,12 @@ nav {
       </div>
 
       <div class="feed-cols">
-        <div class="col-head">time</div>
-        <div class="col-head">proto</div>
-        <div class="col-head">source IP</div>
-        <div class="col-head">sensor</div>
-        <div class="col-head">location</div>
-        <div class="col-head">event</div>
-        <div class="col-head">IoC</div>
-        <div class="col-head">technique</div>
+        <div class="col-head">source ip · location</div>
+        <div class="col-head">asn</div>
+        <div class="col-head">sessions</div>
+        <div class="col-head">events</div>
+        <div class="col-head">last seen</div>
+        <div class="col-head">ioc</div>
       </div>
 
       <div class="feed-body" id="feed-body">
@@ -705,7 +733,6 @@ nav {
         <div class="sidebar-title">Top source countries</div>
         <div id="country-list"></div>
       </div>
-
     </div>
   </div>
 </div>
@@ -724,12 +751,18 @@ let countdownVal = 30;
 let countdownTimer;
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
+
 function fmt(ts) {
   if (!ts) return '—';
   const d = new Date(ts);
   const date = d.toLocaleDateString('en-CA');
   const time = d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
   return `${date} ${time}`;
+}
+
+function fmtTime(ts) {
+  if (!ts) return '—';
+  return new Date(ts).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
 }
 
 function escHtml(s) {
@@ -749,16 +782,16 @@ function eventClass(eventid) {
 
 function eventLabel(eventid) {
   const map = {
-    'cowrie.session.connect':      'CONNECT',
-    'cowrie.session.closed':       'CLOSED',
-    'cowrie.client.version':       'CLIENT',
-    'cowrie.login.success':        'AUTH OK',
-    'cowrie.login.failed':         'AUTH FAIL',
-    'cowrie.command.input':        'COMMAND',
-    'cowrie.command.failed':       'CMD FAIL',
-    'cowrie.session.file_upload':  'UPLOAD',
-    'cowrie.session.file_download':'DOWNLOAD',
-    'cowrie.direct-tcpip.request': 'TUNNEL',
+    'cowrie.session.connect':       'CONNECT',
+    'cowrie.session.closed':        'CLOSED',
+    'cowrie.client.version':        'CLIENT',
+    'cowrie.login.success':         'AUTH OK',
+    'cowrie.login.failed':          'AUTH FAIL',
+    'cowrie.command.input':         'COMMAND',
+    'cowrie.command.failed':        'CMD FAIL',
+    'cowrie.session.file_upload':   'UPLOAD',
+    'cowrie.session.file_download': 'DOWNLOAD',
+    'cowrie.direct-tcpip.request':  'TUNNEL',
   };
   return map[eventid] ?? eventid.split('.').pop().toUpperCase();
 }
@@ -793,7 +826,7 @@ const IOC_SHORT = {
 const IOC_SEVERITY_RANK = { critical: 4, high: 3, medium: 2, low: 1 };
 
 function iocTags(iocs, max = 2) {
-  if (!iocs || !iocs.length) return '';
+  if (!iocs?.length) return '';
   return iocs.slice(0, max).map(ioc =>
     `<span class="ioc-tag ioc-${escHtml(ioc.severity ?? 'low')}" data-tip="${escHtml(ioc.label)}">${IOC_SHORT[ioc.type] ?? 'IOC'}</span>`
   ).join('');
@@ -814,17 +847,7 @@ function passesFilter(e) {
   return true;
 }
 
-// Label for count in session summary based on active filter
-function filterLabel(n) {
-  if (activeFilter === 'all')     return `${n} event${n !== 1 ? 's' : ''}`;
-  if (activeFilter === 'auth')    return `${n} auth attempt${n !== 1 ? 's' : ''}`;
-  if (activeFilter === 'command') return `${n} command${n !== 1 ? 's' : ''}`;
-  if (activeFilter === 'file')    return `${n} file${n !== 1 ? 's' : ''}`;
-  if (activeFilter === 'attack')  return `${n} technique${n !== 1 ? 's' : ''}`;
-  return `${n} event${n !== 1 ? 's' : ''}`;
-}
-
-// Pick highest-severity IoC across a set of events
+// Highest-severity IoC across a set of events
 function topIoc(events) {
   let best = null, bestRank = 0;
   for (const e of events) {
@@ -836,7 +859,7 @@ function topIoc(events) {
   return best;
 }
 
-// Pick best ATT&CK technique (prefer highest tactic rank, fallback to last seen)
+// Best ATT&CK technique (highest tactic rank)
 function topAttack(events) {
   const tacticRank = { Impact: 11, 'Lateral Movement': 10, 'Command and Control': 9, Collection: 8, Exfiltration: 7, 'Defense Evasion': 6, Persistence: 5, 'Privilege Escalation': 4, 'Credential Access': 3, Discovery: 2, Execution: 1, 'Initial Access': 0, Reconnaissance: -1 };
   let best = null, bestRank = -99;
@@ -849,31 +872,45 @@ function topAttack(events) {
   return best;
 }
 
-// ── Group events by session ───────────────────────────────────────────────────
-function groupBySessions(events) {
-  const sessionMap = new Map();
-  const sessionOrder = [];
+// ── Group events: IP → sessions ───────────────────────────────────────────────
+
+function groupByIp(events) {
+  const ipMap = new Map();
 
   for (const e of events) {
-    const key = e.session ?? e.id; // fallback for events with no session
-    if (!sessionMap.has(key)) {
-      sessionMap.set(key, { session: key, events: [], src_ip: e.src_ip, geo: e.geo, sensor: e.sensor, protocol: e.protocol });
-      sessionOrder.push(key);
-    }
-    sessionMap.get(key).events.push(e);
+    const ip  = e.src_ip ?? '(unknown)';
+    const sid = e.session ?? e.id;
+
+    if (!ipMap.has(ip)) ipMap.set(ip, { src_ip: ip, geo: null, sessionMap: new Map() });
+    const ipGroup = ipMap.get(ip);
+    if (!ipGroup.geo && e.geo) ipGroup.geo = e.geo;
+
+    if (!ipGroup.sessionMap.has(sid)) ipGroup.sessionMap.set(sid, []);
+    ipGroup.sessionMap.get(sid).push(e);
   }
 
-  // Sort session order by most recent event timestamp
-  sessionOrder.sort((a, b) => {
-    const aTs = sessionMap.get(a).events[sessionMap.get(a).events.length - 1]?.ts ?? '';
-    const bTs = sessionMap.get(b).events[sessionMap.get(b).events.length - 1]?.ts ?? '';
-    return bTs > aTs ? 1 : -1;
-  });
+  const result = [];
+  for (const [, group] of ipMap) {
+    const sessions = [...group.sessionMap.entries()].map(([sid, evts]) => ({
+      session:  sid,
+      events:   evts,
+      firstTs:  evts[0]?.ts ?? '',
+      lastTs:   evts[evts.length - 1]?.ts ?? '',
+    }));
+    // Most recent session first
+    sessions.sort((a, b) => (b.lastTs > a.lastTs ? 1 : -1));
 
-  return sessionOrder.map(k => sessionMap.get(k));
+    const lastTs = sessions[0]?.lastTs ?? '';
+    result.push({ src_ip: group.src_ip, geo: group.geo, sessions, lastTs });
+  }
+
+  // Most recently active IP first
+  result.sort((a, b) => (b.lastTs > a.lastTs ? 1 : -1));
+  return result;
 }
 
-// ── Detail panel ─────────────────────────────────────────────────────────────
+// ── Detail panel ──────────────────────────────────────────────────────────────
+
 function buildDetailPanel(e) {
   const panel = document.createElement('div');
   panel.className = 'row-detail';
@@ -922,9 +959,9 @@ function buildDetailPanel(e) {
     </div>
     <div class="detail-group">
       <div class="detail-group-title">Network</div>
-      ${e.geo?.asn  ? df('ASN', e.geo.asn)   : ''}
-      ${e.geo?.isp  ? df('ISP', e.geo.isp)   : ''}
-      ${e.geo?.rdns ? df('rDNS', e.geo.rdns) : ''}
+      ${e.geo?.asn  ? df('ASN', e.geo.asn)     : ''}
+      ${e.geo?.isp  ? df('ISP', e.geo.isp)     : ''}
+      ${e.geo?.rdns ? df('rDNS', e.geo.rdns)   : ''}
       ${e.geo?.cloud ? df('Cloud', e.geo.cloud) : ''}
       ${!e.geo ? '<div class="detail-no-data">No network data</div>' : ''}
     </div>
@@ -939,7 +976,8 @@ function df(label, value) {
   </div>`;
 }
 
-// ── Individual event row (inside session) ─────────────────────────────────────
+// ── Individual event row ──────────────────────────────────────────────────────
+
 function makeEventRow(e) {
   const row = document.createElement('div');
   row.className = 'event-row';
@@ -960,11 +998,10 @@ function makeEventRow(e) {
     <div>${attackTag(e.attack)}</div>
   `;
 
-  row.addEventListener('click', (ev) => {
+  row.addEventListener('click', ev => {
     ev.stopPropagation();
     const existing = row.nextSibling;
-    const wasOpen = existing && existing.classList.contains('row-detail');
-    // Close any open detail in this session
+    const wasOpen  = existing?.classList.contains('row-detail');
     row.closest('.session-events')?.querySelectorAll('.row-detail').forEach(d => d.remove());
     row.closest('.session-events')?.querySelectorAll('.event-row.expanded').forEach(r => r.classList.remove('expanded'));
     if (!wasOpen) {
@@ -979,74 +1016,111 @@ function makeEventRow(e) {
   return row;
 }
 
-// ── Session inline detail ────────────────────────────────────────────────────────
-function sessionDetail(events) {
-  // Show first command if present
-  const cmdEvents = events.filter(e => e.eventid === 'cowrie.command.input' && e.input);
-  if (cmdEvents.length > 0) {
-    const cmd = cmdEvents[0].input.slice(0, 60);
-    const truncated = cmdEvents[0].input.length > 60 ? '…' : '';
-    return `<span style="color:var(--text-dim);font-size:10px">${escHtml(cmd)}${truncated}</span>`;
-  }
-  return '';
-}
+// ── Session group row (second level) ─────────────────────────────────────────
 
-// ── Session group row ─────────────────────────────────────────────────────────
-function makeSessionGroup(group, isNew = false) {
-  const filtered = group.events.filter(passesFilter);
-  if (filtered.length === 0) return null;
+function makeSessionGroup(session) {
+  const filteredEvents = session.events.filter(passesFilter);
+  if (filteredEvents.length === 0) return null;
 
   const wrapper = document.createElement('div');
-  wrapper.className = 'session-group' + (isNew ? ' new' : '');
+  wrapper.className = 'session-group';
+  wrapper.dataset.session = session.session;
 
-  // Most recent event in the filtered set
-  const latest = filtered[filtered.length - 1];
-  const geo = group.geo ?? latest?.geo ?? null;
-  const geoStr = geo ? [geo.city, geo.country].filter(Boolean).join(', ') : '—';
-  const ioc = topIoc(filtered);
-  const attack = topAttack(filtered);
+  const firstTs = filteredEvents[0]?.ts;
+  const lastTs  = filteredEvents[filteredEvents.length - 1]?.ts;
+  const sidShort = String(session.session ?? '—').slice(0, 18);
+  const sidTrunc = String(session.session ?? '').length > 18;
 
-  const summaryRow = document.createElement('div');
-  summaryRow.className = 'session-row';
-  summaryRow.innerHTML = `
+  const sessionRow = document.createElement('div');
+  sessionRow.className = 'session-row';
+  sessionRow.innerHTML = `
     <span class="session-chevron">▶</span>
-    <div class="cell-time">${fmt(latest?.ts)}</div>
-    <div class="cell-proto">${escHtml(group.protocol ?? 'ssh')}</div>
-    <div class="cell-ip">${escHtml(group.src_ip ?? '—')}</div>
-    <div class="cell-sensor">${escHtml(group.sensor ?? '—')}</div>
-    <div class="cell-geo">${escHtml(geoStr)}</div>
-    <div class="cell-event" style="flex-direction:column;align-items:flex-start;gap:3px;justify-content:center">
-      <div class="event-count">
-        <span class="event-count-n">${filtered.length}</span>
-        <span>${filterLabel(filtered.length).replace(/^\d+ /, '')}</span>
-      </div>
-      <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%">${sessionDetail(filtered)}</div>
+    <div><span class="session-id-text">${escHtml(sidShort)}${sidTrunc ? '…' : ''}</span></div>
+    <div><span class="ip-badge ip-badge-events">${filteredEvents.length} event${filteredEvents.length !== 1 ? 's' : ''}</span></div>
+    <div class="session-timerange">
+      <span>${fmtTime(firstTs)}</span>
+      <span style="color:var(--text-dim);margin:0 5px">→</span>
+      <span>${fmtTime(lastTs)}</span>
     </div>
-    <div class="cell-ioc">${ioc ? `<span class="ioc-tag ioc-${escHtml(ioc.severity ?? 'low')}" data-tip="${escHtml(ioc.label)}">${IOC_SHORT[ioc.type] ?? 'IOC'}</span>` : ''}</div>
-    <div>${attackTag(attack)}</div>
   `;
 
   const eventsPanel = document.createElement('div');
   eventsPanel.className = 'session-events';
   eventsPanel.style.display = 'none';
+  filteredEvents.forEach(e => eventsPanel.appendChild(makeEventRow(e)));
 
-  // Add event rows in chronological order (oldest first inside session)
-  filtered.forEach(e => eventsPanel.appendChild(makeEventRow(e)));
-
-  summaryRow.addEventListener('click', () => {
+  sessionRow.addEventListener('click', ev => {
+    ev.stopPropagation();
     const isOpen = eventsPanel.style.display !== 'none';
     eventsPanel.style.display = isOpen ? 'none' : 'block';
-    summaryRow.classList.toggle('expanded', !isOpen);
+    sessionRow.classList.toggle('expanded', !isOpen);
     wrapper.classList.toggle('expanded-group', !isOpen);
   });
 
-  wrapper.appendChild(summaryRow);
+  wrapper.appendChild(sessionRow);
   wrapper.appendChild(eventsPanel);
   return wrapper;
 }
 
-// ── Stats from visible events ─────────────────────────────────────────────────
-function computeStats(events) {
+// ── IP group row (top level) ──────────────────────────────────────────────────
+
+function makeIpGroup(ipGroup, isNew = false) {
+  // Only include sessions that have events matching the current filter
+  const visibleSessions = ipGroup.sessions
+    .map(s => ({ ...s, filteredCount: s.events.filter(passesFilter).length }))
+    .filter(s => s.filteredCount > 0);
+
+  if (visibleSessions.length === 0) return null;
+
+  const allFiltered = visibleSessions.flatMap(s => s.events.filter(passesFilter));
+  const ioc  = topIoc(allFiltered);
+  const geo  = ipGroup.geo;
+  const locationStr = geo ? [geo.city, geo.country].filter(Boolean).join(', ') : '';
+  const asnStr = geo?.asn ?? '';
+  const lastTs = visibleSessions[0]?.lastTs;
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'ip-group' + (isNew ? ' new' : '');
+  wrapper.dataset.ip = ipGroup.src_ip;
+
+  const ipRow = document.createElement('div');
+  ipRow.className = 'ip-row';
+  ipRow.innerHTML = `
+    <span class="ip-chevron">▶</span>
+    <div class="ip-col-ip">
+      <span class="cell-ip">${escHtml(ipGroup.src_ip ?? '—')}</span>
+      ${locationStr ? `<span class="ip-location">${escHtml(locationStr)}</span>` : ''}
+    </div>
+    <div>${asnStr ? `<span class="ip-asn">${escHtml(asnStr)}</span>` : ''}</div>
+    <div><span class="ip-badge ip-badge-sessions">${visibleSessions.length} session${visibleSessions.length !== 1 ? 's' : ''}</span></div>
+    <div><span class="ip-badge ip-badge-events">${allFiltered.length} event${allFiltered.length !== 1 ? 's' : ''}</span></div>
+    <div class="cell-time">${fmt(lastTs)}</div>
+    <div class="cell-ioc">${ioc ? `<span class="ioc-tag ioc-${escHtml(ioc.severity ?? 'low')}" data-tip="${escHtml(ioc.label)}">${IOC_SHORT[ioc.type] ?? 'IOC'}</span>` : ''}</div>
+  `;
+
+  const sessionsPanel = document.createElement('div');
+  sessionsPanel.className = 'ip-sessions';
+  sessionsPanel.style.display = 'none';
+  visibleSessions.forEach(s => {
+    const sg = makeSessionGroup(s);
+    if (sg) sessionsPanel.appendChild(sg);
+  });
+
+  ipRow.addEventListener('click', () => {
+    const isOpen = sessionsPanel.style.display !== 'none';
+    sessionsPanel.style.display = isOpen ? 'none' : 'block';
+    ipRow.classList.toggle('expanded', !isOpen);
+    wrapper.classList.toggle('expanded-ip', !isOpen);
+  });
+
+  wrapper.appendChild(ipRow);
+  wrapper.appendChild(sessionsPanel);
+  return wrapper;
+}
+
+// ── Stats ─────────────────────────────────────────────────────────────────────
+
+function updateStats(events) {
   let total = 0, sessions = new Set(), ips = new Set(), logins = 0, cmds = 0, uploads = 0;
   for (const e of events) {
     if (!passesFilter(e)) continue;
@@ -1057,27 +1131,21 @@ function computeStats(events) {
     if (e.eventid === 'cowrie.command.input') cmds++;
     if (e.eventid === 'cowrie.session.file_upload') uploads++;
   }
-  return { total, sessions: sessions.size, ips: ips.size, logins, cmds, uploads };
-}
-
-function updateStats(events) {
-  const s = computeStats(events);
-  document.getElementById('s-total').textContent    = s.total.toLocaleString();
-  document.getElementById('s-sessions').textContent = s.sessions.toLocaleString();
-  document.getElementById('s-ips').textContent      = s.ips.toLocaleString();
-  document.getElementById('s-logins').textContent   = s.logins.toLocaleString();
-  document.getElementById('s-cmds').textContent     = s.cmds.toLocaleString();
-  document.getElementById('s-uploads').textContent  = s.uploads.toLocaleString();
+  document.getElementById('s-total').textContent    = total.toLocaleString();
+  document.getElementById('s-sessions').textContent = sessions.size.toLocaleString();
+  document.getElementById('s-ips').textContent      = ips.size.toLocaleString();
+  document.getElementById('s-logins').textContent   = logins.toLocaleString();
+  document.getElementById('s-cmds').textContent     = cmds.toLocaleString();
+  document.getElementById('s-uploads').textContent  = uploads.toLocaleString();
 }
 
 // ── Render feed ───────────────────────────────────────────────────────────────
-function renderFeed(events, newSessionIds = new Set()) {
-  const body = document.getElementById('feed-body');
 
-  // Group all visible events by session
+function renderFeed(events, newIpIds = new Set()) {
+  const body    = document.getElementById('feed-body');
   const visible = events.slice(-MAX_ROWS);
-  const groups = groupBySessions(visible);
-  const filtered = groups.filter(g => g.events.some(passesFilter));
+  const ipGroups = groupByIp(visible);
+  const filtered = ipGroups.filter(g => g.sessions.some(s => s.events.some(passesFilter)));
 
   if (filtered.length === 0) {
     body.innerHTML = '<div class="empty-state"><p>No events match the current filter.</p></div>';
@@ -1085,32 +1153,32 @@ function renderFeed(events, newSessionIds = new Set()) {
     return;
   }
 
-  if (newSessionIds.size === 0 || body.querySelector('.empty-state')) {
+  if (newIpIds.size === 0 || body.querySelector('.empty-state')) {
     // Full re-render
     const frag = document.createDocumentFragment();
     filtered.forEach(g => {
-      const el = makeSessionGroup(g, false);
+      const el = makeIpGroup(g, false);
       if (el) frag.appendChild(el);
     });
     body.innerHTML = '';
     body.appendChild(frag);
   } else {
-    // Prepend new/updated sessions
+    // Prepend updated IP groups, remove old versions
     const frag = document.createDocumentFragment();
     filtered
-      .filter(g => newSessionIds.has(g.session))
+      .filter(g => newIpIds.has(g.src_ip))
       .forEach(g => {
-        const el = makeSessionGroup(g, true);
-        if (el) frag.appendChild(el);
-        // Remove old version of this session if it exists
-        body.querySelectorAll('.session-group').forEach(existing => {
-          if (existing.dataset.session === g.session && !frag.contains(existing)) existing.remove();
+        const el = makeIpGroup(g, true);
+        if (!el) return;
+        frag.appendChild(el);
+        body.querySelectorAll('.ip-group').forEach(existing => {
+          if (existing.dataset.ip === g.src_ip && !frag.contains(existing)) existing.remove();
         });
       });
     if (frag.childNodes.length > 0) body.insertBefore(frag, body.firstChild);
 
     // Trim excess
-    const groups = body.querySelectorAll('.session-group');
+    const groups = body.querySelectorAll('.ip-group');
     if (groups.length > MAX_ROWS) {
       for (let i = MAX_ROWS; i < groups.length; i++) groups[i].remove();
     }
@@ -1120,10 +1188,10 @@ function renderFeed(events, newSessionIds = new Set()) {
 }
 
 // ── Sidebar ───────────────────────────────────────────────────────────────────
+
 function updateSidebar(events) {
-  // Build tactic counts + commands per technique
   const tactics = {};
-  const tacticCmds = {}; // technique id -> { name, tactic, cmds: { cmd: count } }
+  const tacticCmds = {};
   events.forEach(e => {
     if (!e.attack?.tactic) return;
     tactics[e.attack.tactic] = (tactics[e.attack.tactic] ?? 0) + 1;
@@ -1138,37 +1206,29 @@ function updateSidebar(events) {
   tacticList.innerHTML = Object.entries(tactics)
     .sort((a,b) => b[1]-a[1]).slice(0,8)
     .map(([tactic, n]) => {
-      // Find technique IDs that map to this tactic and have commands
-      const techsForTactic = Object.entries(tacticCmds)
-        .filter(([id, t]) => t.tactic === tactic);
+      const techsForTactic = Object.entries(tacticCmds).filter(([, t]) => t.tactic === tactic);
       const allCmds = {};
       techsForTactic.forEach(([, t]) => {
-        Object.entries(t.cmds).forEach(([cmd, cnt]) => {
-          allCmds[cmd] = (allCmds[cmd] ?? 0) + cnt;
-        });
+        Object.entries(t.cmds).forEach(([cmd, cnt]) => { allCmds[cmd] = (allCmds[cmd] ?? 0) + cnt; });
       });
       const topCmds = Object.entries(allCmds).sort((a,b) => b[1]-a[1]).slice(0,8);
-      const hasCommands = topCmds.length > 0;
-
       const cmdHtml = topCmds.map(([cmd, cnt]) =>
         `<div class="tactic-cmd-item">
           <span class="tactic-cmd-n">${cnt}×</span>
           <span class="tactic-cmd-text" title="${escHtml(cmd)}">${escHtml(cmd.slice(0, 38))}</span>
         </div>`
       ).join('');
-
       return `<div class="tactic-row" data-tactic="${escHtml(tactic)}">
         <div class="tactic-row-header">
           <div class="tactic-name">${escHtml(tactic)}</div>
           <div class="tactic-bar-bg"><div class="tactic-bar-fill" style="width:${Math.round(n/tacMax*100)}%"></div></div>
           <div class="tactic-count">${n}</div>
-          ${hasCommands ? '<span class="tactic-chevron">▶</span>' : '<span class="tactic-chevron" style="opacity:0">▶</span>'}
+          ${topCmds.length ? '<span class="tactic-chevron">▶</span>' : '<span class="tactic-chevron" style="opacity:0">▶</span>'}
         </div>
-        ${hasCommands ? `<div class="tactic-commands">${cmdHtml}</div>` : ''}
+        ${topCmds.length ? `<div class="tactic-commands">${cmdHtml}</div>` : ''}
       </div>`;
     }).join('');
 
-  // Attach click handlers for expandable tactics
   tacticList.querySelectorAll('.tactic-row-header').forEach(header => {
     header.addEventListener('click', () => {
       const row = header.closest('.tactic-row');
@@ -1196,14 +1256,13 @@ function updateSidebar(events) {
       <div class="tactic-count">${n}</div>
     </div>`).join('') || '<div style="font-size:10px;color:var(--text-dim)">No data yet</div>';
 
-
-
   const sensorCounts = {};
   events.forEach(e => { if (e.sensor) sensorCounts[e.sensor] = (sensorCounts[e.sensor] ?? 0) + 1; });
   document.getElementById('sensor-count').textContent = (sensorCounts['honeypot-pi'] ?? 0).toLocaleString();
 }
 
 // ── Fetch ─────────────────────────────────────────────────────────────────────
+
 async function fetchEvents() {
   const url = newestTs
     ? `${READ_URL}/events?limit=500&since=${encodeURIComponent(newestTs)}`
@@ -1215,11 +1274,9 @@ async function fetchEvents() {
 
 async function poll(isFirst = false) {
   try {
-    const evData = await fetchEvents();
+    const evData   = await fetchEvents();
     const incoming = evData.events ?? [];
-
-    // Track which sessions are new/updated
-    const newSessions = new Set(incoming.map(e => e.session ?? e.id));
+    const newIps   = new Set(incoming.map(e => e.src_ip).filter(Boolean));
 
     if (isFirst) {
       allEvents = incoming;
@@ -1230,10 +1287,10 @@ async function poll(isFirst = false) {
 
     if (incoming.length > 0) newestTs = incoming[incoming.length - 1].ts;
 
-    renderFeed(allEvents, isFirst ? new Set() : newSessions);
+    renderFeed(allEvents, isFirst ? new Set() : newIps);
     updateSidebar(allEvents);
 
-    document.getElementById('live-label').textContent = 'live';
+    document.getElementById('live-label').textContent  = 'live';
     document.getElementById('last-update').textContent = 'last update ' + new Date().toLocaleTimeString('en-US', { hour12: false });
 
   } catch (err) {
@@ -1243,6 +1300,7 @@ async function poll(isFirst = false) {
 }
 
 // ── Countdown ─────────────────────────────────────────────────────────────────
+
 function startCountdown() {
   clearInterval(countdownTimer);
   countdownVal = 30;
@@ -1254,6 +1312,7 @@ function startCountdown() {
 }
 
 // ── Filter buttons ────────────────────────────────────────────────────────────
+
 document.querySelectorAll('.filter-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -1264,6 +1323,7 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
 });
 
 // ── Floating tooltip ──────────────────────────────────────────────────────────
+
 const tip    = document.getElementById('floating-tip');
 const MARGIN = 12;
 
@@ -1287,6 +1347,7 @@ document.addEventListener('mouseout', e => {
 });
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
+
 poll(true);
 startCountdown();
 setInterval(() => { poll(false); startCountdown(); }, POLL_MS);
